@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Simulateur Immo Premium</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SimuImmo">
+    <link rel="apple-touch-icon" href="icon.png"> 
+    <link rel="manifest" href="manifest.json">
+
+    <link rel="stylesheet" href="styles.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+
+<div class="header">
+    <h1>📊 Simulateur Immo Premium</h1>
+    <button id="btn-export" class="btn-primary">Exporter le Rapport (PDF)</button>
+</div>
+
+<div class="container">
+    <aside class="inputs-section">
+        <form id="calc-form">
+            
+            <details class="accordion" open>
+                <summary>🛒 1. Acquisition</summary>
+                <div class="accordion-content">
+                    <label>Prix affiché (€) <input type="number" inputmode="numeric" id="prix" value="150000"></label>
+                    <label>Négociation (€) <input type="number" inputmode="numeric" id="nego" value="5000"></label>
+                    <label>Frais d'agence (€) <input type="number" inputmode="numeric" id="agence" value="0"></label>
+                    
+                    <label>Type de bien 
+                        <select id="type-bien">
+                            <option value="ancien">Ancien (~8%)</option>
+                            <option value="neuf">Neuf (~2.5%)</option>
+                        </select>
+                    </label>
+                    <label>Frais notaire (%) <input type="number" inputmode="decimal" step="0.1" id="notaire" value="8"></label>
+                    <label>Travaux (€) <input type="number" inputmode="numeric" id="travaux" value="15000"></label>
+                    <label>Mobilier (€) <input type="number" inputmode="numeric" id="meubles" value="4000"></label>
+                    <label>Frais bancaires (€) <input type="number" inputmode="numeric" id="frais-bancaires" value="1500"></label>
+                </div>
+            </details>
+
+            <details class="accordion" open>
+                <summary>🏦 2. Financement</summary>
+                <div class="accordion-content">
+                    <label>Apport personnel (€) <input type="number" inputmode="numeric" id="apport" value="20000"></label>
+                    
+                    <div class="complex-input">
+                        <label>Taux d'intérêt annuel (%) 
+                            <input type="number" inputmode="decimal" step="0.01" id="taux-input" value="3.5">
+                        </label>
+                        <input type="range" id="taux-slider" class="styled-slider" min="0.5" max="6" step="0.05" value="3.5">
+                    </div>
+
+                    <label>Durée du prêt (Années) <input type="number" inputmode="numeric" id="duree" value="20"></label>
+                    <label>Taux assurance (%) <input type="number" inputmode="decimal" step="0.01" id="assurance" value="0.30"></label>
+                </div>
+            </details>
+
+            <details class="accordion">
+                <summary>📈 3. Exploitation</summary>
+                <div class="accordion-content">
+                    <label>Loyer mensuel HC (€) <input type="number" inputmode="numeric" id="loyer" value="900"></label>
+                    <label>Charges copro/mois (€) <input type="number" inputmode="numeric" id="copro" value="80"></label>
+                    <label>Taxe foncière/an (€) <input type="number" inputmode="numeric" id="fonciere" value="900"></label>
+                    <label>Assur. PNO/an (€) <input type="number" inputmode="numeric" id="pno" value="150"></label>
+                    <label>Vacance locative (%) <input type="number" inputmode="decimal" step="0.1" id="vacance" value="5"></label>
+                    <label>Frais de gestion (%) <input type="number" inputmode="decimal" step="0.1" id="gestion" value="7"></label>
+                </div>
+            </details>
+
+            <details class="accordion">
+                <summary>⚖️ 4. Fiscalité</summary>
+                <div class="accordion-content">
+                    <label class="tooltip-container" title="Revenus nets annuels du foyer pour calculer automatiquement votre tranche d'imposition (TMI).">Revenus du foyer (€) ℹ️ <input type="number" inputmode="numeric" id="revenus" value="60000"></label>
+                    <label>Enfants à charge <input type="number" inputmode="numeric" id="enfants" value="2"></label>
+                    
+                    <div class="tmi-box">
+                        Votre TMI calculée : <strong id="tmi-display">-- %</strong>
+                    </div>
+
+                    <label>Type de location
+                        <select id="type-location">
+                            <option value="meublee" selected>Meublée (LMNP)</option>
+                            <option value="nue">Nue</option>
+                        </select>
+                    </label>
+
+                    <label>Régime fiscal 
+                        <select id="regime">
+                            </select>
+                    </label>
+                </div>
+            </details>
+
+            <details class="accordion" open>
+                <summary>📷 5. Photos du bien</summary>
+                <div class="accordion-content">
+                    <p class="photo-help">Prenez des photos lors de votre visite. Elles seront intégrées au rapport PDF.</p>
+                    <label class="photo-upload-btn">
+                        <span>📸 Ajouter une photo</span>
+                        <input type="file" id="photo-input" accept="image/*" capture="environment" multiple style="display: none;">
+                    </label>
+                </div>
+            </details>
+        </form>
+    </aside>
+
+    <main class="dashboard-section">
+        <div id="export-area">
+            <div class="metrics-grid">
+                <div class="card">
+                    <h3>Rentabilité Brute</h3>
+                    <div class="value" id="renta-brute">-- %</div>
+                </div>
+                <div class="card">
+                    <h3>Rentabilité Nette</h3>
+                    <div class="value" id="renta-nette">-- %</div>
+                </div>
+                <div class="card">
+                    <h3>Cash-Flow Brut / mois</h3>
+                    <div class="value" id="cf-brut">-- €</div>
+                </div>
+                <div class="card">
+                    <h3>Cash-Flow Net / mois</h3>
+                    <div class="value" id="cf-net">-- €</div>
+                </div>
+                <div class="card highlight">
+                    <h3 class="tooltip-container" title="Le montant qui reste réellement dans votre poche chaque mois après impôts.">Cash-Flow Net-Net ℹ️</h3>
+                    <div class="value" id="cf-netnet">-- €</div>
+                    <p class="subtitle">Après impôts / mois</p>
+                </div>
+            </div>
+
+            <div class="details-section">
+                <div class="chart-container">
+                    <canvas id="cashflowChart"></canvas>
+                </div>
+                <div class="summary">
+                    <h3>Résumé du projet</h3>
+                    <ul>
+                        <li><span>Coût total</span> <strong><span id="out-cout-total">--</span> €</strong></li>
+                        <li><span>Montant financé</span> <strong><span id="out-financement">--</span> €</strong></li>
+                        <li><span>Mensualité (avec ass.)</span> <strong><span id="out-mensualite">--</span> €</strong></li>
+                        <li><span>Impôts (An 1)</span> <strong><span id="out-impot">--</span> €/an</strong></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="photos-export-section" id="photos-export-section" style="display: none;">
+                <h3>Galerie Photos du Bien</h3>
+                <div class="photo-grid" id="photo-gallery">
+                    </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
