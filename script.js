@@ -66,14 +66,23 @@ function calculateAndSave() {
         revenus: parseFloat(document.getElementById('revenus').value) || 60000,
         enfants: parseInt(document.getElementById('enfants').value) || 2,
         typeLocation: document.getElementById('type-location').value,
-        regime: document.getElementById('regime').value
+        regime: document.getElementById('regime').value,
+        commentaires: document.getElementById('commentaires-input').value
     };
 
-    // On ne sauvegarde pas les photos dans le localStorage pour éviter de dépasser le quota
     localStorage.setItem('simuImmoData', JSON.stringify(inputs));
 
     const tmi = calculateTMI(inputs.revenus, inputs.enfants);
     document.getElementById('tmi-display').innerText = tmi + ' %';
+
+    // Mise à jour de la section Commentaires dans l'export PDF
+    const commSection = document.getElementById('comments-export-section');
+    if (inputs.commentaires && inputs.commentaires.trim() !== '') {
+        document.getElementById('commentaires-display').innerText = inputs.commentaires;
+        commSection.style.display = 'block';
+    } else {
+        commSection.style.display = 'none';
+    }
 
     // 1. Coûts et Financement
     const prixNet = inputs.prix - inputs.nego;
@@ -93,7 +102,7 @@ function calculateAndSave() {
     const coutAssuranceMensuel = (montantFinance * (inputs.assurancePct / 100)) / 12;
     const mensualiteTotale = mensualiteCredit + coutAssuranceMensuel;
 
-    // 2. Amortissement du prêt (Année 1 - utile pour la déduction d'impôts au réel)
+    // 2. Amortissement du prêt (Année 1)
     let capitalRestant = montantFinance;
     let interetsAnnee1 = 0;
     
@@ -112,17 +121,16 @@ function calculateAndSave() {
     const chargesExploitationAnnuelles = (inputs.copro * 12) + inputs.fonciere + inputs.pno + fraisGestion;
 
     // 4. Fiscalité Année 1
-    const tauxGlobalImpot = (tmi / 100) + 0.172; // TMI + Prélèvements Sociaux
+    const tauxGlobalImpot = (tmi / 100) + 0.172; 
     let baseImposable = 0;
 
     if (inputs.regime === 'micro-foncier') {
-        baseImposable = loyersEncaisses * 0.7; // Abattement 30%
+        baseImposable = loyersEncaisses * 0.7;
     } else if (inputs.regime === 'micro-bic') {
-        baseImposable = loyersEncaisses * 0.5; // Abattement 50%
+        baseImposable = loyersEncaisses * 0.5;
     } else if (inputs.regime === 'reel') {
         baseImposable = Math.max(0, loyersEncaisses - chargesExploitationAnnuelles - interetsAnnee1 - (coutAssuranceMensuel * 12));
     } else if (inputs.regime === 'lmnp-reel') {
-        // Amortissement simplifié : Immobilier sur 30 ans (hors terrain 15%), Meubles sur 5 ans, Travaux sur 15 ans
         const baseAmortImmo = prixNet * 0.85; 
         const amortissementAnnuel = (baseAmortImmo / 30) + (inputs.meubles / 5) + (inputs.travaux / 15);
         baseImposable = Math.max(0, loyersEncaisses - chargesExploitationAnnuelles - interetsAnnee1 - (coutAssuranceMensuel * 12) - amortissementAnnuel);
@@ -172,7 +180,7 @@ function updateChart(loyer, credit, charges, impots, cf) {
             labels: ['Mensualité', 'Charges', 'Impôts', 'Cash-Flow'],
             datasets: [{ data: [credit, charges, impots, cfDisplay], backgroundColor: ['#ff3b30', '#ff9500', '#af52de', '#34c759'], borderWidth: 0 }]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: textColor } } } }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: textColor } } }, animation: { duration: 0 } }
     });
 }
 
@@ -206,19 +214,17 @@ document.getElementById('photo-input').addEventListener('change', function(event
         };
         reader.readAsDataURL(file);
     }
-    // Reset de l'input pour permettre de rajouter la même photo si effacée
     event.target.value = '';
 });
 
 window.removePhoto = function(index) {
-    uploadedPhotos[index] = null; // On "supprime" sans décaler les index
+    uploadedPhotos[index] = null; 
     const item = document.getElementById(`photo-item-${index}`);
     if (item) item.remove();
     
-    // Si toutes les photos sont null, on cache la section
     if (uploadedPhotos.every(p => p === null)) {
         document.getElementById('photos-export-section').style.display = 'none';
-        uploadedPhotos = []; // Reset complet
+        uploadedPhotos = []; 
     }
 };
 
@@ -227,32 +233,45 @@ function loadSavedData() {
     const saved = localStorage.getItem('simuImmoData');
     if (saved) {
         const data = JSON.parse(saved);
-        
-        // Initialiser Type de location d'abord pour créer les options du régime
         if (data.typeLocation) {
             document.getElementById('type-location').value = data.typeLocation;
             document.getElementById('type-location').dispatchEvent(new Event('change'));
         }
 
         for (const key in data) {
-            let el = document.getElementById(key === 'typeBien' ? 'type-bien' : key);
+            let elId = key;
+            if (key === 'typeBien') elId = 'type-bien';
+            if (key === 'commentaires') elId = 'commentaires-input';
+            
+            let el = document.getElementById(elId);
+            
             if(key === 'taux') {
                 document.getElementById('taux-input').value = data[key];
                 document.getElementById('taux-slider').value = data[key];
-            } else if (el) { el.value = data[key]; }
+            } else if (el) { 
+                el.value = data[key]; 
+            }
         }
     } else {
-        // Déclenchement manuel pour générer les régimes par défaut
         document.getElementById('type-location').dispatchEvent(new Event('change'));
     }
     calculateAndSave();
 }
 
-document.querySelectorAll('input, select').forEach(el => el.addEventListener('input', calculateAndSave));
+document.querySelectorAll('input, select, textarea').forEach(el => el.addEventListener('input', calculateAndSave));
 
-// Export PDF incluant les photos
-document.getElementById('btn-export').addEventListener('click', () => {
-    // Masquer temporairement les boutons "Supprimer" des photos pour le PDF
+// CORRECTIF EXPORT PDF
+document.getElementById('btn-export').addEventListener('click', function() {
+    const btn = this;
+    const textInitial = btn.innerText;
+    
+    // UI Loading state
+    btn.innerText = "⏳ Génération...";
+    btn.disabled = true;
+
+    // Solution du bug de coupe / page blanche : forcer le scroll en haut avant capture
+    window.scrollTo(0, 0);
+
     const removeBtns = document.querySelectorAll('.btn-remove');
     removeBtns.forEach(btn => btn.style.display = 'none');
 
@@ -261,14 +280,21 @@ document.getElementById('btn-export').addEventListener('click', () => {
     const opt = {
         margin:       10,
         filename:     'Rapport-Rentabilite-Premium.pdf',
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true }, // useCORS pour bien gérer les images
+        image:        { type: 'jpeg', quality: 0.95 },
+        html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
     html2pdf().set(opt).from(element).save().then(() => {
-        // Remettre les boutons "Supprimer" une fois l'export terminé
         removeBtns.forEach(btn => btn.style.display = 'flex');
+        btn.innerText = textInitial;
+        btn.disabled = false;
+    }).catch(err => {
+        console.error("Erreur d'exportation PDF :", err);
+        alert("Une erreur s'est produite lors de la génération du PDF.");
+        removeBtns.forEach(btn => btn.style.display = 'flex');
+        btn.innerText = textInitial;
+        btn.disabled = false;
     });
 });
 
