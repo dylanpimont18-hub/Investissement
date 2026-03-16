@@ -3,13 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Simulateur Immo Premium</title>
+    <title>Investisseur Pro - Outil d'Aide à la Décision</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="SimuImmo">
-    <link rel="apple-touch-icon" href="icon.png"> 
-    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-title" content="InvestPro">
 
     <link rel="stylesheet" href="styles.css">
     
@@ -19,174 +17,170 @@
 <body>
 
 <div class="header">
-    <h1>📊 Simulateur Immo Premium</h1>
-    <button id="btn-export" class="btn-primary">Exporter (PDF)</button>
+    <h1>📊 Investisseur Pro</h1>
+    <button id="btn-export" class="btn-primary" style="display: none;">Exporter (PDF)</button>
 </div>
 
+<nav class="tabs-nav">
+    <button class="tab-btn active" data-target="view-inputs">📝 1. Saisie & Projets</button>
+    <button class="tab-btn" data-target="view-results">🚀 2. Analyse & Projections</button>
+</nav>
+
 <div class="container">
-    <aside class="inputs-section">
+    
+    <div id="view-inputs" class="view-section active">
         <form id="calc-form">
-
-            <details class="accordion" open style="border: 2px solid var(--primary-color);">
-                <summary>📁 0. Mes Projets</summary>
-                <div class="accordion-content">
-                    <p class="photo-help" style="margin-bottom: 10px; text-align: left;">Sauvegardez vos différentes simulations pour les comparer plus tard.</p>
-                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                        <input type="text" id="project-name" placeholder="Nom du projet (ex: T2 Centre)" style="flex: 1; text-align: left;">
-                        <button type="button" id="btn-save-project" class="btn-primary" style="padding: 10px; white-space: nowrap;">💾 Enregistrer</button>
-                    </div>
-                    <ul id="projects-list" class="projects-list">
-                        </ul>
-                </div>
-            </details>
             
-            <details class="accordion" open>
-                <summary>🛒 1. Acquisition</summary>
-                <div class="accordion-content">
-                    <label>Prix affiché (€) <input type="number" inputmode="numeric" id="prix" value="150000"></label>
-                    <label>Négociation (€) <input type="number" inputmode="numeric" id="nego" value="5000"></label>
-                    <label>Frais d'agence (€) <input type="number" inputmode="numeric" id="agence" value="0"></label>
-                    
-                    <label>Type de bien 
-                        <select id="type-bien">
-                            <option value="ancien">Ancien (~8%)</option>
-                            <option value="neuf">Neuf (~2.5%)</option>
-                        </select>
-                    </label>
-                    <label>Frais notaire (%) <input type="number" inputmode="decimal" step="0.1" id="notaire" value="8"></label>
-                    <label>Travaux (€) <input type="number" inputmode="numeric" id="travaux" value="15000"></label>
-                    <label>Mobilier (€) <input type="number" inputmode="numeric" id="meubles" value="4000"></label>
-                    <label>Frais bancaires (€) <input type="number" inputmode="numeric" id="frais-bancaires" value="1500"></label>
+            <div class="card" style="margin-bottom: 20px; border: 2px solid var(--primary-color);">
+                <h3>📁 Gestion des Projets</h3>
+                <p class="photo-help" style="margin-bottom: 10px; text-align: left;">Sauvegardez vos visites pour les comparer plus tard.</p>
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <input type="text" id="project-name" placeholder="Nom du projet (ex: T2 Centre)" style="flex: 1; text-align: left;">
+                    <button type="button" id="btn-save-project" class="btn-primary" style="padding: 10px; white-space: nowrap;">💾 Sauvegarder</button>
                 </div>
-            </details>
+                <ul id="projects-list" class="projects-list"></ul>
+            </div>
 
-            <details class="accordion" open>
-                <summary>🏦 2. Financement</summary>
-                <div class="accordion-content">
-                    <label>Apport personnel (€) <input type="number" inputmode="numeric" id="apport" value="20000"></label>
-                    
-                    <div class="complex-input">
-                        <label>Taux d'intérêt annuel (%) 
-                            <input type="number" inputmode="decimal" step="0.01" id="taux-input" value="3.5">
-                        </label>
-                        <input type="range" id="taux-slider" class="styled-slider" min="0.5" max="6" step="0.05" value="3.5">
-                    </div>
-
-                    <label>Durée du prêt (Années) <input type="number" inputmode="numeric" id="duree" value="20"></label>
-                    <label>Taux assurance (%) <input type="number" inputmode="decimal" step="0.01" id="assurance" value="0.30"></label>
-                </div>
-            </details>
-
-            <details class="accordion">
-                <summary>📈 3. Exploitation</summary>
-                <div class="accordion-content">
-                    <label>Loyer mensuel HC (€) <input type="number" inputmode="numeric" id="loyer" value="900"></label>
-                    <label>Charges copro/mois (€) <input type="number" inputmode="numeric" id="copro" value="80"></label>
-                    <label>Taxe foncière/an (€) <input type="number" inputmode="numeric" id="fonciere" value="900"></label>
-                    <label>Assur. PNO/an (€) <input type="number" inputmode="numeric" id="pno" value="150"></label>
-                    <label>Vacance locative (%) <input type="number" inputmode="decimal" step="0.1" id="vacance" value="5"></label>
-                    <label>Frais de gestion (%) <input type="number" inputmode="decimal" step="0.1" id="gestion" value="7"></label>
-                </div>
-            </details>
-
-            <details class="accordion">
-                <summary>⚖️ 4. Fiscalité</summary>
-                <div class="accordion-content">
-                    <label class="tooltip-container" title="Revenus nets annuels du foyer pour calculer automatiquement votre tranche d'imposition (TMI).">Revenus du foyer (€) ℹ️ <input type="number" inputmode="numeric" id="revenus" value="60000"></label>
-                    <label>Enfants à charge <input type="number" inputmode="numeric" id="enfants" value="2"></label>
-                    
-                    <div class="tmi-box">
-                        Votre TMI calculée : <strong id="tmi-display">-- %</strong>
-                    </div>
-
-                    <label>Type de location
-                        <select id="type-location">
-                            <option value="meublee" selected>Meublée (LMNP)</option>
-                            <option value="nue">Nue</option>
-                        </select>
-                    </label>
-
-                    <label>Régime fiscal 
-                        <select id="regime">
+            <div class="grid-2-cols">
+                <details class="accordion" open>
+                    <summary>🛒 Acquisition</summary>
+                    <div class="accordion-content">
+                        <label>Prix affiché (€) <input type="number" inputmode="numeric" id="prix" value="150000"></label>
+                        <label>Négociation obtenue (€) <input type="number" inputmode="numeric" id="nego" value="5000"></label>
+                        <label>Frais d'agence (€) <input type="number" inputmode="numeric" id="agence" value="0"></label>
+                        <label>Type de bien 
+                            <select id="type-bien">
+                                <option value="ancien">Ancien (~8%)</option>
+                                <option value="neuf">Neuf (~2.5%)</option>
                             </select>
-                    </label>
-                </div>
-            </details>
-
-            <details class="accordion">
-                <summary>📝 5. Commentaires</summary>
-                <div class="accordion-content">
-                    <p class="photo-help" style="margin-bottom: 5px;">Saisissez vos notes sur la visite, l'état du bien, le quartier...</p>
-                    <textarea id="commentaires-input" rows="4" placeholder="Ex: Rénovation salle de bain à prévoir, toiture saine, proximité des transports..."></textarea>
-                </div>
-            </details>
-
-            <details class="accordion">
-                <summary>📷 6. Photos du bien</summary>
-                <div class="accordion-content">
-                    <p class="photo-help">Prenez des photos lors de votre visite. Elles seront intégrées au rapport PDF.</p>
-                    <label class="photo-upload-btn">
-                        <span>📸 Ajouter une photo</span>
-                        <input type="file" id="photo-input" accept="image/*" capture="environment" multiple style="display: none;">
-                    </label>
-                </div>
-            </details>
-        </form>
-    </aside>
-
-    <main class="dashboard-section">
-        <div id="export-area">
-            <div class="metrics-grid">
-                <div class="card">
-                    <h3>Rentabilité Brute</h3>
-                    <div class="value" id="renta-brute">-- %</div>
-                </div>
-                <div class="card">
-                    <h3>Rentabilité Nette</h3>
-                    <div class="value" id="renta-nette">-- %</div>
-                </div>
-                <div class="card">
-                    <h3>Cash-Flow Brut / mois</h3>
-                    <div class="value" id="cf-brut">-- €</div>
-                </div>
-                <div class="card">
-                    <h3>Cash-Flow Net / mois</h3>
-                    <div class="value" id="cf-net">-- €</div>
-                </div>
-                <div class="card highlight">
-                    <h3 class="tooltip-container" title="Le montant qui reste réellement dans votre poche chaque mois après impôts.">Cash-Flow Net-Net ℹ️</h3>
-                    <div class="value" id="cf-netnet">-- €</div>
-                    <p class="subtitle">Après impôts / mois</p>
-                </div>
-            </div>
-
-            <div class="details-section">
-                <div class="chart-container">
-                    <canvas id="cashflowChart"></canvas>
-                </div>
-                <div class="summary">
-                    <h3>Résumé du projet</h3>
-                    <ul>
-                        <li><span>Coût total</span> <strong><span id="out-cout-total">--</span> €</strong></li>
-                        <li><span>Montant financé</span> <strong><span id="out-financement">--</span> €</strong></li>
-                        <li><span>Mensualité (avec ass.)</span> <strong><span id="out-mensualite">--</span> €</strong></li>
-                        <li><span>Impôts (An 1)</span> <strong><span id="out-impot">--</span> €/an</strong></li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="custom-export-section" id="comments-export-section" style="display: none;">
-                <h3>Notes & Commentaires</h3>
-                <p id="commentaires-display"></p>
-            </div>
-
-            <div class="custom-export-section" id="photos-export-section" style="display: none;">
-                <h3>Galerie Photos du Bien</h3>
-                <div class="photo-grid" id="photo-gallery">
+                        </label>
+                        <label>Frais notaire (%) <input type="number" inputmode="decimal" step="0.1" id="notaire" value="8"></label>
+                        <label>Travaux estim. (€) <input type="number" inputmode="numeric" id="travaux" value="15000"></label>
+                        <label>Mobilier (€) <input type="number" inputmode="numeric" id="meubles" value="4000"></label>
+                        <label>Frais bancaires (€) <input type="number" inputmode="numeric" id="frais-bancaires" value="1500"></label>
                     </div>
+                </details>
+
+                <details class="accordion" open>
+                    <summary>🏦 Financement</summary>
+                    <div class="accordion-content">
+                        <label>Apport personnel (€) <input type="number" inputmode="numeric" id="apport" value="20000"></label>
+                        <div class="complex-input">
+                            <label>Taux d'intérêt annuel (%) <input type="number" inputmode="decimal" step="0.01" id="taux-input" value="3.5"></label>
+                            <input type="range" id="taux-slider" class="styled-slider" min="0.5" max="6" step="0.05" value="3.5">
+                        </div>
+                        <label>Durée du prêt (Années) <input type="number" inputmode="numeric" id="duree" value="20"></label>
+                        <label>Taux assurance (%) <input type="number" inputmode="decimal" step="0.01" id="assurance" value="0.30"></label>
+                    </div>
+                </details>
+
+                <details class="accordion" open>
+                    <summary>📈 Exploitation</summary>
+                    <div class="accordion-content">
+                        <label>Loyer mensuel HC (€) <input type="number" inputmode="numeric" id="loyer" value="900"></label>
+                        <label class="tooltip-container" title="Part non-récupérable">Charges copro (Proprio)/mois <input type="number" inputmode="numeric" id="copro" value="40"></label>
+                        <label>Taxe foncière/an (€) <input type="number" inputmode="numeric" id="fonciere" value="900"></label>
+                        <label>Assur. PNO/an (€) <input type="number" inputmode="numeric" id="pno" value="150"></label>
+                        <label>Vacance locative (%) <input type="number" inputmode="decimal" step="0.1" id="vacance" value="5"></label>
+                        <label>Frais de gestion (%) <input type="number" inputmode="decimal" step="0.1" id="gestion" value="7"></label>
+                    </div>
+                </details>
+
+                <details class="accordion" open>
+                    <summary>⚖️ Fiscalité</summary>
+                    <div class="accordion-content">
+                        <label>Revenus du foyer (€) <input type="number" inputmode="numeric" id="revenus" value="60000"></label>
+                        <label>Enfants à charge <input type="number" inputmode="numeric" id="enfants" value="2"></label>
+                        <div class="tmi-box">Votre TMI : <strong id="tmi-display">-- %</strong></div>
+                        <label>Type de location
+                            <select id="type-location">
+                                <option value="meublee" selected>Meublée (LMNP)</option>
+                                <option value="nue">Nue</option>
+                            </select>
+                        </label>
+                        <label>Régime fiscal <select id="regime"></select></label>
+                    </div>
+                </details>
+            </div>
+        </form>
+        
+        <button class="btn-primary" style="width: 100%; padding: 15px; font-size: 1.1rem; margin-top: 10px;" onclick="document.querySelector('[data-target=\'view-results\']').click();">
+            Lancer l'Analyse 🚀
+        </button>
+    </div>
+
+    <div id="view-results" class="view-section">
+        
+        <div class="card highlight-gold" style="margin-bottom: 20px;">
+            <h3>🎯 Outil de Négociation</h3>
+            <p style="font-size: 0.9rem; margin-bottom: 15px;">Quelle rentabilité Nette visez-vous pour que ce bien soit intéressant ?</p>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+                <label style="margin:0; font-weight:bold;">Objectif Renta Nette :</label>
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <input type="number" id="target-renta" value="6.5" step="0.1" style="width: 80px; font-size: 1.1rem; text-align: center;"> <strong>%</strong>
+                </div>
+            </div>
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between;">
+                <span>Prix d'achat max conseillé :</span>
+                <strong id="nego-prix-max" style="font-size: 1.2rem;">-- €</strong>
+            </div>
+            <div style="margin-top: 10px; display: flex; justify-content: space-between;">
+                <span>Négociation à réaliser :</span>
+                <strong id="nego-montant" style="font-size: 1.2rem; color: var(--danger-color);">-- €</strong>
             </div>
         </div>
-    </main>
+
+        <div class="metrics-grid">
+            <div class="card">
+                <h3>Rentabilité Brute</h3>
+                <div class="value" id="renta-brute">-- %</div>
+            </div>
+            <div class="card">
+                <h3>Rentabilité Nette</h3>
+                <div class="value" id="renta-nette">-- %</div>
+            </div>
+            <div class="card highlight">
+                <h3>Cash-Flow Net-Net</h3>
+                <div class="value" id="cf-netnet">-- €</div>
+                <p class="subtitle">Dans votre poche / mois</p>
+            </div>
+        </div>
+
+        <div class="details-section">
+            <div class="summary">
+                <h3>Résumé de l'Enveloppe</h3>
+                <ul>
+                    <li><span>Prix net vendeur estimé</span> <strong><span id="out-prix-net">--</span> €</strong></li>
+                    <li><span>Frais fixes (Notaire, Travaux...)</span> <strong><span id="out-frais-fixes">--</span> €</strong></li>
+                    <li><span>Coût total de l'opération</span> <strong style="color: var(--primary-color);"><span id="out-cout-total">--</span> €</strong></li>
+                    <li><span>Montant de l'emprunt</span> <strong><span id="out-financement">--</span> €</strong></li>
+                    <li><span>Mensualité de crédit</span> <strong><span id="out-mensualite">--</span> €</strong></li>
+                </ul>
+            </div>
+            <div class="chart-container">
+                <canvas id="cashflowChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: 20px; overflow-x: auto;">
+            <h3 style="text-align: left; margin-bottom: 15px;">📊 Projection Financière (15 ans)</h3>
+            <table class="projection-table">
+                <thead>
+                    <tr>
+                        <th>Année</th>
+                        <th>Capital Amorti</th>
+                        <th>Capital Restant</th>
+                        <th>Intérêts</th>
+                        <th>Impôts</th>
+                        <th>Cash-Flow Net</th>
+                    </tr>
+                </thead>
+                <tbody id="projection-tbody">
+                    </tbody>
+            </table>
+        </div>
+
+    </div>
 </div>
 
 <script src="script.js"></script>
