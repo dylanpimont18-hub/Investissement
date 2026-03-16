@@ -26,6 +26,19 @@
 <div class="container">
     <aside class="inputs-section">
         <form id="calc-form">
+
+            <details class="accordion" open style="border: 2px solid var(--primary-color);">
+                <summary>📁 0. Mes Projets</summary>
+                <div class="accordion-content">
+                    <p class="photo-help" style="margin-bottom: 10px; text-align: left;">Sauvegardez vos différentes simulations pour les comparer plus tard.</p>
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <input type="text" id="project-name" placeholder="Nom du projet (ex: T2 Centre)" style="flex: 1; text-align: left;">
+                        <button type="button" id="btn-save-project" class="btn-primary" style="padding: 10px; white-space: nowrap;">💾 Enregistrer</button>
+                    </div>
+                    <ul id="projects-list" class="projects-list">
+                        </ul>
+                </div>
+            </details>
             
             <details class="accordion" open>
                 <summary>🛒 1. Acquisition</summary>
@@ -100,7 +113,7 @@
                 </div>
             </details>
 
-            <details class="accordion" open>
+            <details class="accordion">
                 <summary>📝 5. Commentaires</summary>
                 <div class="accordion-content">
                     <p class="photo-help" style="margin-bottom: 5px;">Saisissez vos notes sur la visite, l'état du bien, le quartier...</p>
@@ -108,7 +121,7 @@
                 </div>
             </details>
 
-            <details class="accordion" open>
+            <details class="accordion">
                 <summary>📷 6. Photos du bien</summary>
                 <div class="accordion-content">
                     <p class="photo-help">Prenez des photos lors de votre visite. Elles seront intégrées au rapport PDF.</p>

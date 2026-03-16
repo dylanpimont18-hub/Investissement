@@ -1,5 +1,8 @@
 let myChart = null;
-let uploadedPhotos = []; // Stockage des photos en mémoire
+let uploadedPhotos = []; 
+
+// Variables globales pour les projets
+let savedProjects = JSON.parse(localStorage.getItem('simuImmoProjects')) || [];
 
 // Synchronisation Slider et Input Taux
 const tauxInput = document.getElementById('taux-input');
@@ -18,7 +21,7 @@ document.getElementById('type-bien').addEventListener('change', (e) => {
 // Synchronisation Type de Location -> Régimes fiscaux
 document.getElementById('type-location').addEventListener('change', (e) => {
     const regimeSelect = document.getElementById('regime');
-    regimeSelect.innerHTML = ''; // Reset
+    regimeSelect.innerHTML = ''; 
     if (e.target.value === 'nue') {
         regimeSelect.add(new Option('Micro-foncier (-30%)', 'micro-foncier'));
         regimeSelect.add(new Option('Foncier Réel', 'reel'));
@@ -44,8 +47,9 @@ function calculateTMI(revenus, enfants) {
     return 45;
 }
 
-function calculateAndSave() {
-    const inputs = {
+// Fonction centrale pour récupérer toutes les données actuelles du formulaire
+function getCurrentInputs() {
+    return {
         prix: parseFloat(document.getElementById('prix').value) || 0,
         nego: parseFloat(document.getElementById('nego').value) || 0,
         agence: parseFloat(document.getElementById('agence').value) || 0,
@@ -69,13 +73,17 @@ function calculateAndSave() {
         regime: document.getElementById('regime').value,
         commentaires: document.getElementById('commentaires-input').value
     };
+}
 
-    localStorage.setItem('simuImmoData', JSON.stringify(inputs));
+function calculateAndSave() {
+    const inputs = getCurrentInputs();
+
+    // Sauvegarde en tant que "Brouillon en cours" (pour éviter de perdre la saisie si rafraîchissement)
+    localStorage.setItem('simuImmoDraft', JSON.stringify(inputs));
 
     const tmi = calculateTMI(inputs.revenus, inputs.enfants);
     document.getElementById('tmi-display').innerText = tmi + ' %';
 
-    // Mise à jour de la section Commentaires dans l'export PDF
     const commSection = document.getElementById('comments-export-section');
     if (inputs.commentaires && inputs.commentaires.trim() !== '') {
         document.getElementById('commentaires-display').innerText = inputs.commentaires;
@@ -139,17 +147,16 @@ function calculateAndSave() {
     const impotsAnnuels = baseImposable * tauxGlobalImpot;
     const impotsMensuels = impotsAnnuels / 12;
 
-    // 5. Indicateurs de rentabilité standard
+    // 5. Indicateurs
     const rentaBrute = coutTotal > 0 ? (loyersAnnuelsTheoriques / coutTotal) * 100 : 0;
     const rentaNette = coutTotal > 0 ? ((loyersEncaisses - chargesExploitationAnnuelles) / coutTotal) * 100 : 0;
     const cfBrut = inputs.loyer - mensualiteTotale;
     const cfNet = (loyersEncaisses / 12) - mensualiteTotale - (chargesExploitationAnnuelles / 12);
     const cfNetNet = cfNet - impotsMensuels;
 
-    // 6. Mise à jour de l'UI
+    // 6. Affichage UI
     document.getElementById('renta-brute').innerText = rentaBrute.toFixed(2) + ' %';
     document.getElementById('renta-nette').innerText = rentaNette.toFixed(2) + ' %';
-    
     updateColor('cf-brut', cfBrut); 
     updateColor('cf-net', cfNet);
     updateColor('cf-netnet', cfNetNet); 
@@ -183,6 +190,109 @@ function updateChart(loyer, credit, charges, impots, cf) {
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: textColor } } }, animation: { duration: 0 } }
     });
 }
+
+// --- GESTION DES PROJETS ---
+function renderProjectsList() {
+    const listEl = document.getElementById('projects-list');
+    listEl.innerHTML = '';
+    
+    if(savedProjects.length === 0) {
+        listEl.innerHTML = '<li style="justify-content:center; color:#8e8e93; font-size:0.9rem;">Aucun projet sauvegardé.</li>';
+        return;
+    }
+
+    savedProjects.forEach((project, index) => {
+        const li = document.createElement('li');
+        
+        const nameSpan = document.createElement('span');
+        nameSpan.innerText = project.name;
+        nameSpan.title = project.name; // Tooltip si nom trop long
+        
+        const btnGroup = document.createElement('div');
+        btnGroup.className = 'project-btns';
+        
+        const btnLoad = document.createElement('button');
+        btnLoad.className = 'btn-small btn-load';
+        btnLoad.innerText = '📂 Charger';
+        btnLoad.onclick = (e) => { e.preventDefault(); loadProject(index); };
+        
+        const btnDelete = document.createElement('button');
+        btnDelete.className = 'btn-small btn-delete';
+        btnDelete.innerText = '🗑️';
+        btnDelete.onclick = (e) => { e.preventDefault(); deleteProject(index); };
+        
+        btnGroup.appendChild(btnLoad);
+        btnGroup.appendChild(btnDelete);
+        
+        li.appendChild(nameSpan);
+        li.appendChild(btnGroup);
+        listEl.appendChild(li);
+    });
+}
+
+document.getElementById('btn-save-project').addEventListener('click', () => {
+    const nameInput = document.getElementById('project-name');
+    const projectName = nameInput.value.trim();
+    
+    if(!projectName) {
+        alert('Veuillez entrer un nom pour ce projet.');
+        return;
+    }
+    
+    const currentData = getCurrentInputs();
+    currentData.name = projectName;
+    
+    // Vérifier si un projet du même nom existe pour l'écraser (Optionnel, ici on ajoute toujours à la suite)
+    savedProjects.push(currentData);
+    localStorage.setItem('simuImmoProjects', JSON.stringify(savedProjects));
+    
+    nameInput.value = ''; // Réinitialiser l'input
+    renderProjectsList();
+    alert(`Le projet "${projectName}" a été sauvegardé avec succès !`);
+});
+
+function loadProject(index) {
+    if(confirm('Charger ce projet va écraser vos données actuelles non sauvegardées. Continuer ?')) {
+        const projectData = savedProjects[index];
+        injectDataToForm(projectData);
+        document.getElementById('project-name').value = projectData.name;
+        alert(`Projet "${projectData.name}" chargé !`);
+    }
+}
+
+function deleteProject(index) {
+    const projectName = savedProjects[index].name;
+    if(confirm(`Êtes-vous sûr de vouloir supprimer définitivement le projet "${projectName}" ?`)) {
+        savedProjects.splice(index, 1);
+        localStorage.setItem('simuImmoProjects', JSON.stringify(savedProjects));
+        renderProjectsList();
+    }
+}
+
+// Injecte un objet de données (projet ou brouillon) dans le formulaire HTML
+function injectDataToForm(data) {
+    if (data.typeLocation) {
+        document.getElementById('type-location').value = data.typeLocation;
+        document.getElementById('type-location').dispatchEvent(new Event('change'));
+    }
+
+    for (const key in data) {
+        let elId = key;
+        if (key === 'typeBien') elId = 'type-bien';
+        if (key === 'commentaires') elId = 'commentaires-input';
+        
+        let el = document.getElementById(elId);
+        
+        if(key === 'taux') {
+            document.getElementById('taux-input').value = data[key];
+            document.getElementById('taux-slider').value = data[key];
+        } else if (el) { 
+            el.value = data[key]; 
+        }
+    }
+    calculateAndSave();
+}
+
 
 // --- GESTION DES PHOTOS ---
 document.getElementById('photo-input').addEventListener('change', function(event) {
@@ -229,47 +339,29 @@ window.removePhoto = function(index) {
 };
 
 // Initialisation au lancement
-function loadSavedData() {
-    const saved = localStorage.getItem('simuImmoData');
-    if (saved) {
-        const data = JSON.parse(saved);
-        if (data.typeLocation) {
-            document.getElementById('type-location').value = data.typeLocation;
-            document.getElementById('type-location').dispatchEvent(new Event('change'));
-        }
+function initApp() {
+    renderProjectsList(); // Affiche la liste des projets
 
-        for (const key in data) {
-            let elId = key;
-            if (key === 'typeBien') elId = 'type-bien';
-            if (key === 'commentaires') elId = 'commentaires-input';
-            
-            let el = document.getElementById(elId);
-            
-            if(key === 'taux') {
-                document.getElementById('taux-input').value = data[key];
-                document.getElementById('taux-slider').value = data[key];
-            } else if (el) { 
-                el.value = data[key]; 
-            }
-        }
+    const savedDraft = localStorage.getItem('simuImmoDraft');
+    if (savedDraft) {
+        const data = JSON.parse(savedDraft);
+        injectDataToForm(data);
     } else {
         document.getElementById('type-location').dispatchEvent(new Event('change'));
+        calculateAndSave();
     }
-    calculateAndSave();
 }
 
 document.querySelectorAll('input, select, textarea').forEach(el => el.addEventListener('input', calculateAndSave));
 
-// CORRECTIF EXPORT PDF
+// Export PDF
 document.getElementById('btn-export').addEventListener('click', function() {
     const btn = this;
     const textInitial = btn.innerText;
     
-    // UI Loading state
     btn.innerText = "⏳ Génération...";
     btn.disabled = true;
 
-    // Solution du bug de coupe / page blanche : forcer le scroll en haut avant capture
     window.scrollTo(0, 0);
 
     const removeBtns = document.querySelectorAll('.btn-remove');
@@ -277,9 +369,13 @@ document.getElementById('btn-export').addEventListener('click', function() {
 
     const element = document.getElementById('export-area');
     
+    // Ajout du nom du projet en nom de fichier si présent, sinon défaut
+    const currentName = document.getElementById('project-name').value.trim();
+    const pdfFilename = currentName ? `Rapport-${currentName.replace(/\s+/g, '-')}.pdf` : 'Rapport-Rentabilite-Premium.pdf';
+
     const opt = {
         margin:       10,
-        filename:     'Rapport-Rentabilite-Premium.pdf',
+        filename:     pdfFilename,
         image:        { type: 'jpeg', quality: 0.95 },
         html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -298,4 +394,4 @@ document.getElementById('btn-export').addEventListener('click', function() {
     });
 });
 
-window.onload = loadSavedData;
+window.onload = initApp;
