@@ -10,12 +10,15 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
         
         btn.classList.add('active');
         document.getElementById(btn.dataset.target).classList.add('active');
-        window.scrollTo(0, 0); // Scroll au top sur mobile
+        window.scrollTo(0, 0); 
         
         const btnExport = document.getElementById('btn-export');
         if(btn.dataset.target === 'view-results') {
             btnExport.style.display = 'block';
             calculateAndSave();
+        } else if(btn.dataset.target === 'view-vierzon') {
+            btnExport.style.display = 'none';
+            calculateVierzonStrategy();
         } else {
             btnExport.style.display = 'none';
         }
@@ -25,12 +28,12 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 // Synchronisations
 const tauxInput = document.getElementById('taux-input');
 const tauxSlider = document.getElementById('taux-slider');
-tauxInput.addEventListener('input', (e) => { tauxSlider.value = e.target.value; calculateAndSave(); });
-tauxSlider.addEventListener('input', (e) => { tauxInput.value = e.target.value; calculateAndSave(); });
+tauxInput.addEventListener('input', (e) => { tauxSlider.value = e.target.value; triggerCalculations(); });
+tauxSlider.addEventListener('input', (e) => { tauxInput.value = e.target.value; triggerCalculations(); });
 
 document.getElementById('type-bien').addEventListener('change', (e) => {
     document.getElementById('notaire').value = e.target.value === 'ancien' ? 8.0 : 2.5;
-    calculateAndSave();
+    triggerCalculations();
 });
 
 document.getElementById('type-location').addEventListener('change', (e) => {
@@ -43,7 +46,7 @@ document.getElementById('type-location').addEventListener('change', (e) => {
         regimeSelect.add(new Option('Micro-BIC (-50%)', 'micro-bic'));
         regimeSelect.add(new Option('LMNP Réel', 'lmnp-reel'));
     }
-    calculateAndSave();
+    triggerCalculations();
 });
 
 function calculateTMI(revenus, enfants) {
@@ -60,46 +63,116 @@ function calculateTMI(revenus, enfants) {
 
 function getCurrentInputs() {
     const data = {};
-    document.querySelectorAll('#calc-form input:not(#project-name):not([type="file"]), #calc-form select, #calc-form textarea').forEach(el => {
+    document.querySelectorAll('input:not(#project-name):not([type="file"]), select, textarea').forEach(el => {
         if (el.id) data[el.id] = (el.type === 'number' || el.type === 'range') ? parseFloat(el.value) || 0 : el.value;
     });
     return data;
 }
 
-// Outil de Négociation (CORRIGÉ)
-function calculateNegotiation(inputs, loyersEncaisses, chargesExploitation) {
-    const targetRenta = parseFloat(document.getElementById('target-renta').value) || 0;
-    if(targetRenta <= 0) return;
-
-    // CORRECTION ICI : "revenusNetsAnnuels" au lieu de "revenusNets Annuels"
-    const revenusNetsAnnuels = loyersEncaisses - chargesExploitation;
-    const coutTotalMax = (revenusNetsAnnuels / (targetRenta / 100));
-
-    const fraisFixes = inputs['travaux'] + inputs['meubles'] + inputs['frais-bancaires'] + inputs['agence'];
-    const notaireMult = 1 + (inputs['notaire'] / 100);
-
-    const prixNetVendeurMax = (coutTotalMax - fraisFixes) / notaireMult;
-    const prixAfficheActuel = inputs['prix'];
-    const negoRequise = prixAfficheActuel - prixNetVendeurMax;
-
-    const elPrixMax = document.getElementById('nego-prix-max');
-    const elNego = document.getElementById('nego-montant');
-
-    if(prixNetVendeurMax <= 0) {
-        elPrixMax.innerText = "Impossible";
-        elNego.innerText = "-- €";
-    } else {
-        elPrixMax.innerText = Math.round(prixNetVendeurMax).toLocaleString('fr-FR') + ' €';
-        if(negoRequise <= 0) {
-            elNego.innerText = "Objectif déjà atteint ! ✅";
-            elNego.style.color = "var(--success-color)";
-        } else {
-            elNego.innerText = "- " + Math.round(negoRequise).toLocaleString('fr-FR') + ' €';
-            elNego.style.color = "var(--danger-color)";
-        }
-    }
+function triggerCalculations() {
+    calculateAndSave();
+    calculateVierzonStrategy();
 }
 
+// ALGORITHME MOTEUR : Calcule le CF Net-Net pour n'importe quelle configuration
+function computeCF(prixVendeur, loyerMensuel, inputs, tmi) {
+    const fraisNotaire = prixVendeur * (inputs['notaire'] / 100);
+    const fraisFixes = inputs['agence'] + inputs['travaux'] + inputs['meubles'] + inputs['frais-bancaires'];
+    const coutTotal = prixVendeur + fraisNotaire + fraisFixes;
+    const montantFinance = Math.max(0, coutTotal - inputs['apport']);
+
+    const nMois = inputs['duree'] * 12;
+    const tauxMensuel = (inputs['taux-input'] / 100) / 12;
+    let mensualiteCredit = 0;
+    if (tauxMensuel > 0 && nMois > 0) mensualiteCredit = (montantFinance * tauxMensuel) / (1 - Math.pow(1 + tauxMensuel, -nMois));
+    else if (nMois > 0) mensualiteCredit = montantFinance / nMois;
+
+    const coutAssuranceMensuel = (montantFinance * (inputs['assurance'] / 100)) / 12;
+    const mensualiteTotale = mensualiteCredit + coutAssuranceMensuel;
+
+    const loyersAnnuelsTheoriques = loyerMensuel * 12;
+    const loyersEncaisses = loyersAnnuelsTheoriques * (1 - (inputs['vacance'] / 100));
+    const chargesExploitationAnnuelles = (inputs['copro'] * 12) + inputs['fonciere'] + inputs['pno'] + (loyersEncaisses * (inputs['gestion'] / 100));
+
+    let capitalRestant = montantFinance;
+    let interetsAnnee1 = 0;
+    for (let m = 0; m < 12; m++) {
+        if (capitalRestant > 0) {
+            let interetMois = capitalRestant * tauxMensuel;
+            let capMois = mensualiteCredit - interetMois;
+            interetsAnnee1 += interetMois;
+            capitalRestant -= capMois;
+        }
+    }
+
+    const tauxGlobalImpot = (tmi / 100) + 0.172; 
+    let impotsAnnee = 0;
+
+    if (inputs['regime'] === 'micro-foncier') {
+        impotsAnnee = (loyersEncaisses * 0.7) * tauxGlobalImpot;
+    } else if (inputs['regime'] === 'micro-bic') {
+        impotsAnnee = (loyersEncaisses * 0.5) * tauxGlobalImpot;
+    } else if (inputs['regime'] === 'reel') {
+        let chargesAnnuees = chargesExploitationAnnuelles + (coutAssuranceMensuel * 12) + inputs['travaux'] + inputs['frais-bancaires'];
+        let revenusNets = loyersEncaisses - chargesAnnuees - interetsAnnee1;
+        if (revenusNets > 0) impotsAnnee = revenusNets * tauxGlobalImpot;
+        else impotsAnnee = -(Math.min(10700, Math.abs(loyersEncaisses - chargesAnnuees)) * (tmi / 100)); 
+    } else if (inputs['regime'] === 'lmnp-reel') {
+        let chargesAnnuees = chargesExploitationAnnuelles + interetsAnnee1 + (coutAssuranceMensuel * 12) + (fraisNotaire + inputs['agence'] + inputs['frais-bancaires']); 
+        let amortissementTotal = (prixVendeur * 0.85 / 30) + (inputs['meubles'] / 5) + (inputs['travaux'] / 15);
+        let resultatComptable = loyersEncaisses - chargesAnnuees - amortissementTotal;
+        if(resultatComptable > 0) impotsAnnee = resultatComptable * tauxGlobalImpot;
+    }
+
+    const cfNet = (loyersEncaisses / 12) - mensualiteTotale - (chargesExploitationAnnuelles / 12);
+    return cfNet - (impotsAnnee / 12);
+}
+
+// --- STRATÉGIE VIERZON (Onglet 3) ---
+function calculateVierzonStrategy() {
+    const inputs = getCurrentInputs();
+    const tmi = calculateTMI(inputs.revenus, inputs.enfants);
+    const targetCF = parseFloat(document.getElementById('vierzon-target-cf').value) || 0;
+    
+    // Scénario A : Je fixe le loyer, quel prix max ?
+    const loyerEstime = parseFloat(document.getElementById('vierzon-loyer-estime').value) || 0;
+    let minPrice = 1; let maxPrice = 1000000; let bestPrice = 0;
+    for (let i = 0; i < 40; i++) {
+        let midPrice = (minPrice + maxPrice) / 2;
+        let cf = computeCF(midPrice, loyerEstime, inputs, tmi);
+        if (cf >= targetCF) { bestPrice = midPrice; minPrice = midPrice; } 
+        else { maxPrice = midPrice; }
+    }
+    
+    // Vérification de l'impossibilité
+    if(computeCF(1, loyerEstime, inputs, tmi) < targetCF) {
+        document.getElementById('vierzon-prix-max').innerText = "Impossible 🚫";
+    } else {
+        // Le bestPrice ici est le Net Vendeur. On ajoute l'agence pour afficher le prix FAI max.
+        let prixFaiMax = bestPrice + inputs['agence'];
+        document.getElementById('vierzon-prix-max').innerText = Math.round(prixFaiMax).toLocaleString('fr-FR') + ' €';
+    }
+
+    // Scénario B : Je fixe le prix, quel loyer min ?
+    const prixAnnonceFai = parseFloat(document.getElementById('vierzon-prix-annonce').value) || 0;
+    const prixNetVendeur = prixAnnonceFai - inputs['agence'];
+    
+    let minRent = 1; let maxRent = 10000; let bestRent = 10000;
+    for (let i = 0; i < 40; i++) {
+        let midRent = (minRent + maxRent) / 2;
+        let cf = computeCF(prixNetVendeur, midRent, inputs, tmi);
+        if (cf >= targetCF) { bestRent = midRent; maxRent = midRent; } 
+        else { minRent = midRent; }
+    }
+    document.getElementById('vierzon-loyer-min').innerText = Math.round(bestRent).toLocaleString('fr-FR') + ' €';
+}
+
+// Ecouteurs spécifiques à l'onglet Vierzon
+['vierzon-target-cf', 'vierzon-loyer-estime', 'vierzon-prix-annonce'].forEach(id => {
+    document.getElementById(id).addEventListener('input', calculateVierzonStrategy);
+});
+
+// --- ANALYSE & SAUVEGARDE (Onglet 1 et 2) ---
 function calculateAndSave() {
     const inputs = getCurrentInputs();
     localStorage.setItem('simuImmoDraft', JSON.stringify(inputs));
@@ -107,7 +180,6 @@ function calculateAndSave() {
     const tmi = calculateTMI(inputs.revenus, inputs.enfants);
     document.getElementById('tmi-display').innerText = tmi + ' %';
 
-    // Affichage des notes
     const commSection = document.getElementById('comments-export-section');
     if (inputs['commentaires-input'] && inputs['commentaires-input'].trim() !== '') {
         document.getElementById('commentaires-display').innerText = inputs['commentaires-input'];
@@ -135,14 +207,10 @@ function calculateAndSave() {
     const loyersEncaisses = loyersAnnuelsTheoriques * (1 - (inputs['vacance'] / 100));
     const chargesExploitationAnnuelles = (inputs['copro'] * 12) + inputs['fonciere'] + inputs['pno'] + (loyersEncaisses * (inputs['gestion'] / 100));
 
-    // Négociateur
-    calculateNegotiation(inputs, loyersEncaisses, chargesExploitationAnnuelles);
-
     // --- PROJECTION SUR 15 ANS ---
     let capitalRestant = montantFinance;
     const tauxGlobalImpot = (tmi / 100) + 0.172; 
-    let baseAmortImmo = prixNet * 0.85; 
-    let amortissementImmoAnnuel = baseAmortImmo / 30;
+    let amortissementImmoAnnuel = (prixNet * 0.85) / 30;
     let amortissementMeubles = inputs['meubles'] / 5;
     let amortissementTravaux = inputs['travaux'] / 15;
     let lmnpDeficitReportable = 0;
@@ -166,7 +234,6 @@ function calculateAndSave() {
         
         if (capitalRestant < 0) capitalRestant = 0;
 
-        // Calcul Impôts
         let impotsAnnee = 0;
         if (inputs['regime'] === 'micro-foncier') {
             impotsAnnee = (loyersEncaisses * 0.7) * tauxGlobalImpot;
@@ -231,12 +298,10 @@ function calculateAndSave() {
     }
     document.getElementById('projection-tbody').innerHTML = tbodyHTML;
 
-    // Mise à jour KPIs Année 1
     const rentaBrute = coutTotal > 0 ? (loyersAnnuelsTheoriques / coutTotal) * 100 : 0;
     const rentaNette = coutTotal > 0 ? ((loyersEncaisses - chargesExploitationAnnuelles) / coutTotal) * 100 : 0;
     const rentaNetNet = coutTotal > 0 ? ((loyersEncaisses - chargesExploitationAnnuelles - firstYearImpots) / coutTotal) * 100 : 0;
     
-    const cfBrut = inputs['loyer'] - mensualiteTotale;
     const cfNet = (loyersEncaisses / 12) - mensualiteTotale - (chargesExploitationAnnuelles / 12);
     const cfNetNet = cfNet - (firstYearImpots / 12);
 
@@ -254,8 +319,6 @@ function calculateAndSave() {
 
     updateChart(mensualiteTotale, chargesExploitationAnnuelles/12, Math.max(0, firstYearImpots/12), cfNetNet);
 }
-
-document.getElementById('target-renta').addEventListener('input', calculateAndSave);
 
 function updateColor(id, value) {
     const el = document.getElementById(id);
@@ -291,19 +354,16 @@ document.getElementById('photo-input').addEventListener('change', function(event
     for (let i = 0; i < files.length; i++) {
         const file = files[i];
         if (!file.type.startsWith('image/')) continue;
-
         const reader = new FileReader();
         reader.onload = function(e) {
             const base64Src = e.target.result;
             uploadedPhotos.push(base64Src);
             const index = uploadedPhotos.length - 1;
-            
             const photoHTML = `
                 <div class="photo-item" id="photo-item-${index}">
                     <img src="${base64Src}">
                     <button class="btn-remove" onclick="removePhoto(${index})">✖</button>
                 </div>`;
-                
             previewGrid.insertAdjacentHTML('beforeend', photoHTML);
             exportGrid.insertAdjacentHTML('beforeend', photoHTML);
         };
@@ -384,8 +444,8 @@ function loadProject(index) {
         }
         if (data['regime']) document.getElementById('regime').value = data['regime'];
         document.getElementById('project-name').value = data._projectName;
-        calculateAndSave();
-        document.querySelector('[data-target="view-results"]').click(); // Redirection Onglet Analyse
+        triggerCalculations();
+        document.querySelector('[data-target="view-results"]').click();
     }
 }
 
@@ -415,10 +475,10 @@ function initApp() {
     document.getElementById('type-location').dispatchEvent(new Event('change'));
 }
 
-document.querySelectorAll('input, select, textarea').forEach(el => el.addEventListener('input', calculateAndSave));
+document.querySelectorAll('input, select, textarea').forEach(el => el.addEventListener('input', triggerCalculations));
 window.onload = initApp;
 
-// Export PDF (CORRIGÉ)
+// Export PDF
 document.getElementById('btn-export').addEventListener('click', function() {
     const btn = this;
     const textInitial = btn.innerText;

@@ -20,15 +20,15 @@
 </div>
 
 <nav class="tabs-nav">
-    <button class="tab-btn active" data-target="view-inputs">📝 1. Saisie & Projets</button>
-    <button class="tab-btn" data-target="view-results">🚀 2. Analyse & Projections</button>
+    <button class="tab-btn active" data-target="view-inputs">📝 1. Saisie</button>
+    <button class="tab-btn" data-target="view-results">🚀 2. Analyse</button>
+    <button class="tab-btn" data-target="view-vierzon">📍 3. Vierzon</button>
 </nav>
 
 <div class="container">
     
     <div id="view-inputs" class="view-section active">
         <form id="calc-form">
-            
             <div class="card" style="margin-bottom: 20px; border: 2px solid var(--primary-color);">
                 <h3>📁 Gestion des Projets</h3>
                 <p class="photo-help" style="margin-bottom: 10px; text-align: left;">Sauvegardez vos visites pour les comparer plus tard.</p>
@@ -43,8 +43,8 @@
                 <details class="accordion" open>
                     <summary>🛒 Acquisition</summary>
                     <div class="accordion-content">
-                        <label>Prix affiché (€) <input type="number" inputmode="numeric" id="prix" value="150000"></label>
-                        <label>Négociation obtenue (€) <input type="number" inputmode="numeric" id="nego" value="5000"></label>
+                        <label>Prix affiché (€) <input type="number" inputmode="numeric" id="prix" value="107000"></label>
+                        <label>Négociation obtenue (€) <input type="number" inputmode="numeric" id="nego" value="0"></label>
                         <label>Frais d'agence (€) <input type="number" inputmode="numeric" id="agence" value="0"></label>
                         <label>Type de bien 
                             <select id="type-bien">
@@ -53,7 +53,7 @@
                             </select>
                         </label>
                         <label>Frais notaire (%) <input type="number" inputmode="decimal" step="0.1" id="notaire" value="8"></label>
-                        <label>Travaux estim. (€) <input type="number" inputmode="numeric" id="travaux" value="15000"></label>
+                        <label>Travaux estim. (€) <input type="number" inputmode="numeric" id="travaux" value="5000"></label>
                         <label>Mobilier (€) <input type="number" inputmode="numeric" id="meubles" value="4000"></label>
                         <label>Frais bancaires (€) <input type="number" inputmode="numeric" id="frais-bancaires" value="1500"></label>
                     </div>
@@ -62,10 +62,10 @@
                 <details class="accordion" open>
                     <summary>🏦 Financement</summary>
                     <div class="accordion-content">
-                        <label>Apport personnel (€) <input type="number" inputmode="numeric" id="apport" value="20000"></label>
+                        <label>Apport personnel (€) <input type="number" inputmode="numeric" id="apport" value="0"></label>
                         <div class="complex-input">
-                            <label>Taux d'intérêt annuel (%) <input type="number" inputmode="decimal" step="0.01" id="taux-input" value="3.5"></label>
-                            <input type="range" id="taux-slider" class="styled-slider" min="0.5" max="6" step="0.05" value="3.5">
+                            <label>Taux d'intérêt annuel (%) <input type="number" inputmode="decimal" step="0.01" id="taux-input" value="3.17"></label>
+                            <input type="range" id="taux-slider" class="styled-slider" min="0.5" max="6" step="0.05" value="3.17">
                         </div>
                         <label>Durée du prêt (Années) <input type="number" inputmode="numeric" id="duree" value="20"></label>
                         <label>Taux assurance (%) <input type="number" inputmode="decimal" step="0.01" id="assurance" value="0.30"></label>
@@ -75,9 +75,9 @@
                 <details class="accordion" open>
                     <summary>📈 Exploitation</summary>
                     <div class="accordion-content">
-                        <label>Loyer mensuel HC (€) <input type="number" inputmode="numeric" id="loyer" value="900"></label>
+                        <label>Loyer mensuel HC (€) <input type="number" inputmode="numeric" id="loyer" value="700"></label>
                         <label class="tooltip-container" title="Part non-récupérable">Charges copro (Proprio)/mois <input type="number" inputmode="numeric" id="copro" value="40"></label>
-                        <label>Taxe foncière/an (€) <input type="number" inputmode="numeric" id="fonciere" value="900"></label>
+                        <label>Taxe foncière/an (€) <input type="number" inputmode="numeric" id="fonciere" value="1500"></label>
                         <label>Assur. PNO/an (€) <input type="number" inputmode="numeric" id="pno" value="150"></label>
                         <label>Vacance locative (%) <input type="number" inputmode="decimal" step="0.1" id="vacance" value="5"></label>
                         <label>Frais de gestion (%) <input type="number" inputmode="decimal" step="0.1" id="gestion" value="7"></label>
@@ -113,34 +113,11 @@
                 </details>
             </div>
         </form>
-        
-        <button class="btn-primary" style="width: 100%; padding: 15px; font-size: 1.1rem; margin-top: 10px;" onclick="document.querySelector('[data-target=\'view-results\']').click();">
-            Lancer l'Analyse 🚀
-        </button>
     </div>
 
     <div id="view-results" class="view-section">
         <div id="export-area">
             
-            <div class="card highlight-gold" style="margin-bottom: 20px;">
-                <h3>🎯 Outil de Négociation</h3>
-                <p style="font-size: 0.9rem; margin-bottom: 15px;">Quelle rentabilité Nette visez-vous pour que ce bien soit intéressant ?</p>
-                <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
-                    <label style="margin:0; font-weight:bold;">Objectif Renta Nette :</label>
-                    <div style="display: flex; align-items: center; gap: 5px;">
-                        <input type="number" id="target-renta" value="6.5" step="0.1" style="width: 80px; font-size: 1.1rem; text-align: center; border: 1px solid var(--gold-color);"> <strong>%</strong>
-                    </div>
-                </div>
-                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between;">
-                    <span>Prix d'achat max conseillé :</span>
-                    <strong id="nego-prix-max" style="font-size: 1.2rem;">-- €</strong>
-                </div>
-                <div style="margin-top: 10px; display: flex; justify-content: space-between;">
-                    <span>Négociation à réaliser :</span>
-                    <strong id="nego-montant" style="font-size: 1.2rem; color: var(--danger-color);">-- €</strong>
-                </div>
-            </div>
-
             <div class="metrics-grid">
                 <div class="card">
                     <h3>Rentabilité Brute</h3>
@@ -205,8 +182,58 @@
                 <h3 style="margin-bottom: 10px;">📷 Galerie Photos</h3>
                 <div class="photo-grid" id="photo-gallery"></div>
             </div>
+        </div>
+    </div>
 
-        </div> </div>
+    <div id="view-vierzon" class="view-section">
+        
+        <div class="card highlight-gold" style="margin-bottom: 20px; text-align: left;">
+            <h3 style="font-size: 1.3rem; margin-bottom: 15px;">🎯 Mon Objectif de Renta</h3>
+            <p style="font-size: 0.95rem; margin-bottom: 15px; color: #8e8e93;">Définissez le Cash-Flow Net-Net (après tous les impôts et charges) que vous voulez absolument dégager chaque mois sur votre investissement.</p>
+            
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--bg-color); padding: 15px; border-radius: 10px;">
+                <label style="margin:0; font-weight:bold; font-size: 1.1rem;">Je veux un Cash-Flow de :</label>
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <input type="number" id="vierzon-target-cf" value="100" step="10" style="width: 100px; font-size: 1.2rem; font-weight: bold; text-align: center; border: 2px solid var(--gold-color); color: var(--gold-color);"> <strong>€ / mois</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-2-cols">
+            
+            <div class="card" style="text-align: left; border-top: 4px solid var(--primary-color);">
+                <h3 style="color: var(--primary-color); font-size: 1.1rem; margin-bottom: 10px;">Scénario A : Je connais le loyer</h3>
+                <p style="font-size: 0.85rem; color: #8e8e93; margin-bottom: 15px;">Vous connaissez les prix du marché locatif sur Vierzon. Quel prix max pouvez-vous acheter le bien ?</p>
+                
+                <label style="font-weight: 600;">Loyer estimé : 
+                    <div><input type="number" id="vierzon-loyer-estime" value="500" style="width: 80px;"> €/mois</div>
+                </label>
+                
+                <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color);">
+                    <div style="font-size: 0.9rem; color: #8e8e93; margin-bottom: 5px;">Prix d'achat Max (Frais agence inclus) :</div>
+                    <div id="vierzon-prix-max" style="font-size: 1.8rem; font-weight: bold; color: var(--text-color);">-- €</div>
+                </div>
+            </div>
+
+            <div class="card" style="text-align: left; border-top: 4px solid var(--success-color);">
+                <h3 style="color: var(--success-color); font-size: 1.1rem; margin-bottom: 10px;">Scénario B : J'ai repéré une annonce</h3>
+                <p style="font-size: 0.85rem; color: #8e8e93; margin-bottom: 15px;">Vous avez vu un bien à la vente. A combien devrez-vous le louer au minimum ?</p>
+                
+                <label style="font-weight: 600;">Prix de l'annonce : 
+                    <div><input type="number" id="vierzon-prix-annonce" value="80000" style="width: 90px;"> € FAI</div>
+                </label>
+                
+                <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color);">
+                    <div style="font-size: 0.9rem; color: #8e8e93; margin-bottom: 5px;">Loyer Minimum à exiger :</div>
+                    <div id="vierzon-loyer-min" style="font-size: 1.8rem; font-weight: bold; color: var(--text-color);">-- € /mois</div>
+                </div>
+            </div>
+
+        </div>
+        
+        <p style="text-align: center; font-size: 0.85rem; color: #8e8e93; margin-top: 20px;">* Ces calculs utilisent l'apport, les taux, la durée et les impôts définis dans l'onglet Saisie.</p>
+    </div>
+
 </div>
 
 <script src="script.js"></script>
