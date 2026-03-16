@@ -4,13 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Investisseur Pro - Outil d'Aide à la Décision</title>
-    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="InvestPro">
-
+    <link rel="apple-touch-icon" href="icon.png"> 
+    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="styles.css">
-    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
@@ -101,6 +99,18 @@
                         <label>Régime fiscal <select id="regime"></select></label>
                     </div>
                 </details>
+
+                <details class="accordion">
+                    <summary>📝 Notes & Photos</summary>
+                    <div class="accordion-content">
+                        <textarea id="commentaires-input" rows="3" placeholder="Notes sur la visite, l'état du bien..."></textarea>
+                        <label class="photo-upload-btn">
+                            <span>📸 Ajouter une photo</span>
+                            <input type="file" id="photo-input" accept="image/*" capture="environment" multiple style="display: none;">
+                        </label>
+                        <div class="photo-grid" id="photo-gallery-preview" style="margin-top: 10px;"></div>
+                    </div>
+                </details>
             </div>
         </form>
         
@@ -110,77 +120,93 @@
     </div>
 
     <div id="view-results" class="view-section">
-        
-        <div class="card highlight-gold" style="margin-bottom: 20px;">
-            <h3>🎯 Outil de Négociation</h3>
-            <p style="font-size: 0.9rem; margin-bottom: 15px;">Quelle rentabilité Nette visez-vous pour que ce bien soit intéressant ?</p>
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
-                <label style="margin:0; font-weight:bold;">Objectif Renta Nette :</label>
-                <div style="display: flex; align-items: center; gap: 5px;">
-                    <input type="number" id="target-renta" value="6.5" step="0.1" style="width: 80px; font-size: 1.1rem; text-align: center;"> <strong>%</strong>
+        <div id="export-area">
+            
+            <div class="card highlight-gold" style="margin-bottom: 20px;">
+                <h3>🎯 Outil de Négociation</h3>
+                <p style="font-size: 0.9rem; margin-bottom: 15px;">Quelle rentabilité Nette visez-vous pour que ce bien soit intéressant ?</p>
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+                    <label style="margin:0; font-weight:bold;">Objectif Renta Nette :</label>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <input type="number" id="target-renta" value="6.5" step="0.1" style="width: 80px; font-size: 1.1rem; text-align: center; border: 1px solid var(--gold-color);"> <strong>%</strong>
+                    </div>
+                </div>
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between;">
+                    <span>Prix d'achat max conseillé :</span>
+                    <strong id="nego-prix-max" style="font-size: 1.2rem;">-- €</strong>
+                </div>
+                <div style="margin-top: 10px; display: flex; justify-content: space-between;">
+                    <span>Négociation à réaliser :</span>
+                    <strong id="nego-montant" style="font-size: 1.2rem; color: var(--danger-color);">-- €</strong>
                 </div>
             </div>
-            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between;">
-                <span>Prix d'achat max conseillé :</span>
-                <strong id="nego-prix-max" style="font-size: 1.2rem;">-- €</strong>
-            </div>
-            <div style="margin-top: 10px; display: flex; justify-content: space-between;">
-                <span>Négociation à réaliser :</span>
-                <strong id="nego-montant" style="font-size: 1.2rem; color: var(--danger-color);">-- €</strong>
-            </div>
-        </div>
 
-        <div class="metrics-grid">
-            <div class="card">
-                <h3>Rentabilité Brute</h3>
-                <div class="value" id="renta-brute">-- %</div>
+            <div class="metrics-grid">
+                <div class="card">
+                    <h3>Rentabilité Brute</h3>
+                    <div class="value" id="renta-brute">-- %</div>
+                </div>
+                <div class="card">
+                    <h3>Rentabilité Nette</h3>
+                    <div class="value" id="renta-nette">-- %</div>
+                </div>
+                <div class="card highlight-gold">
+                    <h3>Renta. Nette-Nette</h3>
+                    <div class="value" id="renta-netnet">-- %</div>
+                    <p class="subtitle">Après Impôts</p>
+                </div>
+                <div class="card highlight">
+                    <h3>Cash-Flow Net-Net</h3>
+                    <div class="value" id="cf-netnet">-- €</div>
+                    <p class="subtitle">Dans votre poche / mois</p>
+                </div>
             </div>
-            <div class="card">
-                <h3>Rentabilité Nette</h3>
-                <div class="value" id="renta-nette">-- %</div>
-            </div>
-            <div class="card highlight">
-                <h3>Cash-Flow Net-Net</h3>
-                <div class="value" id="cf-netnet">-- €</div>
-                <p class="subtitle">Dans votre poche / mois</p>
-            </div>
-        </div>
 
-        <div class="details-section">
-            <div class="summary">
-                <h3>Résumé de l'Enveloppe</h3>
-                <ul>
-                    <li><span>Prix net vendeur estimé</span> <strong><span id="out-prix-net">--</span> €</strong></li>
-                    <li><span>Frais fixes (Notaire, Travaux...)</span> <strong><span id="out-frais-fixes">--</span> €</strong></li>
-                    <li><span>Coût total de l'opération</span> <strong style="color: var(--primary-color);"><span id="out-cout-total">--</span> €</strong></li>
-                    <li><span>Montant de l'emprunt</span> <strong><span id="out-financement">--</span> €</strong></li>
-                    <li><span>Mensualité de crédit</span> <strong><span id="out-mensualite">--</span> €</strong></li>
-                </ul>
+            <div class="details-section">
+                <div class="summary">
+                    <h3>Résumé de l'Enveloppe</h3>
+                    <ul>
+                        <li><span>Prix net vendeur estimé</span> <strong><span id="out-prix-net">--</span> €</strong></li>
+                        <li><span>Frais fixes (Notaire, Travaux...)</span> <strong><span id="out-frais-fixes">--</span> €</strong></li>
+                        <li><span>Coût total de l'opération</span> <strong style="color: var(--primary-color);"><span id="out-cout-total">--</span> €</strong></li>
+                        <li><span>Montant de l'emprunt</span> <strong><span id="out-financement">--</span> €</strong></li>
+                        <li><span>Mensualité de crédit</span> <strong><span id="out-mensualite">--</span> €</strong></li>
+                    </ul>
+                </div>
+                <div class="chart-container">
+                    <canvas id="cashflowChart"></canvas>
+                </div>
             </div>
-            <div class="chart-container">
-                <canvas id="cashflowChart"></canvas>
+
+            <div class="card" style="margin-top: 20px; overflow-x: auto; text-align: left;">
+                <h3 style="margin-bottom: 15px;">📊 Projection Financière (15 ans)</h3>
+                <table class="projection-table">
+                    <thead>
+                        <tr>
+                            <th>Année</th>
+                            <th>Capital Amorti</th>
+                            <th>Capital Restant</th>
+                            <th>Intérêts</th>
+                            <th>Impôts</th>
+                            <th>Cash-Flow Net</th>
+                        </tr>
+                    </thead>
+                    <tbody id="projection-tbody">
+                        </tbody>
+                </table>
             </div>
-        </div>
 
-        <div class="card" style="margin-top: 20px; overflow-x: auto;">
-            <h3 style="text-align: left; margin-bottom: 15px;">📊 Projection Financière (15 ans)</h3>
-            <table class="projection-table">
-                <thead>
-                    <tr>
-                        <th>Année</th>
-                        <th>Capital Amorti</th>
-                        <th>Capital Restant</th>
-                        <th>Intérêts</th>
-                        <th>Impôts</th>
-                        <th>Cash-Flow Net</th>
-                    </tr>
-                </thead>
-                <tbody id="projection-tbody">
-                    </tbody>
-            </table>
-        </div>
+            <div class="card" id="comments-export-section" style="display: none; margin-top: 20px; text-align: left;">
+                <h3 style="margin-bottom: 10px;">📝 Notes & Commentaires</h3>
+                <p id="commentaires-display" style="white-space: pre-wrap; font-size: 0.95rem;"></p>
+            </div>
 
-    </div>
+            <div class="card" id="photos-export-section" style="display: none; margin-top: 20px; text-align: left;">
+                <h3 style="margin-bottom: 10px;">📷 Galerie Photos</h3>
+                <div class="photo-grid" id="photo-gallery"></div>
+            </div>
+
+        </div> </div>
 </div>
 
 <script src="script.js"></script>

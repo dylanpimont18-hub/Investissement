@@ -1,7 +1,8 @@
 let myChart = null;
+let uploadedPhotos = [];
 let savedProjects = JSON.parse(localStorage.getItem('simuImmoProjects')) || [];
 
-// --- GESTION DES ONGLETS ---
+// --- GESTION DES ONGLETS ET BOUTON EXPORT ---
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -9,13 +10,19 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
         
         btn.classList.add('active');
         document.getElementById(btn.dataset.target).classList.add('active');
+        window.scrollTo(0, 0); // Scroll au top sur mobile
         
-        // S'assurer que les calculs et graphiques sont à jour
-        if(btn.dataset.target === 'view-results') calculateAndSave();
+        const btnExport = document.getElementById('btn-export');
+        if(btn.dataset.target === 'view-results') {
+            btnExport.style.display = 'block';
+            calculateAndSave();
+        } else {
+            btnExport.style.display = 'none';
+        }
     });
 });
 
-// Synchronisations de base
+// Synchronisations
 const tauxInput = document.getElementById('taux-input');
 const tauxSlider = document.getElementById('taux-slider');
 tauxInput.addEventListener('input', (e) => { tauxSlider.value = e.target.value; calculateAndSave(); });
@@ -39,7 +46,6 @@ document.getElementById('type-location').addEventListener('change', (e) => {
     calculateAndSave();
 });
 
-// Calcul de la TMI
 function calculateTMI(revenus, enfants) {
     let parts = 2; 
     if (enfants === 1) parts += 0.5;
@@ -54,29 +60,25 @@ function calculateTMI(revenus, enfants) {
 
 function getCurrentInputs() {
     const data = {};
-    document.querySelectorAll('#calc-form input:not(#project-name), #calc-form select').forEach(el => {
+    document.querySelectorAll('#calc-form input:not(#project-name):not([type="file"]), #calc-form select, #calc-form textarea').forEach(el => {
         if (el.id) data[el.id] = (el.type === 'number' || el.type === 'range') ? parseFloat(el.value) || 0 : el.value;
     });
     return data;
 }
 
-// Outil de Négociation
+// Outil de Négociation (CORRIGÉ)
 function calculateNegotiation(inputs, loyersEncaisses, chargesExploitation) {
     const targetRenta = parseFloat(document.getElementById('target-renta').value) || 0;
     if(targetRenta <= 0) return;
 
-    // Formule : Cout Total Cible = Revenus Nets / RentaCible
-    const revenusNets Annuels = loyersEncaisses - chargesExploitation;
-    const coutTotalMax = (revenusNets Annuels / (targetRenta / 100));
+    // CORRECTION ICI : "revenusNetsAnnuels" au lieu de "revenusNets Annuels"
+    const revenusNetsAnnuels = loyersEncaisses - chargesExploitation;
+    const coutTotalMax = (revenusNetsAnnuels / (targetRenta / 100));
 
-    // Frais fixes = Travaux + Meubles + Banque + Agence
     const fraisFixes = inputs['travaux'] + inputs['meubles'] + inputs['frais-bancaires'] + inputs['agence'];
     const notaireMult = 1 + (inputs['notaire'] / 100);
 
-    // Prix Net Vendeur Cible = (CoutTotalMax - FraisFixes) / Multiplicateur Notaire
     const prixNetVendeurMax = (coutTotalMax - fraisFixes) / notaireMult;
-    
-    // Le prix affiché demandé pour atteindre ce net vendeur (sachant qu'on a déjà l'input prix de base)
     const prixAfficheActuel = inputs['prix'];
     const negoRequise = prixAfficheActuel - prixNetVendeurMax;
 
@@ -105,6 +107,15 @@ function calculateAndSave() {
     const tmi = calculateTMI(inputs.revenus, inputs.enfants);
     document.getElementById('tmi-display').innerText = tmi + ' %';
 
+    // Affichage des notes
+    const commSection = document.getElementById('comments-export-section');
+    if (inputs['commentaires-input'] && inputs['commentaires-input'].trim() !== '') {
+        document.getElementById('commentaires-display').innerText = inputs['commentaires-input'];
+        commSection.style.display = 'block';
+    } else {
+        commSection.style.display = 'none';
+    }
+
     const prixNet = inputs['prix'] - inputs['nego'];
     const fraisNotaire = prixNet * (inputs['notaire'] / 100);
     const fraisFixes = inputs['agence'] + inputs['travaux'] + inputs['meubles'] + inputs['frais-bancaires'];
@@ -130,7 +141,7 @@ function calculateAndSave() {
     // --- PROJECTION SUR 15 ANS ---
     let capitalRestant = montantFinance;
     const tauxGlobalImpot = (tmi / 100) + 0.172; 
-    let baseAmortImmo = prixNet * 0.85; // Pour le LMNP
+    let baseAmortImmo = prixNet * 0.85; 
     let amortissementImmoAnnuel = baseAmortImmo / 30;
     let amortissementMeubles = inputs['meubles'] / 5;
     let amortissementTravaux = inputs['travaux'] / 15;
@@ -138,7 +149,6 @@ function calculateAndSave() {
 
     let tbodyHTML = '';
     let firstYearImpots = 0;
-    let firstYearInterets = 0;
 
     for (let annee = 1; annee <= 15; annee++) {
         let interetsAnnee = 0;
@@ -155,9 +165,8 @@ function calculateAndSave() {
         }
         
         if (capitalRestant < 0) capitalRestant = 0;
-        if(annee === 1) firstYearInterets = interetsAnnee;
 
-        // Calcul Impôts pour cette année
+        // Calcul Impôts
         let impotsAnnee = 0;
         if (inputs['regime'] === 'micro-foncier') {
             impotsAnnee = (loyersEncaisses * 0.7) * tauxGlobalImpot;
@@ -165,19 +174,18 @@ function calculateAndSave() {
             impotsAnnee = (loyersEncaisses * 0.5) * tauxGlobalImpot;
         } else if (inputs['regime'] === 'reel') {
             let chargesAnnuees = chargesExploitationAnnuelles + (coutAssuranceMensuel * 12);
-            // Travaux et frais bancaires déduits uniquement l'année 1
             if(annee === 1) chargesAnnuees += inputs['travaux'] + inputs['frais-bancaires'];
             
             let revenusNets = loyersEncaisses - chargesAnnuees - interetsAnnee;
             if (revenusNets > 0) {
                 impotsAnnee = revenusNets * tauxGlobalImpot;
-            } else if (annee === 1) { // Simplification: deficit créé l'an 1
+            } else if (annee === 1) { 
                 let deficitImputable = Math.min(10700, Math.abs(loyersEncaisses - chargesAnnuees));
                 impotsAnnee = -(deficitImputable * (tmi / 100)); 
             }
         } else if (inputs['regime'] === 'lmnp-reel') {
             let chargesAnnuees = chargesExploitationAnnuelles + interetsAnnee + (coutAssuranceMensuel * 12);
-            if(annee === 1) chargesAnnuees += (fraisNotaire + inputs['agence'] + inputs['frais-bancaires']); // Frais d'acquisition
+            if(annee === 1) chargesAnnuees += (fraisNotaire + inputs['agence'] + inputs['frais-bancaires']); 
             
             let amortissementTotal = amortissementImmoAnnuel;
             if(annee <= 5) amortissementTotal += amortissementMeubles;
@@ -204,7 +212,6 @@ function calculateAndSave() {
         }
 
         if(annee === 1) firstYearImpots = impotsAnnee;
-
         let cfNetNetAnnee = loyersEncaisses - (mensualiteTotale * 12) - chargesExploitationAnnuelles - impotsAnnee;
 
         tbodyHTML += `
@@ -224,9 +231,10 @@ function calculateAndSave() {
     }
     document.getElementById('projection-tbody').innerHTML = tbodyHTML;
 
-    // Mise à jour des KPIs Année 1
+    // Mise à jour KPIs Année 1
     const rentaBrute = coutTotal > 0 ? (loyersAnnuelsTheoriques / coutTotal) * 100 : 0;
     const rentaNette = coutTotal > 0 ? ((loyersEncaisses - chargesExploitationAnnuelles) / coutTotal) * 100 : 0;
+    const rentaNetNet = coutTotal > 0 ? ((loyersEncaisses - chargesExploitationAnnuelles - firstYearImpots) / coutTotal) * 100 : 0;
     
     const cfBrut = inputs['loyer'] - mensualiteTotale;
     const cfNet = (loyersEncaisses / 12) - mensualiteTotale - (chargesExploitationAnnuelles / 12);
@@ -234,6 +242,8 @@ function calculateAndSave() {
 
     document.getElementById('renta-brute').innerText = rentaBrute.toFixed(2) + ' %';
     document.getElementById('renta-nette').innerText = rentaNette.toFixed(2) + ' %';
+    document.getElementById('renta-netnet').innerText = rentaNetNet.toFixed(2) + ' %';
+    
     updateColor('cf-netnet', cfNetNet); 
 
     document.getElementById('out-prix-net').innerText = Math.round(prixNet).toLocaleString('fr-FR');
@@ -262,12 +272,54 @@ function updateChart(credit, charges, impots, cf) {
     myChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['Banque (Mensualité)', 'Charges', 'Impôts', 'Cash-Flow'],
+            labels: ['Banque', 'Charges', 'Impôts', 'Cash-Flow'],
             datasets: [{ data: [credit, charges, impots, cfDisplay], backgroundColor: ['#ff3b30', '#ff9500', '#af52de', '#34c759'], borderWidth: 0 }]
         },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: textColor } } } }
     });
 }
+
+// --- GESTION DES PHOTOS ---
+document.getElementById('photo-input').addEventListener('change', function(event) {
+    const files = event.target.files;
+    const previewGrid = document.getElementById('photo-gallery-preview');
+    const exportGrid = document.getElementById('photo-gallery');
+    const exportSection = document.getElementById('photos-export-section');
+
+    if (files.length > 0) exportSection.style.display = 'block';
+
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!file.type.startsWith('image/')) continue;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const base64Src = e.target.result;
+            uploadedPhotos.push(base64Src);
+            const index = uploadedPhotos.length - 1;
+            
+            const photoHTML = `
+                <div class="photo-item" id="photo-item-${index}">
+                    <img src="${base64Src}">
+                    <button class="btn-remove" onclick="removePhoto(${index})">✖</button>
+                </div>`;
+                
+            previewGrid.insertAdjacentHTML('beforeend', photoHTML);
+            exportGrid.insertAdjacentHTML('beforeend', photoHTML);
+        };
+        reader.readAsDataURL(file);
+    }
+    event.target.value = '';
+});
+
+window.removePhoto = function(index) {
+    uploadedPhotos[index] = null; 
+    document.querySelectorAll(`#photo-item-${index}`).forEach(el => el.remove());
+    if (uploadedPhotos.every(p => p === null)) {
+        document.getElementById('photos-export-section').style.display = 'none';
+        uploadedPhotos = []; 
+    }
+};
 
 // --- GESTION DES PROJETS ---
 function renderProjectsList() {
@@ -333,7 +385,7 @@ function loadProject(index) {
         if (data['regime']) document.getElementById('regime').value = data['regime'];
         document.getElementById('project-name').value = data._projectName;
         calculateAndSave();
-        document.querySelector('[data-target="view-results"]').click(); // Bascule sur l'onglet analyse
+        document.querySelector('[data-target="view-results"]').click(); // Redirection Onglet Analyse
     }
 }
 
@@ -363,5 +415,40 @@ function initApp() {
     document.getElementById('type-location').dispatchEvent(new Event('change'));
 }
 
-document.querySelectorAll('input, select').forEach(el => el.addEventListener('input', calculateAndSave));
+document.querySelectorAll('input, select, textarea').forEach(el => el.addEventListener('input', calculateAndSave));
 window.onload = initApp;
+
+// Export PDF (CORRIGÉ)
+document.getElementById('btn-export').addEventListener('click', function() {
+    const btn = this;
+    const textInitial = btn.innerText;
+    btn.innerText = "⏳ Génération...";
+    btn.disabled = true;
+
+    window.scrollTo(0, 0);
+    const removeBtns = document.querySelectorAll('.btn-remove');
+    removeBtns.forEach(btn => btn.style.display = 'none');
+
+    const element = document.getElementById('export-area');
+    const currentName = document.getElementById('project-name').value.trim();
+    const pdfFilename = currentName ? `Rapport-${currentName.replace(/\s+/g, '-')}.pdf` : 'Rapport-InvestPro.pdf';
+
+    const opt = {
+        margin:       10,
+        filename:     pdfFilename,
+        image:        { type: 'jpeg', quality: 0.95 },
+        html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opt).from(element).save().then(() => {
+        removeBtns.forEach(btn => btn.style.display = 'flex');
+        btn.innerText = textInitial;
+        btn.disabled = false;
+    }).catch(err => {
+        console.error("Erreur PDF :", err);
+        removeBtns.forEach(btn => btn.style.display = 'flex');
+        btn.innerText = textInitial;
+        btn.disabled = false;
+    });
+});
