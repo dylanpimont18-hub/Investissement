@@ -20,7 +20,7 @@
 
 <div class="header">
     <h1>📊 Simulateur Immo Premium</h1>
-    <button id="btn-export" class="btn-primary">Exporter le Rapport (PDF)</button>
+    <button id="btn-export" class="btn-primary">Exporter (PDF)</button>
 </div>
 
 <div class="container">
@@ -101,7 +101,15 @@
             </details>
 
             <details class="accordion" open>
-                <summary>📷 5. Photos du bien</summary>
+                <summary>📝 5. Commentaires</summary>
+                <div class="accordion-content">
+                    <p class="photo-help" style="margin-bottom: 5px;">Saisissez vos notes sur la visite, l'état du bien, le quartier...</p>
+                    <textarea id="commentaires-input" rows="4" placeholder="Ex: Rénovation salle de bain à prévoir, toiture saine, proximité des transports..."></textarea>
+                </div>
+            </details>
+
+            <details class="accordion" open>
+                <summary>📷 6. Photos du bien</summary>
                 <div class="accordion-content">
                     <p class="photo-help">Prenez des photos lors de votre visite. Elles seront intégrées au rapport PDF.</p>
                     <label class="photo-upload-btn">
@@ -154,7 +162,12 @@
                 </div>
             </div>
 
-            <div class="photos-export-section" id="photos-export-section" style="display: none;">
+            <div class="custom-export-section" id="comments-export-section" style="display: none;">
+                <h3>Notes & Commentaires</h3>
+                <p id="commentaires-display"></p>
+            </div>
+
+            <div class="custom-export-section" id="photos-export-section" style="display: none;">
                 <h3>Galerie Photos du Bien</h3>
                 <div class="photo-grid" id="photo-gallery">
                     </div>
