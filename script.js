@@ -39,18 +39,6 @@ document.getElementById('type-bien').addEventListener('change', (e) => {
     triggerCalculations();
 });
 
-document.getElementById('type-location').addEventListener('change', (e) => {
-    const regimeSelect = document.getElementById('regime');
-    regimeSelect.innerHTML = ''; 
-    if (e.target.value === 'nue') {
-        regimeSelect.add(new Option('Micro-foncier (-30%)', 'micro-foncier'));
-        regimeSelect.add(new Option('Foncier Réel', 'reel'));
-    } else {
-        regimeSelect.add(new Option('Micro-BIC (-50%)', 'micro-bic'));
-        regimeSelect.add(new Option('LMNP Réel', 'lmnp-reel'));
-    }
-    triggerCalculations();
-});
 
 function calculateTMI(revenus, enfants) {
     let parts = 2; 
@@ -116,19 +104,21 @@ function computeCF(prixVendeur, loyerMensuel, inputs, tmi) {
     let impotsAnnee = 0;
 
     if (inputs['regime'] === 'micro-foncier') {
+        // Abattement forfaitaire 30% → base imposable = 70% des loyers encaissés
         impotsAnnee = (loyersEncaisses * 0.7) * tauxGlobalImpot;
-    } else if (inputs['regime'] === 'micro-bic') {
-        impotsAnnee = (loyersEncaisses * 0.5) * tauxGlobalImpot;
     } else if (inputs['regime'] === 'reel') {
         let chargesAnnuees = chargesExploitationAnnuelles + (coutAssuranceMensuel * 12);
         let revenusNets = loyersEncaisses - chargesAnnuees - interetsAnnee1;
-        if (revenusNets > 0) impotsAnnee = revenusNets * tauxGlobalImpot;
-        else impotsAnnee = -(Math.min(10700, Math.abs(loyersEncaisses - chargesAnnuees)) * (tmi / 100)); 
-    } else if (inputs['regime'] === 'lmnp-reel') {
-        let chargesAnnuees = chargesExploitationAnnuelles + interetsAnnee1 + (coutAssuranceMensuel * 12);
-        let amortissementTotal = (prixVendeur * 0.85 / 30) + (inputs['meubles'] / 5) + (inputs['travaux'] / 15);
-        let resultatComptable = loyersEncaisses - chargesAnnuees - amortissementTotal;
-        if(resultatComptable > 0) impotsAnnee = resultatComptable * tauxGlobalImpot;
+        if (revenusNets > 0) {
+            impotsAnnee = revenusNets * tauxGlobalImpot;
+        } else {
+            // Déficit foncier : seule la partie hors intérêts est imputable sur le revenu global (plafond 10 700 €/an)
+            const soldeHorsInterets = loyersEncaisses - chargesAnnuees;
+            if (soldeHorsInterets < 0) {
+                impotsAnnee = -(Math.min(10700, Math.abs(soldeHorsInterets)) * (tmi / 100));
+            }
+            // Si soldeHorsInterets >= 0, le déficit vient uniquement des intérêts → pas d'imputation sur revenu global
+        }
     }
 
     const cfNet = (loyersEncaisses / 12) - mensualiteTotale - (chargesExploitationAnnuelles / 12);
@@ -241,10 +231,6 @@ function calculateAndSave() {
     // --- PROJECTION SUR 15 ANS ---
     let capitalRestant = montantFinance;
     const tauxGlobalImpot = (tmi / 100) + CSG_CRDS_RATE;
-    let amortissementImmoAnnuel = (prixNet * 0.85) / 30;
-    let amortissementMeubles = inputs['meubles'] / 5;
-    let amortissementTravaux = inputs['travaux'] / 15;
-    let lmnpDeficitReportable = 0;
 
     let tbodyHTML = '';
     let firstYearImpots = 0;
@@ -267,44 +253,20 @@ function calculateAndSave() {
 
         let impotsAnnee = 0;
         if (inputs['regime'] === 'micro-foncier') {
+            // Abattement forfaitaire 30% → base imposable = 70% des loyers encaissés
             impotsAnnee = (loyersEncaisses * 0.7) * tauxGlobalImpot;
-        } else if (inputs['regime'] === 'micro-bic') {
-            impotsAnnee = (loyersEncaisses * 0.5) * tauxGlobalImpot;
         } else if (inputs['regime'] === 'reel') {
             let chargesAnnuees = chargesExploitationAnnuelles + (coutAssuranceMensuel * 12);
             if(annee === 1) chargesAnnuees += inputs['travaux'] + inputs['frais-bancaires'];
-            
+
             let revenusNets = loyersEncaisses - chargesAnnuees - interetsAnnee;
             if (revenusNets > 0) {
                 impotsAnnee = revenusNets * tauxGlobalImpot;
-            } else if (annee === 1) { 
-                let deficitImputable = Math.min(10700, Math.abs(loyersEncaisses - chargesAnnuees));
-                impotsAnnee = -(deficitImputable * (tmi / 100)); 
-            }
-        } else if (inputs['regime'] === 'lmnp-reel') {
-            let chargesAnnuees = chargesExploitationAnnuelles + interetsAnnee + (coutAssuranceMensuel * 12);
-            if(annee === 1) chargesAnnuees += (fraisNotaire + inputs['agence'] + inputs['frais-bancaires']); 
-            
-            let amortissementTotal = amortissementImmoAnnuel;
-            if(annee <= 5) amortissementTotal += amortissementMeubles;
-            if(annee <= 15) amortissementTotal += amortissementTravaux;
-
-            let resultatComptable = loyersEncaisses - chargesAnnuees - amortissementTotal;
-            if(resultatComptable < 0) {
-                lmnpDeficitReportable += Math.abs(resultatComptable);
-                impotsAnnee = 0;
             } else {
-                if(lmnpDeficitReportable > 0) {
-                    if(resultatComptable <= lmnpDeficitReportable) {
-                        lmnpDeficitReportable -= resultatComptable;
-                        impotsAnnee = 0;
-                    } else {
-                        let baseImposable = resultatComptable - lmnpDeficitReportable;
-                        lmnpDeficitReportable = 0;
-                        impotsAnnee = baseImposable * tauxGlobalImpot;
-                    }
-                } else {
-                    impotsAnnee = resultatComptable * tauxGlobalImpot;
+                // Déficit foncier : seule la partie hors intérêts est imputable sur revenu global (plafond 10 700 €/an)
+                const soldeHorsInterets = loyersEncaisses - chargesAnnuees;
+                if (soldeHorsInterets < 0) {
+                    impotsAnnee = -(Math.min(10700, Math.abs(soldeHorsInterets)) * (tmi / 100));
                 }
             }
         }
@@ -375,38 +337,32 @@ function updateScoreBanner(cfNetNet, rentaNette) {
 }
 
 function updateRegimeComparison(prixNet, inputs, tmi) {
-    const typeLocation = inputs['type-location'];
     const currentRegime = inputs['regime'];
     const loyer = inputs['loyer'];
 
     const allRegimes = [
-        { id: 'micro-bic',     label: 'Micro-BIC',     applicable: typeLocation === 'meublee' },
-        { id: 'lmnp-reel',     label: 'LMNP Réel',     applicable: typeLocation === 'meublee' },
-        { id: 'micro-foncier', label: 'Micro-Foncier', applicable: typeLocation === 'nue' },
-        { id: 'reel',          label: 'Foncier Réel',  applicable: typeLocation === 'nue' },
+        { id: 'micro-foncier', label: 'Micro-Foncier' },
+        { id: 'reel',          label: 'Foncier Réel'  },
     ];
 
     const results = allRegimes.map(r => {
-        const cf = r.applicable ? computeCF(prixNet, loyer, Object.assign({}, inputs, { regime: r.id }), tmi) : null;
+        const cf = computeCF(prixNet, loyer, Object.assign({}, inputs, { regime: r.id }), tmi);
         return { ...r, cf };
     });
 
-    const bestCF = Math.max(...results.filter(r => r.applicable).map(r => r.cf));
+    const bestCF = Math.max(...results.map(r => r.cf));
 
     document.getElementById('regime-compare-grid').innerHTML = results.map(r => {
-        const isBest = r.applicable && r.cf === bestCF;
+        const isBest = r.cf === bestCF;
         const isCurrent = r.id === currentRegime;
-        let cfHTML = '<span style="color:#8e8e93">N/A</span>';
-        if (r.applicable) {
-            const color = r.cf >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
-            cfHTML = `<span style="color:${color}">${r.cf >= 0 ? '+' : ''}${Math.round(r.cf)} €</span>`;
-        }
+        const color = r.cf >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+        const cfHTML = `<span style="color:${color}">${r.cf >= 0 ? '+' : ''}${Math.round(r.cf)} €</span>`;
         let badge = '';
         if (isBest) badge = `<div class="regime-badge" style="color:var(--success-color)">✅ Meilleur</div>`;
         else if (isCurrent) badge = `<div class="regime-badge" style="color:var(--primary-color)">◀ Actuel</div>`;
         else badge = `<div class="regime-badge">&nbsp;</div>`;
 
-        const cls = ['regime-card', isBest ? 'regime-best' : '', !r.applicable ? 'regime-na' : ''].join(' ').trim();
+        const cls = ['regime-card', isBest ? 'regime-best' : ''].join(' ').trim();
         return `<div class="${cls}"><div class="regime-name">${r.label}</div><div class="regime-cf">${cfHTML}</div>${badge}</div>`;
     }).join('');
 }
@@ -419,10 +375,7 @@ function updateNegoTable(prixNet, prixAffiche, inputs, tmi) {
     if (!container) return;
 
     if (negoTableMode === 'regimes') {
-        const typeLocation = inputs['type-location'];
-        const regimes = typeLocation === 'nue'
-            ? [{ id: 'micro-foncier', label: 'Micro-Foncier' }, { id: 'reel', label: 'Foncier Réel' }]
-            : [{ id: 'micro-bic', label: 'Micro-BIC' }, { id: 'lmnp-reel', label: 'LMNP Réel' }];
+        const regimes = [{ id: 'micro-foncier', label: 'Micro-Foncier' }, { id: 'reel', label: 'Foncier Réel' }];
 
         let html = `<table class="nego-table">
             <thead><tr>
@@ -628,10 +581,6 @@ document.getElementById('btn-save-project').addEventListener('click', () => {
 function loadProject(index) {
     if(confirm('Charger ce projet ?')) {
         const data = savedProjects[index];
-        if (data['type-location']) {
-            document.getElementById('type-location').value = data['type-location'];
-            document.getElementById('type-location').dispatchEvent(new Event('change'));
-        }
         for (const id in data) {
             if (id === '_projectName') continue;
             const el = document.getElementById(id);
@@ -661,25 +610,15 @@ function initApp() {
     if (savedDraft) {
         try {
             const data = JSON.parse(savedDraft);
-            // 1. Peupler les options du select régime avant de restaurer les autres champs
-            if (data['type-location']) {
-                document.getElementById('type-location').value = data['type-location'];
-                document.getElementById('type-location').dispatchEvent(new Event('change'));
-            }
-            // 2. Restaurer tous les autres champs
             for (const id in data) {
-                if (id === 'type-location') continue;
                 const el = document.getElementById(id);
                 if (el) {
                     el.value = data[id];
                     if (id === 'taux-input') document.getElementById('taux-slider').value = data[id];
                 }
             }
-            // 3. Re-setter le régime (les options sont maintenant peuplées)
             if (data['regime']) document.getElementById('regime').value = data['regime'];
         } catch (e) {}
-    } else {
-        document.getElementById('type-location').dispatchEvent(new Event('change'));
     }
 }
 

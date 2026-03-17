@@ -90,15 +90,12 @@
                         <label>Revenus du foyer (€) <input type="number" inputmode="numeric" id="revenus" value="60000"></label>
                         <label>Enfants à charge <input type="number" inputmode="numeric" id="enfants" value="2"></label>
                         <div class="tmi-box">Votre TMI : <strong id="tmi-display">-- %</strong></div>
-                        <label>Type de location
-                            <select id="type-location">
-                                <option value="meublee" selected>Meublée (LMNP)</option>
-                                <option value="nue">Nue</option>
-                            </select>
-                        </label>
                         <label>Régime fiscal
                             <div style="display:flex; align-items:center; gap:6px;">
-                                <select id="regime"></select>
+                                <select id="regime">
+                                    <option value="micro-foncier">Micro-Foncier (-30%)</option>
+                                    <option value="reel">Foncier Réel</option>
+                                </select>
                                 <button type="button" class="btn-info-regime" onclick="openRegimeModal()" title="Détails des régimes fiscaux">i</button>
                             </div>
                         </label>
@@ -277,33 +274,10 @@
 <div id="modal-regimes" class="modal-overlay" onclick="closeRegimeModal(this, event)">
     <div class="modal-content">
         <div class="modal-header">
-            <h2>⚖️ Les 4 Régimes Fiscaux</h2>
+            <h2>⚖️ Les 2 Régimes Fiscaux</h2>
             <button type="button" class="modal-close" onclick="closeRegimeModal(null, null)" title="Fermer">✕</button>
         </div>
         <div class="modal-body">
-            <div class="regime-info-card micro-bic">
-                <div class="regime-info-title">📦 Micro-BIC</div>
-                <div class="regime-info-subtitle">Location meublée · Revenus bruts &lt; 77 700 €/an</div>
-                <p>Abattement forfaitaire de <strong>50 %</strong> sur les loyers encaissés. Seuls les <strong>50 % restants</strong> sont imposés à votre TMI + CSG/CRDS (17,2 %).</p>
-                <ul>
-                    <li>✅ Aucune comptabilité, déclaration simplifiée</li>
-                    <li>✅ Abattement garanti même si vos charges réelles sont faibles</li>
-                    <li>❌ Impossible de déduire les intérêts d'emprunt ou les charges réelles</li>
-                    <li>❌ Moins avantageux si vos charges dépassent 50 % des loyers</li>
-                </ul>
-            </div>
-            <div class="regime-info-card lmnp-reel">
-                <div class="regime-info-title">🏗️ LMNP Réel</div>
-                <div class="regime-info-subtitle">Location meublée · Statut LMNP (Loueur Meublé Non Professionnel)</div>
-                <p>Déduction de <strong>toutes les charges réelles</strong> (intérêts, copro, assurances…) + <strong>amortissement comptable</strong> du bien (bâti 85 % / 30 ans), du mobilier (5 ans) et des travaux (15 ans).</p>
-                <ul>
-                    <li>✅ Souvent zéro impôt grâce aux amortissements</li>
-                    <li>✅ Déficits reportables indéfiniment sur les BIC meublés</li>
-                    <li>✅ Idéal pour les gros investissements avec crédit</li>
-                    <li>❌ Expert-comptable obligatoire (~600–900 €/an)</li>
-                    <li>❌ Amortissements réintégrés au calcul de la plus-value à la revente</li>
-                </ul>
-            </div>
             <div class="regime-info-card micro-foncier">
                 <div class="regime-info-title">🏠 Micro-Foncier</div>
                 <div class="regime-info-subtitle">Location nue · Revenus fonciers bruts &lt; 15 000 €/an</div>
