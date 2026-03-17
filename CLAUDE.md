@@ -42,10 +42,22 @@ External CDN dependencies (loaded in `index.html`):
 - **LMNP Réel** depreciation: building at 85% over 30 years + furniture over 5 years + works over 15 years, with carry-forward of accounting deficits
 - **Vierzon Strategy tab**: uses binary search (40 iterations) on `computeCF()` to find max purchase price or minimum rent needed to hit a target cash-flow
 
+## Results View Helpers
+
+After `calculateAndSave()` computes the main figures, three helpers update the results tab:
+- `updateScoreBanner(cfNetNet, rentaNette)` — color-coded investment score
+- `updateRegimeComparison(prixNet, inputs, tmi)` — side-by-side table comparing all four tax regimes
+- `updateNegoCalc(prixNet, prixAffiche, inputs, tmi)` — negotiation calculator showing price reduction impact
+
+## Key Constants
+
+- `CSG_CRDS_RATE = 0.172` — CSG+CRDS rate on capital income (2024), used across all tax regime calculations
+- `triggerCalculations()` debounces recalculation by 150 ms on every input event
+
 ## Persistence
 
 - `simuImmoDraft` — auto-saved current form state on every input
-- `simuImmoProjects` — array of named saved projects; each project is the `getCurrentInputs()` snapshot plus a `_projectName` key
+- `simuImmoProjects` — array of named saved projects; each project is the `getCurrentInputs()` snapshot plus a `_projectName` key and an optional `photos` array (base64 data URLs from file uploads)
 
 ## PWA
 

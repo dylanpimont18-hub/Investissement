@@ -33,6 +33,12 @@ const tauxSlider = document.getElementById('taux-slider');
 tauxInput.addEventListener('input', (e) => { tauxSlider.value = e.target.value; triggerCalculations(); });
 tauxSlider.addEventListener('input', (e) => { tauxInput.value = e.target.value; triggerCalculations(); });
 
+// Sync objectif CF : onglet Saisie ↔ onglet Analyse
+const cfObjTab1 = document.getElementById('objectif-cf');
+const cfObjTab2 = document.getElementById('objectif-cf-results');
+cfObjTab1.addEventListener('input', () => { cfObjTab2.value = cfObjTab1.value; });
+cfObjTab2.addEventListener('input', () => { cfObjTab1.value = cfObjTab2.value; });
+
 document.getElementById('type-bien').addEventListener('change', (e) => {
     document.getElementById('notaire').value = e.target.value === 'ancien' ? 8.0 : 2.5;
     triggerCalculations();
@@ -65,7 +71,7 @@ function calculateTMI(revenus, enfants) {
 
 function getCurrentInputs() {
     const data = {};
-    document.querySelectorAll('input:not(#project-name):not([type="file"]), select, textarea').forEach(el => {
+    document.querySelectorAll('input:not(#project-name):not([type="file"]):not(#objectif-cf-results), select, textarea').forEach(el => {
         if (el.id) data[el.id] = (el.type === 'number' || el.type === 'range') ? parseFloat(el.value) || 0 : el.value;
     });
     return data;
@@ -416,13 +422,38 @@ function updateNegoCalc(prixNet, prixAffiche, inputs, tmi) {
     const negoTotal = prixAffiche - targetPrixNet;
     const negoPct = prixAffiche > 0 ? (negoTotal / prixAffiche) * 100 : 0;
 
+    // Tableau de sensibilité : CF à différents niveaux de négociation
+    const rows = [
+        { label: '0 %',                              prix: prixAffiche        },
+        { label: '−3 %',                             prix: prixAffiche * 0.97 },
+        { label: '−5 %',                             prix: prixAffiche * 0.95 },
+        { label: `−${negoPct.toFixed(1)} % ← cible`, prix: targetPrixNet, target: true },
+        { label: '−10 %',                            prix: prixAffiche * 0.90 },
+    ];
+    rows.sort((a, b) => b.prix - a.prix);
+
+    let tableHTML = `<table class="sensitivity-table">
+        <thead><tr><th>Négociation</th><th>Prix vendeur</th><th>CF net-net</th></tr></thead><tbody>`;
+    rows.forEach(row => {
+        const cf = computeCF(row.prix, loyer, inputs, tmi);
+        const cfColor = cf >= objectifCF ? 'var(--success-color)' : (cf >= 0 ? 'var(--text-color)' : 'var(--danger-color)');
+        const sign = cf >= 0 ? '+' : '';
+        tableHTML += `<tr class="${row.target ? 'sensitivity-target' : ''}">
+            <td>${row.label}</td>
+            <td>${Math.round(row.prix).toLocaleString('fr-FR')} €</td>
+            <td style="color:${cfColor}">${sign}${Math.round(cf)} €/mois</td>
+        </tr>`;
+    });
+    tableHTML += '</tbody></table>';
+
     resultEl.innerHTML = `
         <div class="nego-banner" style="background:rgba(0,122,255,0.08);border:1px solid var(--primary-color);color:var(--primary-color)">
-            Objectif +${objectifCF} €/mois · CF actuel ${Math.round(cfActuel)} €/mois
+            CF actuel : ${Math.round(cfActuel)} €/mois · Objectif : +${objectifCF} €/mois
         </div>
         <div class="nego-row"><span class="nego-key">Négociation supplémentaire à obtenir</span><span class="nego-val" style="color:var(--danger-color)">− ${Math.round(negoSupp).toLocaleString('fr-FR')} €</span></div>
         <div class="nego-row"><span class="nego-key">Négociation totale sur prix affiché</span><span class="nego-val" style="color:var(--primary-color)">− ${Math.round(negoTotal).toLocaleString('fr-FR')} € (${negoPct.toFixed(1)} %)</span></div>
-        <div class="nego-row"><span class="nego-key">Prix net vendeur cible</span><span class="nego-val">${Math.round(targetPrixNet).toLocaleString('fr-FR')} €</span></div>`;
+        <div class="nego-row"><span class="nego-key">Prix net vendeur cible</span><span class="nego-val">${Math.round(targetPrixNet).toLocaleString('fr-FR')} €</span></div>
+        ${tableHTML}`;
 }
 
 function updateColor(id, value) {
@@ -632,6 +663,8 @@ function initApp() {
     } else {
         document.getElementById('type-location').dispatchEvent(new Event('change'));
     }
+    // Sync objectif CF vers l'onglet Analyse
+    document.getElementById('objectif-cf-results').value = document.getElementById('objectif-cf').value;
 }
 
 document.querySelectorAll('input, select, textarea').forEach(el => el.addEventListener('input', triggerCalculations));

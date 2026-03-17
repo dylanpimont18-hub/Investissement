@@ -175,8 +175,14 @@
 
             <!-- Calcul de négociation -->
             <div class="card" style="margin-top: 20px; text-align: left;">
-                <h3 style="margin-bottom: 10px;">🤝 Calcul de Négociation</h3>
-                <p class="subtitle" style="margin-bottom: 15px; font-size: 0.88rem; color: #8e8e93;">Combien négocier pour atteindre votre objectif de CF (défini dans l'onglet Saisie) ?</p>
+                <h3 style="margin-bottom: 12px;">🤝 Calcul de Négociation</h3>
+                <div class="nego-input-row">
+                    <label for="objectif-cf-results" style="margin:0; font-weight:600; font-size:0.95rem;">🎯 Objectif CF net-net</label>
+                    <div class="input-with-unit">
+                        <input type="number" id="objectif-cf-results" placeholder="100" step="10" style="width:90px;">
+                        <span style="color:#8e8e93; font-size:0.9rem; white-space:nowrap;">€/mois</span>
+                    </div>
+                </div>
                 <div id="nego-result"></div>
             </div>
 
