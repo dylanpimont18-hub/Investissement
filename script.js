@@ -649,4 +649,10 @@ document.getElementById('btn-export').addEventListener('click', function() {
         btn.innerText = textInitial;
         btn.disabled = false;
     });
+<<<<<<< Updated upstream
 });
+=======
+});
+
+window.onload = initApp;   
+>>>>>>> Stashed changes
