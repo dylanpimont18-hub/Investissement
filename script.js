@@ -1,6 +1,8 @@
+const CSG_CRDS_RATE = 0.172; // Taux CSG+CRDS sur revenus du capital (2024)
+
 let myChart = null;
 let uploadedPhotos = [];
-let savedProjects = JSON.parse(localStorage.getItem('simuImmoProjects')) || [];
+let savedProjects = (() => { try { return JSON.parse(localStorage.getItem('simuImmoProjects')) || []; } catch(e) { return []; } })();
 
 // --- GESTION DES ONGLETS ET BOUTON EXPORT ---
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -69,9 +71,13 @@ function getCurrentInputs() {
     return data;
 }
 
+let calcTimeout = null;
 function triggerCalculations() {
-    calculateAndSave();
-    calculateVierzonStrategy();
+    clearTimeout(calcTimeout);
+    calcTimeout = setTimeout(() => {
+        calculateAndSave();
+        calculateVierzonStrategy();
+    }, 150);
 }
 
 // ALGORITHME MOTEUR : Calcule le CF Net-Net pour n'importe quelle configuration
@@ -105,7 +111,7 @@ function computeCF(prixVendeur, loyerMensuel, inputs, tmi) {
         }
     }
 
-    const tauxGlobalImpot = (tmi / 100) + 0.172; 
+    const tauxGlobalImpot = (tmi / 100) + CSG_CRDS_RATE;
     let impotsAnnee = 0;
 
     if (inputs['regime'] === 'micro-foncier') {
@@ -113,12 +119,12 @@ function computeCF(prixVendeur, loyerMensuel, inputs, tmi) {
     } else if (inputs['regime'] === 'micro-bic') {
         impotsAnnee = (loyersEncaisses * 0.5) * tauxGlobalImpot;
     } else if (inputs['regime'] === 'reel') {
-        let chargesAnnuees = chargesExploitationAnnuelles + (coutAssuranceMensuel * 12) + inputs['travaux'] + inputs['frais-bancaires'];
+        let chargesAnnuees = chargesExploitationAnnuelles + (coutAssuranceMensuel * 12);
         let revenusNets = loyersEncaisses - chargesAnnuees - interetsAnnee1;
         if (revenusNets > 0) impotsAnnee = revenusNets * tauxGlobalImpot;
         else impotsAnnee = -(Math.min(10700, Math.abs(loyersEncaisses - chargesAnnuees)) * (tmi / 100)); 
     } else if (inputs['regime'] === 'lmnp-reel') {
-        let chargesAnnuees = chargesExploitationAnnuelles + interetsAnnee1 + (coutAssuranceMensuel * 12) + (fraisNotaire + inputs['agence'] + inputs['frais-bancaires']); 
+        let chargesAnnuees = chargesExploitationAnnuelles + interetsAnnee1 + (coutAssuranceMensuel * 12);
         let amortissementTotal = (prixVendeur * 0.85 / 30) + (inputs['meubles'] / 5) + (inputs['travaux'] / 15);
         let resultatComptable = loyersEncaisses - chargesAnnuees - amortissementTotal;
         if(resultatComptable > 0) impotsAnnee = resultatComptable * tauxGlobalImpot;
@@ -158,13 +164,17 @@ function calculateVierzonStrategy() {
     const prixNetVendeur = prixAnnonceFai - inputs['agence'];
     
     let minRent = 1; let maxRent = 10000; let bestRent = 10000;
-    for (let i = 0; i < 40; i++) {
-        let midRent = (minRent + maxRent) / 2;
-        let cf = computeCF(prixNetVendeur, midRent, inputs, tmi);
-        if (cf >= targetCF) { bestRent = midRent; maxRent = midRent; } 
-        else { minRent = midRent; }
+    if (computeCF(prixNetVendeur, maxRent, inputs, tmi) < targetCF) {
+        document.getElementById('vierzon-loyer-min').innerText = 'Impossible 🚫';
+    } else {
+        for (let i = 0; i < 40; i++) {
+            let midRent = (minRent + maxRent) / 2;
+            let cf = computeCF(prixNetVendeur, midRent, inputs, tmi);
+            if (cf >= targetCF) { bestRent = midRent; maxRent = midRent; }
+            else { minRent = midRent; }
+        }
+        document.getElementById('vierzon-loyer-min').innerText = Math.round(bestRent).toLocaleString('fr-FR') + ' €';
     }
-    document.getElementById('vierzon-loyer-min').innerText = Math.round(bestRent).toLocaleString('fr-FR') + ' €';
 }
 
 // Ecouteurs spécifiques à l'onglet Vierzon
@@ -209,7 +219,7 @@ function calculateAndSave() {
 
     // --- PROJECTION SUR 15 ANS ---
     let capitalRestant = montantFinance;
-    const tauxGlobalImpot = (tmi / 100) + 0.172; 
+    const tauxGlobalImpot = (tmi / 100) + CSG_CRDS_RATE;
     let amortissementImmoAnnuel = (prixNet * 0.85) / 30;
     let amortissementMeubles = inputs['meubles'] / 5;
     let amortissementTravaux = inputs['travaux'] / 15;
@@ -422,11 +432,16 @@ function updateColor(id, value) {
 }
 
 function updateChart(credit, charges, impots, cf) {
-    const ctx = document.getElementById('cashflowChart').getContext('2d');
-    const cfDisplay = cf > 0 ? cf : 0; 
+    const cfDisplay = cf > 0 ? cf : 0;
     const textColor = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? '#f5f5f7' : '#1c1e21';
 
-    if (myChart) myChart.destroy();
+    if (myChart) {
+        myChart.data.datasets[0].data = [credit, charges, impots, cfDisplay];
+        myChart.options.plugins.legend.labels.color = textColor;
+        myChart.update();
+        return;
+    }
+    const ctx = document.getElementById('cashflowChart').getContext('2d');
     myChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
@@ -597,16 +612,26 @@ function initApp() {
     if (savedDraft) {
         try {
             const data = JSON.parse(savedDraft);
+            // 1. Peupler les options du select régime avant de restaurer les autres champs
+            if (data['type-location']) {
+                document.getElementById('type-location').value = data['type-location'];
+                document.getElementById('type-location').dispatchEvent(new Event('change'));
+            }
+            // 2. Restaurer tous les autres champs
             for (const id in data) {
+                if (id === 'type-location') continue;
                 const el = document.getElementById(id);
                 if (el) {
                     el.value = data[id];
                     if (id === 'taux-input') document.getElementById('taux-slider').value = data[id];
                 }
             }
+            // 3. Re-setter le régime (les options sont maintenant peuplées)
+            if (data['regime']) document.getElementById('regime').value = data['regime'];
         } catch (e) {}
+    } else {
+        document.getElementById('type-location').dispatchEvent(new Event('change'));
     }
-    document.getElementById('type-location').dispatchEvent(new Event('change'));
 }
 
 document.querySelectorAll('input, select, textarea').forEach(el => el.addEventListener('input', triggerCalculations));
