@@ -318,6 +318,101 @@ function calculateAndSave() {
     document.getElementById('out-mensualite').innerText = mensualiteTotale.toFixed(2);
 
     updateChart(mensualiteTotale, chargesExploitationAnnuelles/12, Math.max(0, firstYearImpots/12), cfNetNet);
+    updateScoreBanner(cfNetNet, rentaNette);
+    updateRegimeComparison(prixNet, inputs, tmi);
+    updateNegoCalc(prixNet, inputs['prix'], inputs, tmi);
+}
+
+function updateScoreBanner(cfNetNet, rentaNette) {
+    let pts = 0;
+    if (cfNetNet >= 300) pts += 3; else if (cfNetNet >= 100) pts += 2; else if (cfNetNet >= 0) pts += 1;
+    if (rentaNette >= 7) pts += 3; else if (rentaNette >= 5) pts += 2; else if (rentaNette >= 3.5) pts += 1;
+
+    let cls, emoji, label, stars;
+    if (pts >= 5)      { cls = 'score-excellent'; emoji = '🏆'; label = 'Excellent'; stars = '★★★'; }
+    else if (pts >= 3) { cls = 'score-bon';       emoji = '👍'; label = 'Bon';       stars = '★★☆'; }
+    else if (pts >= 1) { cls = 'score-moyen';     emoji = '⚠️'; label = 'Moyen';     stars = '★☆☆'; }
+    else               { cls = 'score-risque';    emoji = '🚫'; label = 'Risqué';    stars = '☆☆☆'; }
+
+    const banner = document.getElementById('score-banner');
+    banner.className = 'score-banner ' + cls;
+    document.getElementById('score-emoji').innerText = emoji;
+    document.getElementById('score-label').innerText = label;
+    document.getElementById('score-stars').innerText = stars;
+    const sign = cfNetNet >= 0 ? '+' : '';
+    document.getElementById('score-detail').innerText = `CF ${sign}${Math.round(cfNetNet)} €/mois · Renta nette ${rentaNette.toFixed(1)} %`;
+}
+
+function updateRegimeComparison(prixNet, inputs, tmi) {
+    const typeLocation = inputs['type-location'];
+    const currentRegime = inputs['regime'];
+    const loyer = inputs['loyer'];
+
+    const allRegimes = [
+        { id: 'micro-bic',     label: 'Micro-BIC',     applicable: typeLocation === 'meublee' },
+        { id: 'lmnp-reel',     label: 'LMNP Réel',     applicable: typeLocation === 'meublee' },
+        { id: 'micro-foncier', label: 'Micro-Foncier', applicable: typeLocation === 'nue' },
+        { id: 'reel',          label: 'Foncier Réel',  applicable: typeLocation === 'nue' },
+    ];
+
+    const results = allRegimes.map(r => {
+        const cf = r.applicable ? computeCF(prixNet, loyer, Object.assign({}, inputs, { regime: r.id }), tmi) : null;
+        return { ...r, cf };
+    });
+
+    const bestCF = Math.max(...results.filter(r => r.applicable).map(r => r.cf));
+
+    document.getElementById('regime-compare-grid').innerHTML = results.map(r => {
+        const isBest = r.applicable && r.cf === bestCF;
+        const isCurrent = r.id === currentRegime;
+        let cfHTML = '<span style="color:#8e8e93">N/A</span>';
+        if (r.applicable) {
+            const color = r.cf >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+            cfHTML = `<span style="color:${color}">${r.cf >= 0 ? '+' : ''}${Math.round(r.cf)} €</span>`;
+        }
+        let badge = '';
+        if (isBest) badge = `<div class="regime-badge" style="color:var(--success-color)">✅ Meilleur</div>`;
+        else if (isCurrent) badge = `<div class="regime-badge" style="color:var(--primary-color)">◀ Actuel</div>`;
+        else badge = `<div class="regime-badge">&nbsp;</div>`;
+
+        const cls = ['regime-card', isBest ? 'regime-best' : '', !r.applicable ? 'regime-na' : ''].join(' ').trim();
+        return `<div class="${cls}"><div class="regime-name">${r.label}</div><div class="regime-cf">${cfHTML}</div>${badge}</div>`;
+    }).join('');
+}
+
+function updateNegoCalc(prixNet, prixAffiche, inputs, tmi) {
+    const objectifCF = parseFloat(inputs['objectif-cf']) || 100;
+    const loyer = inputs['loyer'];
+    const resultEl = document.getElementById('nego-result');
+
+    const cfActuel = computeCF(prixNet, loyer, inputs, tmi);
+    if (cfActuel >= objectifCF) {
+        resultEl.innerHTML = `<div class="nego-banner" style="background:rgba(52,199,89,0.12);border:1px solid var(--success-color);color:var(--success-color)">✅ Objectif déjà atteint ! CF actuel : ${cfActuel >= 0 ? '+' : ''}${Math.round(cfActuel)} €/mois</div>`;
+        return;
+    }
+    if (computeCF(1, loyer, inputs, tmi) < objectifCF) {
+        resultEl.innerHTML = `<div class="nego-banner" style="background:rgba(255,59,48,0.1);border:1px solid var(--danger-color);color:var(--danger-color)">🚫 Impossible — même à prix nul, le loyer de ${loyer} €/mois ne permet pas d'atteindre +${objectifCF} €/mois de CF.</div>`;
+        return;
+    }
+
+    let minPrice = 0, maxPrice = prixNet, targetPrixNet = 0;
+    for (let i = 0; i < 40; i++) {
+        const mid = (minPrice + maxPrice) / 2;
+        if (computeCF(mid, loyer, inputs, tmi) >= objectifCF) { targetPrixNet = mid; minPrice = mid; }
+        else { maxPrice = mid; }
+    }
+
+    const negoSupp = prixNet - targetPrixNet;
+    const negoTotal = prixAffiche - targetPrixNet;
+    const negoPct = prixAffiche > 0 ? (negoTotal / prixAffiche) * 100 : 0;
+
+    resultEl.innerHTML = `
+        <div class="nego-banner" style="background:rgba(0,122,255,0.08);border:1px solid var(--primary-color);color:var(--primary-color)">
+            Objectif +${objectifCF} €/mois · CF actuel ${Math.round(cfActuel)} €/mois
+        </div>
+        <div class="nego-row"><span class="nego-key">Négociation supplémentaire à obtenir</span><span class="nego-val" style="color:var(--danger-color)">− ${Math.round(negoSupp).toLocaleString('fr-FR')} €</span></div>
+        <div class="nego-row"><span class="nego-key">Négociation totale sur prix affiché</span><span class="nego-val" style="color:var(--primary-color)">− ${Math.round(negoTotal).toLocaleString('fr-FR')} € (${negoPct.toFixed(1)} %)</span></div>
+        <div class="nego-row"><span class="nego-key">Prix net vendeur cible</span><span class="nego-val">${Math.round(targetPrixNet).toLocaleString('fr-FR')} €</span></div>`;
 }
 
 function updateColor(id, value) {
@@ -359,13 +454,18 @@ document.getElementById('photo-input').addEventListener('change', function(event
             const base64Src = e.target.result;
             uploadedPhotos.push(base64Src);
             const index = uploadedPhotos.length - 1;
-            const photoHTML = `
+            const previewHTML = `
                 <div class="photo-item" id="photo-item-${index}">
                     <img src="${base64Src}">
                     <button class="btn-remove" onclick="removePhoto(${index})">✖</button>
+                    <button class="btn-save-photo" onclick="savePhotoToGallery(${index})" title="Enregistrer dans la galerie">💾</button>
                 </div>`;
-            previewGrid.insertAdjacentHTML('beforeend', photoHTML);
-            exportGrid.insertAdjacentHTML('beforeend', photoHTML);
+            const exportHTML = `
+                <div class="photo-item" id="photo-export-item-${index}">
+                    <img src="${base64Src}">
+                </div>`;
+            previewGrid.insertAdjacentHTML('beforeend', previewHTML);
+            exportGrid.insertAdjacentHTML('beforeend', exportHTML);
         };
         reader.readAsDataURL(file);
     }
@@ -373,12 +473,46 @@ document.getElementById('photo-input').addEventListener('change', function(event
 });
 
 window.removePhoto = function(index) {
-    uploadedPhotos[index] = null; 
-    document.querySelectorAll(`#photo-item-${index}`).forEach(el => el.remove());
+    uploadedPhotos[index] = null;
+    const previewEl = document.getElementById(`photo-item-${index}`);
+    const exportEl = document.getElementById(`photo-export-item-${index}`);
+    if (previewEl) previewEl.remove();
+    if (exportEl) exportEl.remove();
     if (uploadedPhotos.every(p => p === null)) {
         document.getElementById('photos-export-section').style.display = 'none';
-        uploadedPhotos = []; 
+        uploadedPhotos = [];
     }
+};
+
+function dataURLtoBlob(dataURL) {
+    const arr = dataURL.split(',');
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) u8arr[n] = bstr.charCodeAt(n);
+    return new Blob([u8arr], { type: mime });
+}
+
+window.savePhotoToGallery = async function(index) {
+    const src = uploadedPhotos[index];
+    if (!src) return;
+    const fileName = `investpro-photo-${Date.now()}.jpg`;
+    try {
+        const blob = dataURLtoBlob(src);
+        const file = new File([blob], fileName, { type: blob.type });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file], title: 'Photo – Investisseur Pro' });
+            return;
+        }
+    } catch (e) { /* share annulé ou non supporté, on passe au téléchargement */ }
+    // Fallback : téléchargement direct
+    const a = document.createElement('a');
+    a.href = src;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
 };
 
 // --- GESTION DES PROJETS ---
@@ -488,6 +622,8 @@ document.getElementById('btn-export').addEventListener('click', function() {
     window.scrollTo(0, 0);
     const removeBtns = document.querySelectorAll('.btn-remove');
     removeBtns.forEach(btn => btn.style.display = 'none');
+    const saveBtns = document.querySelectorAll('.btn-save-photo');
+    saveBtns.forEach(btn => btn.style.display = 'none');
 
     const element = document.getElementById('export-area');
     const currentName = document.getElementById('project-name').value.trim();
@@ -502,12 +638,14 @@ document.getElementById('btn-export').addEventListener('click', function() {
     };
 
     html2pdf().set(opt).from(element).save().then(() => {
-        removeBtns.forEach(btn => btn.style.display = 'flex');
+        removeBtns.forEach(b => b.style.display = 'flex');
+        saveBtns.forEach(b => b.style.display = 'flex');
         btn.innerText = textInitial;
         btn.disabled = false;
     }).catch(err => {
         console.error("Erreur PDF :", err);
-        removeBtns.forEach(btn => btn.style.display = 'flex');
+        removeBtns.forEach(b => b.style.display = 'flex');
+        saveBtns.forEach(b => b.style.display = 'flex');
         btn.innerText = textInitial;
         btn.disabled = false;
     });
