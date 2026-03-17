@@ -33,11 +33,6 @@ const tauxSlider = document.getElementById('taux-slider');
 tauxInput.addEventListener('input', (e) => { tauxSlider.value = e.target.value; triggerCalculations(); });
 tauxSlider.addEventListener('input', (e) => { tauxInput.value = e.target.value; triggerCalculations(); });
 
-// Sync objectif CF : onglet Saisie ↔ onglet Analyse
-const cfObjTab1 = document.getElementById('objectif-cf');
-const cfObjTab2 = document.getElementById('objectif-cf-results');
-cfObjTab1.addEventListener('input', () => { cfObjTab2.value = cfObjTab1.value; });
-cfObjTab2.addEventListener('input', () => { cfObjTab1.value = cfObjTab2.value; });
 
 document.getElementById('type-bien').addEventListener('change', (e) => {
     document.getElementById('notaire').value = e.target.value === 'ancien' ? 8.0 : 2.5;
@@ -71,7 +66,7 @@ function calculateTMI(revenus, enfants) {
 
 function getCurrentInputs() {
     const data = {};
-    document.querySelectorAll('input:not(#project-name):not([type="file"]):not(#objectif-cf-results), select, textarea').forEach(el => {
+    document.querySelectorAll('input:not(#project-name):not([type="file"]), select, textarea').forEach(el => {
         if (el.id) data[el.id] = (el.type === 'number' || el.type === 'range') ? parseFloat(el.value) || 0 : el.value;
     });
     return data;
@@ -186,6 +181,26 @@ function calculateVierzonStrategy() {
 // Ecouteurs spécifiques à l'onglet Vierzon
 ['vierzon-target-cf', 'vierzon-loyer-estime', 'vierzon-prix-annonce'].forEach(id => {
     document.getElementById(id).addEventListener('input', calculateVierzonStrategy);
+});
+
+// Bouton Simulation
+document.getElementById('btn-simulate').addEventListener('click', () => {
+    calculateAndSave();
+    document.querySelector('[data-target="view-results"]').click();
+});
+
+// Toggle tableau de négociation
+document.getElementById('toggle-pct').addEventListener('click', () => {
+    negoTableMode = 'pct';
+    document.getElementById('toggle-pct').classList.add('active');
+    document.getElementById('toggle-amount').classList.remove('active');
+    triggerCalculations();
+});
+document.getElementById('toggle-amount').addEventListener('click', () => {
+    negoTableMode = 'amount';
+    document.getElementById('toggle-amount').classList.add('active');
+    document.getElementById('toggle-pct').classList.remove('active');
+    triggerCalculations();
 });
 
 // --- ANALYSE & SAUVEGARDE (Onglet 1 et 2) ---
@@ -336,7 +351,7 @@ function calculateAndSave() {
     updateChart(mensualiteTotale, chargesExploitationAnnuelles/12, Math.max(0, firstYearImpots/12), cfNetNet);
     updateScoreBanner(cfNetNet, rentaNette);
     updateRegimeComparison(prixNet, inputs, tmi);
-    updateNegoCalc(prixNet, inputs['prix'], inputs, tmi);
+    updateNegoTable(prixNet, inputs['prix'], inputs, tmi);
 }
 
 function updateScoreBanner(cfNetNet, rentaNette) {
@@ -396,64 +411,46 @@ function updateRegimeComparison(prixNet, inputs, tmi) {
     }).join('');
 }
 
-function updateNegoCalc(prixNet, prixAffiche, inputs, tmi) {
-    const objectifCF = parseFloat(inputs['objectif-cf']) || 100;
+let negoTableMode = 'pct';
+
+function updateNegoTable(prixNet, prixAffiche, inputs, tmi) {
     const loyer = inputs['loyer'];
-    const resultEl = document.getElementById('nego-result');
+    const container = document.getElementById('nego-table-container');
+    if (!container) return;
 
-    const cfActuel = computeCF(prixNet, loyer, inputs, tmi);
-    if (cfActuel >= objectifCF) {
-        resultEl.innerHTML = `<div class="nego-banner" style="background:rgba(52,199,89,0.12);border:1px solid var(--success-color);color:var(--success-color)">✅ Objectif déjà atteint ! CF actuel : ${cfActuel >= 0 ? '+' : ''}${Math.round(cfActuel)} €/mois</div>`;
-        return;
+    let rows = [];
+    if (negoTableMode === 'pct') {
+        for (let pct = 0; pct <= 25; pct++) {
+            const prix = prixAffiche * (1 - pct / 100);
+            const cf = computeCF(prix, loyer, inputs, tmi);
+            rows.push({ col1: pct + ' %', col2: Math.round(prixAffiche * pct / 100).toLocaleString('fr-FR') + ' €', prix: Math.round(prix), cf });
+        }
+    } else {
+        const maxNego = Math.ceil(prixAffiche * 0.25 / 1000) * 1000;
+        for (let neg = 0; neg <= maxNego; neg += 1000) {
+            const prix = prixAffiche - neg;
+            const pct = prixAffiche > 0 ? (neg / prixAffiche * 100).toFixed(1) : '0.0';
+            const cf = computeCF(prix, loyer, inputs, tmi);
+            rows.push({ col1: neg.toLocaleString('fr-FR') + ' €', col2: pct + ' %', prix: Math.round(prix), cf });
+        }
     }
-    if (computeCF(1, loyer, inputs, tmi) < objectifCF) {
-        resultEl.innerHTML = `<div class="nego-banner" style="background:rgba(255,59,48,0.1);border:1px solid var(--danger-color);color:var(--danger-color)">🚫 Impossible — même à prix nul, le loyer de ${loyer} €/mois ne permet pas d'atteindre +${objectifCF} €/mois de CF.</div>`;
-        return;
-    }
 
-    let minPrice = 0, maxPrice = prixNet, targetPrixNet = 0;
-    for (let i = 0; i < 40; i++) {
-        const mid = (minPrice + maxPrice) / 2;
-        if (computeCF(mid, loyer, inputs, tmi) >= objectifCF) { targetPrixNet = mid; minPrice = mid; }
-        else { maxPrice = mid; }
-    }
-
-    const negoSupp = prixNet - targetPrixNet;
-    const negoTotal = prixAffiche - targetPrixNet;
-    const negoPct = prixAffiche > 0 ? (negoTotal / prixAffiche) * 100 : 0;
-
-    // Tableau de sensibilité : CF à différents niveaux de négociation
-    const rows = [
-        { label: '0 %',                              prix: prixAffiche        },
-        { label: '−3 %',                             prix: prixAffiche * 0.97 },
-        { label: '−5 %',                             prix: prixAffiche * 0.95 },
-        { label: `−${negoPct.toFixed(1)} % ← cible`, prix: targetPrixNet, target: true },
-        { label: '−10 %',                            prix: prixAffiche * 0.90 },
-    ];
-    rows.sort((a, b) => b.prix - a.prix);
-
-    let tableHTML = `<table class="sensitivity-table">
-        <thead><tr><th>Négociation</th><th>Prix vendeur</th><th>CF net-net</th></tr></thead><tbody>`;
+    const th2 = negoTableMode === 'pct' ? 'Montant' : '%';
+    let html = `<table class="nego-table">
+        <thead><tr><th>Négociation</th><th>${th2}</th><th>Prix vendeur</th><th>CF net-net / mois</th></tr></thead><tbody>`;
     rows.forEach(row => {
-        const cf = computeCF(row.prix, loyer, inputs, tmi);
-        const cfColor = cf >= objectifCF ? 'var(--success-color)' : (cf >= 0 ? 'var(--text-color)' : 'var(--danger-color)');
-        const sign = cf >= 0 ? '+' : '';
-        tableHTML += `<tr class="${row.target ? 'sensitivity-target' : ''}">
-            <td>${row.label}</td>
-            <td>${Math.round(row.prix).toLocaleString('fr-FR')} €</td>
-            <td style="color:${cfColor}">${sign}${Math.round(cf)} €/mois</td>
+        const isCurrent = Math.abs(row.prix - prixNet) < 1;
+        const cfColor = row.cf >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+        const sign = row.cf >= 0 ? '+' : '';
+        html += `<tr class="${isCurrent ? 'nego-row-current' : ''}">
+            <td>${row.col1}</td>
+            <td style="color:#8e8e93">${row.col2}</td>
+            <td>${row.prix.toLocaleString('fr-FR')} €</td>
+            <td style="color:${cfColor};font-weight:600">${sign}${Math.round(row.cf)} €</td>
         </tr>`;
     });
-    tableHTML += '</tbody></table>';
-
-    resultEl.innerHTML = `
-        <div class="nego-banner" style="background:rgba(0,122,255,0.08);border:1px solid var(--primary-color);color:var(--primary-color)">
-            CF actuel : ${Math.round(cfActuel)} €/mois · Objectif : +${objectifCF} €/mois
-        </div>
-        <div class="nego-row"><span class="nego-key">Négociation supplémentaire à obtenir</span><span class="nego-val" style="color:var(--danger-color)">− ${Math.round(negoSupp).toLocaleString('fr-FR')} €</span></div>
-        <div class="nego-row"><span class="nego-key">Négociation totale sur prix affiché</span><span class="nego-val" style="color:var(--primary-color)">− ${Math.round(negoTotal).toLocaleString('fr-FR')} € (${negoPct.toFixed(1)} %)</span></div>
-        <div class="nego-row"><span class="nego-key">Prix net vendeur cible</span><span class="nego-val">${Math.round(targetPrixNet).toLocaleString('fr-FR')} €</span></div>
-        ${tableHTML}`;
+    html += '</tbody></table>';
+    container.innerHTML = html;
 }
 
 function updateColor(id, value) {
@@ -663,8 +660,6 @@ function initApp() {
     } else {
         document.getElementById('type-location').dispatchEvent(new Event('change'));
     }
-    // Sync objectif CF vers l'onglet Analyse
-    document.getElementById('objectif-cf-results').value = document.getElementById('objectif-cf').value;
 }
 
 document.querySelectorAll('input, select, textarea').forEach(el => el.addEventListener('input', triggerCalculations));

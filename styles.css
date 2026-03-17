@@ -125,6 +125,23 @@ textarea { width: 100%; margin-top: 10px; padding: 12px; border: 1px solid var(-
 .sensitivity-table tr.sensitivity-target { background: rgba(0,122,255,0.07); }
 .sensitivity-table tr.sensitivity-target td { font-weight: 700; }
 
+/* ===== BOUTON SIMULATION ===== */
+.btn-simulate { display: block; width: 100%; padding: 16px; background: var(--primary-color); color: white; border: none; border-radius: var(--border-radius); font-size: 1.1rem; font-weight: 700; cursor: pointer; margin-top: 20px; letter-spacing: 0.02em; transition: opacity 0.2s; }
+.btn-simulate:hover { opacity: 0.85; }
+
+/* ===== TABLEAU DE NÉGOCIATION ===== */
+.table-toggle { display: flex; border: 1px solid var(--border-color); border-radius: 10px; overflow: hidden; margin-bottom: 14px; }
+.table-toggle-btn { flex: 1; padding: 9px 12px; border: none; background: transparent; color: #8e8e93; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: background 0.15s, color 0.15s; }
+.table-toggle-btn.active { background: var(--primary-color); color: white; }
+.nego-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; min-width: 380px; }
+.nego-table th { color: #8e8e93; font-weight: 500; padding: 8px 10px; border-bottom: 2px solid var(--border-color); text-align: right; position: sticky; top: 0; background: var(--card-bg); z-index: 1; }
+.nego-table th:first-child { text-align: left; }
+.nego-table td { padding: 9px 10px; border-bottom: 1px solid var(--border-color); text-align: right; }
+.nego-table td:first-child { text-align: left; font-weight: 600; }
+.nego-table tr:last-child td { border-bottom: none; }
+.nego-table tr.nego-row-current { background: rgba(0,122,255,0.08); }
+.nego-table tr.nego-row-current td:first-child::after { content: ' ◀ actuel'; font-size: 0.75rem; color: var(--primary-color); font-weight: 700; }
+
 /* ===== MOBILE RESPONSIVE ===== */
 @media (max-width: 640px) {
     body { padding-bottom: 60px; }
@@ -194,6 +211,12 @@ textarea { width: 100%; margin-top: 10px; padding: 12px; border: 1px solid var(-
     .nego-input-row { flex-direction: column; align-items: flex-start; gap: 8px; }
     .sensitivity-table { font-size: 0.78rem; }
     .sensitivity-table th, .sensitivity-table td { padding: 6px 4px; }
+
+    /* Bouton simulation */
+    .btn-simulate { font-size: 1rem; padding: 14px; }
+    /* Tableau de négociation */
+    .nego-table { font-size: 0.78rem; min-width: 320px; }
+    .nego-table th, .nego-table td { padding: 7px 6px; }
 
     /* Onglet Vierzon */
     .vierzon-cf-row { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; }

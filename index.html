@@ -81,7 +81,6 @@
                         <label>Assur. PNO/an (€) <input type="number" inputmode="numeric" id="pno" value="150"></label>
                         <label>Vacance locative (%) <input type="number" inputmode="decimal" step="0.1" id="vacance" value="5"></label>
                         <label>Frais de gestion (%) <input type="number" inputmode="decimal" step="0.1" id="gestion" value="7"></label>
-                        <label>Objectif CF net-net (€/mois) <input type="number" inputmode="numeric" id="objectif-cf" value="100"></label>
                     </div>
                 </details>
 
@@ -113,6 +112,7 @@
                     </div>
                 </details>
             </div>
+            <button type="button" id="btn-simulate" class="btn-simulate">🚀 Lancer la Simulation</button>
         </form>
     </div>
 
@@ -173,17 +173,15 @@
                 <div id="regime-compare-grid" class="regime-compare-grid"></div>
             </div>
 
-            <!-- Calcul de négociation -->
+            <!-- Simulation de négociation -->
             <div class="card" style="margin-top: 20px; text-align: left;">
-                <h3 style="margin-bottom: 12px;">🤝 Calcul de Négociation</h3>
-                <div class="nego-input-row">
-                    <label for="objectif-cf-results" style="margin:0; font-weight:600; font-size:0.95rem;">🎯 Objectif CF net-net</label>
-                    <div class="input-with-unit">
-                        <input type="number" id="objectif-cf-results" placeholder="100" step="10" style="width:90px;">
-                        <span style="color:#8e8e93; font-size:0.9rem; white-space:nowrap;">€/mois</span>
-                    </div>
+                <h3 style="margin-bottom: 8px;">📉 Impact de la Négociation sur le CF</h3>
+                <p class="subtitle" style="margin-bottom: 14px;">CF net-net mensuel selon le niveau de négociation sur le prix affiché.</p>
+                <div class="table-toggle">
+                    <button type="button" class="table-toggle-btn active" id="toggle-pct">Par % (0 → 25 %)</button>
+                    <button type="button" class="table-toggle-btn" id="toggle-amount">Par 1 000 €</button>
                 </div>
-                <div id="nego-result"></div>
+                <div id="nego-table-container" style="overflow-x: auto; max-height: 440px; overflow-y: auto;"></div>
             </div>
 
             <div class="card" style="margin-top: 20px; overflow-x: auto; text-align: left;">
