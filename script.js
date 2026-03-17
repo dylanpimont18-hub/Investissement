@@ -197,7 +197,7 @@ document.getElementById('toggle-pct').addEventListener('click', () => {
     triggerCalculations();
 });
 document.getElementById('toggle-amount').addEventListener('click', () => {
-    negoTableMode = 'amount';
+    negoTableMode = 'regimes';
     document.getElementById('toggle-amount').classList.add('active');
     document.getElementById('toggle-pct').classList.remove('active');
     triggerCalculations();
@@ -418,26 +418,47 @@ function updateNegoTable(prixNet, prixAffiche, inputs, tmi) {
     const container = document.getElementById('nego-table-container');
     if (!container) return;
 
-    let rows = [];
-    if (negoTableMode === 'pct') {
+    if (negoTableMode === 'regimes') {
+        const typeLocation = inputs['type-location'];
+        const regimes = typeLocation === 'nue'
+            ? [{ id: 'micro-foncier', label: 'Micro-Foncier' }, { id: 'reel', label: 'Foncier Réel' }]
+            : [{ id: 'micro-bic', label: 'Micro-BIC' }, { id: 'lmnp-reel', label: 'LMNP Réel' }];
+
+        let html = `<table class="nego-table">
+            <thead><tr>
+                <th>Négo.</th>
+                <th>Prix vendeur</th>
+                ${regimes.map(r => `<th style="color:var(--primary-color)">${r.label}</th>`).join('')}
+            </tr></thead><tbody>`;
+
         for (let pct = 0; pct <= 25; pct++) {
             const prix = prixAffiche * (1 - pct / 100);
-            const cf = computeCF(prix, loyer, inputs, tmi);
-            rows.push({ col1: pct + ' %', col2: Math.round(prixAffiche * pct / 100).toLocaleString('fr-FR') + ' €', prix: Math.round(prix), cf });
+            const isCurrent = Math.abs(prix - prixNet) < 1;
+            html += `<tr class="${isCurrent ? 'nego-row-current' : ''}">
+                <td>${pct} %</td>
+                <td style="color:#8e8e93">${Math.round(prix).toLocaleString('fr-FR')} €</td>
+                ${regimes.map(r => {
+                    const cf = computeCF(prix, loyer, Object.assign({}, inputs, { regime: r.id }), tmi);
+                    const color = cf >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+                    const sign = cf >= 0 ? '+' : '';
+                    return `<td style="color:${color};font-weight:600">${sign}${Math.round(cf)} €</td>`;
+                }).join('')}
+            </tr>`;
         }
-    } else {
-        const maxNego = Math.ceil(prixAffiche * 0.25 / 1000) * 1000;
-        for (let neg = 0; neg <= maxNego; neg += 1000) {
-            const prix = prixAffiche - neg;
-            const pct = prixAffiche > 0 ? (neg / prixAffiche * 100).toFixed(1) : '0.0';
-            const cf = computeCF(prix, loyer, inputs, tmi);
-            rows.push({ col1: neg.toLocaleString('fr-FR') + ' €', col2: pct + ' %', prix: Math.round(prix), cf });
-        }
+        html += '</tbody></table>';
+        container.innerHTML = html;
+        return;
     }
 
-    const th2 = negoTableMode === 'pct' ? 'Montant' : '%';
+    let rows = [];
+    for (let pct = 0; pct <= 25; pct++) {
+        const prix = prixAffiche * (1 - pct / 100);
+        const cf = computeCF(prix, loyer, inputs, tmi);
+        rows.push({ col1: pct + ' %', col2: Math.round(prixAffiche * pct / 100).toLocaleString('fr-FR') + ' €', prix: Math.round(prix), cf });
+    }
+
     let html = `<table class="nego-table">
-        <thead><tr><th>Négociation</th><th>${th2}</th><th>Prix vendeur</th><th>CF net-net / mois</th></tr></thead><tbody>`;
+        <thead><tr><th>Négociation</th><th>Montant</th><th>Prix vendeur</th><th>CF net-net / mois</th></tr></thead><tbody>`;
     rows.forEach(row => {
         const isCurrent = Math.abs(row.prix - prixNet) < 1;
         const cfColor = row.cf >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
@@ -665,6 +686,17 @@ function initApp() {
 document.querySelectorAll('input, select, textarea').forEach(el => el.addEventListener('input', triggerCalculations));
 window.onload = initApp;
 
+// --- MODAL RÉGIMES FISCAUX ---
+window.openRegimeModal = function() {
+    document.getElementById('modal-regimes').classList.add('open');
+    document.body.style.overflow = 'hidden';
+};
+window.closeRegimeModal = function(overlay, event) {
+    if (overlay && event && event.target !== overlay) return;
+    document.getElementById('modal-regimes').classList.remove('open');
+    document.body.style.overflow = '';
+};
+
 // Export PDF
 document.getElementById('btn-export').addEventListener('click', function() {
     const btn = this;
@@ -677,6 +709,8 @@ document.getElementById('btn-export').addEventListener('click', function() {
     removeBtns.forEach(btn => btn.style.display = 'none');
     const saveBtns = document.querySelectorAll('.btn-save-photo');
     saveBtns.forEach(btn => btn.style.display = 'none');
+    const infoBtns = document.querySelectorAll('.btn-info-regime');
+    infoBtns.forEach(btn => btn.style.display = 'none');
 
     const element = document.getElementById('export-area');
     const currentName = document.getElementById('project-name').value.trim();
@@ -693,12 +727,14 @@ document.getElementById('btn-export').addEventListener('click', function() {
     html2pdf().set(opt).from(element).save().then(() => {
         removeBtns.forEach(b => b.style.display = 'flex');
         saveBtns.forEach(b => b.style.display = 'flex');
+        infoBtns.forEach(b => b.style.display = '');
         btn.innerText = textInitial;
         btn.disabled = false;
     }).catch(err => {
         console.error("Erreur PDF :", err);
         removeBtns.forEach(b => b.style.display = 'flex');
         saveBtns.forEach(b => b.style.display = 'flex');
+        infoBtns.forEach(b => b.style.display = '');
         btn.innerText = textInitial;
         btn.disabled = false;
     });

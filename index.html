@@ -96,7 +96,12 @@
                                 <option value="nue">Nue</option>
                             </select>
                         </label>
-                        <label>Régime fiscal <select id="regime"></select></label>
+                        <label>Régime fiscal
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <select id="regime"></select>
+                                <button type="button" class="btn-info-regime" onclick="openRegimeModal()" title="Détails des régimes fiscaux">i</button>
+                            </div>
+                        </label>
                     </div>
                 </details>
 
@@ -168,7 +173,10 @@
 
             <!-- Comparaison des régimes fiscaux -->
             <div class="card" style="margin-top: 20px; text-align: left;">
-                <h3 style="margin-bottom: 15px;">⚖️ Comparaison des Régimes Fiscaux</h3>
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:15px;">
+                    <h3>⚖️ Comparaison des Régimes Fiscaux</h3>
+                    <button type="button" class="btn-info-regime" onclick="openRegimeModal()" title="Détails des régimes fiscaux">i</button>
+                </div>
                 <p class="subtitle" style="margin-bottom: 15px;">CF net-net mensuel estimé pour chaque régime avec vos paramètres actuels.</p>
                 <div id="regime-compare-grid" class="regime-compare-grid"></div>
             </div>
@@ -179,7 +187,7 @@
                 <p class="subtitle" style="margin-bottom: 14px;">CF net-net mensuel selon le niveau de négociation sur le prix affiché.</p>
                 <div class="table-toggle">
                     <button type="button" class="table-toggle-btn active" id="toggle-pct">Par % (0 → 25 %)</button>
-                    <button type="button" class="table-toggle-btn" id="toggle-amount">Par 1 000 €</button>
+                    <button type="button" class="table-toggle-btn" id="toggle-amount">Par Régime Fiscal</button>
                 </div>
                 <div id="nego-table-container" style="overflow-x: auto; max-height: 440px; overflow-y: auto;"></div>
             </div>
@@ -263,6 +271,65 @@
         <p style="text-align: center; font-size: 0.85rem; color: #8e8e93; margin-top: 20px;">* Ces calculs utilisent l'apport, les taux, la durée et les impôts définis dans l'onglet Saisie.</p>
     </div>
 
+</div>
+
+<!-- Modal Régimes Fiscaux -->
+<div id="modal-regimes" class="modal-overlay" onclick="closeRegimeModal(this, event)">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>⚖️ Les 4 Régimes Fiscaux</h2>
+            <button type="button" class="modal-close" onclick="closeRegimeModal(null, null)" title="Fermer">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="regime-info-card micro-bic">
+                <div class="regime-info-title">📦 Micro-BIC</div>
+                <div class="regime-info-subtitle">Location meublée · Revenus bruts &lt; 77 700 €/an</div>
+                <p>Abattement forfaitaire de <strong>50 %</strong> sur les loyers encaissés. Seuls les <strong>50 % restants</strong> sont imposés à votre TMI + CSG/CRDS (17,2 %).</p>
+                <ul>
+                    <li>✅ Aucune comptabilité, déclaration simplifiée</li>
+                    <li>✅ Abattement garanti même si vos charges réelles sont faibles</li>
+                    <li>❌ Impossible de déduire les intérêts d'emprunt ou les charges réelles</li>
+                    <li>❌ Moins avantageux si vos charges dépassent 50 % des loyers</li>
+                </ul>
+            </div>
+            <div class="regime-info-card lmnp-reel">
+                <div class="regime-info-title">🏗️ LMNP Réel</div>
+                <div class="regime-info-subtitle">Location meublée · Statut LMNP (Loueur Meublé Non Professionnel)</div>
+                <p>Déduction de <strong>toutes les charges réelles</strong> (intérêts, copro, assurances…) + <strong>amortissement comptable</strong> du bien (bâti 85 % / 30 ans), du mobilier (5 ans) et des travaux (15 ans).</p>
+                <ul>
+                    <li>✅ Souvent zéro impôt grâce aux amortissements</li>
+                    <li>✅ Déficits reportables indéfiniment sur les BIC meublés</li>
+                    <li>✅ Idéal pour les gros investissements avec crédit</li>
+                    <li>❌ Expert-comptable obligatoire (~600–900 €/an)</li>
+                    <li>❌ Amortissements réintégrés au calcul de la plus-value à la revente</li>
+                </ul>
+            </div>
+            <div class="regime-info-card micro-foncier">
+                <div class="regime-info-title">🏠 Micro-Foncier</div>
+                <div class="regime-info-subtitle">Location nue · Revenus fonciers bruts &lt; 15 000 €/an</div>
+                <p>Abattement forfaitaire de <strong>30 %</strong> sur les loyers. Les <strong>70 % restants</strong> sont imposés à votre TMI + CSG/CRDS (17,2 %).</p>
+                <ul>
+                    <li>✅ Simple, pas de comptabilité</li>
+                    <li>✅ Suffisant si peu de charges et petit patrimoine</li>
+                    <li>❌ Abattement limité à 30 % (moins qu'en LMNP)</li>
+                    <li>❌ Pas de déduction des charges réelles si elles dépassent 30 %</li>
+                    <li>❌ Pas de déduction des intérêts d'emprunt</li>
+                </ul>
+            </div>
+            <div class="regime-info-card foncier-reel">
+                <div class="regime-info-title">📋 Foncier Réel</div>
+                <div class="regime-info-subtitle">Location nue · Revenus fonciers &gt; 15 000 € ou sur option libre</div>
+                <p>Déduction de <strong>toutes les charges réelles</strong> : intérêts d'emprunt, travaux, charges de copro, assurances PNO, taxe foncière… Le déficit foncier est imputable sur le revenu global à hauteur de <strong>10 700 €/an</strong>, le reste est reportable 10 ans.</p>
+                <ul>
+                    <li>✅ Très puissant avec d'importants travaux ou un gros crédit</li>
+                    <li>✅ Déficit déductible du revenu global (économie d'IR immédiate)</li>
+                    <li>✅ Permet de "gommer" des revenus fonciers d'autres biens</li>
+                    <li>❌ Pas d'amortissement du bâti (contrairement au LMNP réel)</li>
+                    <li>❌ Comptabilité à tenir, déclaration 2044</li>
+                </ul>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script src="script.js"></script>
