@@ -636,6 +636,16 @@ window.closeRegimeModal = function(overlay, event) {
     document.body.style.overflow = '';
 };
 
+window.openDeductiblesModal = function() {
+    document.getElementById('modal-deductibles').classList.add('open');
+    document.body.style.overflow = 'hidden';
+};
+window.closeDeductiblesModal = function(overlay, event) {
+    if (overlay && event && event.target !== overlay) return;
+    document.getElementById('modal-deductibles').classList.remove('open');
+    document.body.style.overflow = '';
+};
+
 // Export PDF
 document.getElementById('btn-export').addEventListener('click', function() {
     const btn = this;
@@ -643,38 +653,270 @@ document.getElementById('btn-export').addEventListener('click', function() {
     btn.innerText = "⏳ Génération...";
     btn.disabled = true;
 
-    window.scrollTo(0, 0);
-    const removeBtns = document.querySelectorAll('.btn-remove');
-    removeBtns.forEach(btn => btn.style.display = 'none');
-    const saveBtns = document.querySelectorAll('.btn-save-photo');
-    saveBtns.forEach(btn => btn.style.display = 'none');
-    const infoBtns = document.querySelectorAll('.btn-info-regime');
-    infoBtns.forEach(btn => btn.style.display = 'none');
+    // --- Collecte des données depuis le DOM ---
+    const projectName = document.getElementById('project-name').value.trim() || 'Investissement';
+    const today = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
 
-    const element = document.getElementById('export-area');
-    const currentName = document.getElementById('project-name').value.trim();
-    const pdfFilename = currentName ? `Rapport-${currentName.replace(/\s+/g, '-')}.pdf` : 'Rapport-InvestPro.pdf';
+    // Score
+    const scoreBanner = document.getElementById('score-banner');
+    const scoreClass   = scoreBanner.className;
+    const scoreLabel   = document.getElementById('score-label').innerText;
+    const scoreStars   = document.getElementById('score-stars').innerText;
+    const scoreDetail  = document.getElementById('score-detail').innerText;
 
-    const opt = {
-        margin:       10,
-        filename:     pdfFilename,
-        image:        { type: 'jpeg', quality: 0.95 },
-        html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
+    // KPIs
+    const rentaBrute  = document.getElementById('renta-brute').innerText;
+    const rentaNette  = document.getElementById('renta-nette').innerText;
+    const rentaNetnet = document.getElementById('renta-netnet').innerText;
+    const cfNetnetEl  = document.getElementById('cf-netnet');
+    const cfNetnet    = cfNetnetEl.innerText;
+    const cfIsNeg     = cfNetnetEl.classList.contains('negative');
 
-    html2pdf().set(opt).from(element).save().then(() => {
-        removeBtns.forEach(b => b.style.display = 'flex');
-        saveBtns.forEach(b => b.style.display = 'flex');
-        infoBtns.forEach(b => b.style.display = '');
+    // Résumé
+    const outPrixNet    = document.getElementById('out-prix-net').innerText;
+    const outFraisFixes = document.getElementById('out-frais-fixes').innerText;
+    const outCoutTotal  = document.getElementById('out-cout-total').innerText;
+    const outFinancement= document.getElementById('out-financement').innerText;
+    const outMensualite = document.getElementById('out-mensualite').innerText;
+
+    // Chart → image
+    const chartCanvas = document.getElementById('cashflowChart');
+    const chartImg = chartCanvas ? chartCanvas.toDataURL('image/png') : null;
+
+    // Régimes (HTML du grid existant)
+    const regimeHTML = document.getElementById('regime-compare-grid').innerHTML;
+
+    // Négociation (HTML du tableau existant, sans contrainte de hauteur)
+    const negoHTML = document.getElementById('nego-table-container').innerHTML;
+
+    // Projection (corps du tableau)
+    const projHTML = document.getElementById('projection-tbody').innerHTML;
+
+    // Notes
+    const notesEl  = document.getElementById('commentaires-display');
+    const notesText = notesEl ? notesEl.innerText.trim() : '';
+    const hasNotes  = notesText !== '';
+
+    // Photos
+    const activePhotos = (typeof uploadedPhotos !== 'undefined') ? uploadedPhotos.filter(p => p) : [];
+    const hasPhotos = activePhotos.length > 0;
+    const photosHTML = activePhotos.map(p => `<img src="${p}" class="photo-img">`).join('');
+
+    // Couleurs du score
+    let scoreBg = '#fff8e6', scoreBorder = '#ffc107', scoreColor = '#856404';
+    if (scoreClass.includes('score-excellent')) { scoreBg = '#eafaf0'; scoreBorder = '#34c759'; scoreColor = '#1a6e28'; }
+    else if (scoreClass.includes('score-bon'))  { scoreBg = '#e8f0ff'; scoreBorder = '#007aff'; scoreColor = '#004a99'; }
+    else if (scoreClass.includes('score-risque')){ scoreBg = '#fde8e8'; scoreBorder = '#ff3b30'; scoreColor = '#8b0000'; }
+
+    // --- Construction du HTML d'impression ---
+    const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Rapport – ${projectName}</title>
+<style>
+  :root {
+    --primary-color: #007aff;
+    --success-color: #34c759;
+    --danger-color:  #ff3b30;
+    --gold-color:    #d4af37;
+  }
+  @page { size: A4; margin: 14mm 15mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 10.5px; color: #1c1e21; background: #fff; }
+
+  /* ── Header ── */
+  .rpt-header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #007aff; padding-bottom: 9px; margin-bottom: 13px; }
+  .rpt-title  { font-size: 19px; font-weight: 800; color: #007aff; letter-spacing: -0.3px; }
+  .rpt-sub    { font-size: 10px; color: #8e8e93; margin-top: 2px; }
+  .rpt-date   { font-size: 9.5px; color: #8e8e93; text-align: right; }
+
+  /* ── Score banner ── */
+  .score-banner { display: flex; justify-content: space-between; align-items: center; padding: 9px 13px; border-radius: 10px; border: 1.5px solid ${scoreBorder}; background: ${scoreBg}; margin-bottom: 12px; }
+  .score-left { font-size: 13px; font-weight: 700; color: ${scoreColor}; display: flex; align-items: center; gap: 6px; }
+  .score-right { font-size: 10.5px; font-weight: 600; color: ${scoreColor}; }
+
+  /* ── KPI grid ── */
+  .kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 9px; margin-bottom: 12px; }
+  .kpi-card { border: 1px solid #e5e5ea; border-radius: 10px; padding: 9px 11px; text-align: center; }
+  .kpi-card.gold { border-top: 3px solid #ff9500; }
+  .kpi-card.blue { border-top: 3px solid #007aff; }
+  .kpi-lbl { font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; color: #8e8e93; margin-bottom: 4px; }
+  .kpi-val { font-size: 19px; font-weight: 800; }
+  .kpi-val.neg { color: #ff3b30; }
+  .kpi-val.pos { color: #34c759; }
+  .kpi-s   { font-size: 7.5px; color: #8e8e93; margin-top: 2px; }
+
+  /* ── Résumé + chart ── */
+  .summary-row { display: flex; gap: 12px; margin-bottom: 12px; }
+  .summary-box { flex: 1; border: 1px solid #e5e5ea; border-radius: 10px; padding: 11px 13px; }
+  .summary-box h3 { font-size: 11px; font-weight: 700; margin-bottom: 9px; }
+  .summary-box ul { list-style: none; }
+  .summary-box li { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #f2f2f7; font-size: 9.5px; }
+  .summary-box li:last-child { border-bottom: none; }
+  .summary-box li strong { font-weight: 700; }
+  .total-line strong { color: #007aff; }
+  .chart-box { width: 150px; flex-shrink: 0; border: 1px solid #e5e5ea; border-radius: 10px; padding: 10px; display: flex; align-items: center; justify-content: center; }
+  .chart-box img { width: 124px; height: 124px; object-fit: contain; }
+
+  /* ── Section card ── */
+  .card { border: 1px solid #e5e5ea; border-radius: 10px; padding: 11px 13px; margin-bottom: 12px; page-break-inside: avoid; }
+  .card h3 { font-size: 11px; font-weight: 700; margin-bottom: 6px; }
+  .card-sub { font-size: 8.5px; color: #8e8e93; margin-bottom: 9px; }
+
+  /* ── Régimes grid ── */
+  .regime-compare-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px,1fr)); gap: 8px; }
+  .regime-card { border: 1px solid #e5e5ea; border-radius: 8px; padding: 8px; text-align: center; }
+  .regime-best { border-color: #34c759; }
+  .regime-name { font-size: 7.5px; text-transform: uppercase; color: #8e8e93; letter-spacing: 0.4px; margin-bottom: 4px; }
+  .regime-cf   { font-size: 15px; font-weight: 800; margin-bottom: 3px; }
+  .regime-badge { font-size: 8px; color: #8e8e93; }
+
+  /* ── Tables (négociation + projection) ── */
+  table { width: 100%; border-collapse: collapse; font-size: 9.5px; }
+  thead tr { background: #f2f2f7; }
+  th { padding: 5px 8px; text-align: left; font-size: 8px; text-transform: uppercase; color: #8e8e93; letter-spacing: 0.4px; font-weight: 600; white-space: nowrap; }
+  td { padding: 4.5px 8px; border-bottom: 1px solid #f2f2f7; }
+  tr { page-break-inside: avoid; }
+  tr:last-child td { border-bottom: none; }
+  .nego-row-current { background: #edf5ff; }
+  .nego-row-current td:first-child { font-weight: 700; color: #007aff; }
+
+  /* ── Saut de page ── */
+  .page-break { page-break-before: always; }
+
+  /* ── Photos ── */
+  .photo-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+  .photo-img { width: calc(50% - 5px); height: 170px; object-fit: cover; border-radius: 8px; }
+
+  /* ── Notes ── */
+  .notes-text { white-space: pre-wrap; font-size: 10px; line-height: 1.65; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="rpt-header">
+  <div>
+    <div class="rpt-title">Investisseur Pro</div>
+    <div class="rpt-sub">${projectName}</div>
+  </div>
+  <div class="rpt-date">Rapport généré le ${today}</div>
+</div>
+
+<!-- SCORE -->
+<div class="score-banner">
+  <div class="score-left">${scoreLabel} &nbsp; ${scoreStars}</div>
+  <div class="score-right">${scoreDetail}</div>
+</div>
+
+<!-- KPIs -->
+<div class="kpi-grid">
+  <div class="kpi-card">
+    <div class="kpi-lbl">Rentabilité Brute</div>
+    <div class="kpi-val">${rentaBrute}</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-lbl">Rentabilité Nette</div>
+    <div class="kpi-val">${rentaNette}</div>
+  </div>
+  <div class="kpi-card gold">
+    <div class="kpi-lbl">Renta. Nette-Nette</div>
+    <div class="kpi-val">${rentaNetnet}</div>
+    <div class="kpi-s">Après Impôts</div>
+  </div>
+  <div class="kpi-card blue">
+    <div class="kpi-lbl">Cash-Flow Net-Net</div>
+    <div class="kpi-val ${cfIsNeg ? 'neg' : 'pos'}">${cfNetnet}</div>
+    <div class="kpi-s">Dans votre poche / mois</div>
+  </div>
+</div>
+
+<!-- RÉSUMÉ + CHART -->
+<div class="summary-row">
+  <div class="summary-box">
+    <h3>Résumé de l'Enveloppe</h3>
+    <ul>
+      <li><span>Prix net vendeur estimé</span><strong>${outPrixNet} €</strong></li>
+      <li><span>Frais fixes (Notaire, Travaux…)</span><strong>${outFraisFixes} €</strong></li>
+      <li class="total-line"><span>Coût total de l'opération</span><strong>${outCoutTotal} €</strong></li>
+      <li><span>Montant de l'emprunt</span><strong>${outFinancement} €</strong></li>
+      <li><span>Mensualité de crédit</span><strong>${outMensualite} €</strong></li>
+    </ul>
+  </div>
+  ${chartImg ? `<div class="chart-box"><img src="${chartImg}" alt="Répartition CF"></div>` : ''}
+</div>
+
+<!-- RÉGIMES -->
+<div class="card">
+  <h3>⚖️ Comparaison des Régimes Fiscaux</h3>
+  <div class="card-sub">CF net-net mensuel estimé pour chaque régime avec vos paramètres actuels.</div>
+  <div class="regime-compare-grid">${regimeHTML}</div>
+</div>
+
+<!-- SAUT DE PAGE → Négociation -->
+<div class="page-break"></div>
+
+<!-- NÉGOCIATION -->
+<div class="card" style="page-break-inside: auto;">
+  <h3>📉 Impact de la Négociation sur le CF</h3>
+  <div class="card-sub">CF net-net mensuel selon le niveau de négociation sur le prix affiché (0 → 25 %).</div>
+  ${negoHTML}
+</div>
+
+<!-- SAUT DE PAGE → Projection -->
+<div class="page-break"></div>
+
+<!-- PROJECTION -->
+<div class="card" style="page-break-inside: auto;">
+  <h3>📊 Projection Financière (15 ans)</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Année</th>
+        <th>Capital Amorti</th>
+        <th>Capital Restant</th>
+        <th>Intérêts</th>
+        <th>Impôts</th>
+        <th>Cash-Flow Net</th>
+      </tr>
+    </thead>
+    <tbody>${projHTML}</tbody>
+  </table>
+</div>
+
+${hasNotes ? `
+<div class="page-break"></div>
+<div class="card">
+  <h3>📝 Notes &amp; Commentaires</h3>
+  <p class="notes-text" style="margin-top:8px;">${notesText}</p>
+</div>` : ''}
+
+${hasPhotos ? `
+<div class="page-break"></div>
+<div class="card">
+  <h3>📷 Galerie Photos</h3>
+  <div class="photo-grid">${photosHTML}</div>
+</div>` : ''}
+
+</body>
+</html>`;
+
+    // --- Ouverture de la fenêtre d'impression ---
+    const win = window.open('', '_blank');
+    if (!win) {
+        alert('Veuillez autoriser les pop-ups pour générer le rapport.');
         btn.innerText = textInitial;
         btn.disabled = false;
-    }).catch(err => {
-        console.error("Erreur PDF :", err);
-        removeBtns.forEach(b => b.style.display = 'flex');
-        saveBtns.forEach(b => b.style.display = 'flex');
-        infoBtns.forEach(b => b.style.display = '');
-        btn.innerText = textInitial;
-        btn.disabled = false;
+        return;
+    }
+    win.document.write(html);
+    win.document.close();
+    win.addEventListener('load', () => {
+        win.focus();
+        win.print();
     });
+
+    btn.innerText = textInitial;
+    btn.disabled = false;
 });

@@ -161,6 +161,8 @@ textarea { width: 100%; margin-top: 10px; padding: 12px; border: 1px solid var(-
 .regime-info-card ul { list-style: none; font-size: 0.88rem; display: flex; flex-direction: column; gap: 5px; line-height: 1.45; }
 .btn-info-regime { background: none; border: 1.5px solid var(--primary-color); border-radius: 50%; width: 22px; height: 22px; font-size: 0.72rem; cursor: pointer; color: var(--primary-color); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: 700; line-height: 1; }
 .btn-info-regime:hover { background: var(--primary-color); color: white; }
+.btn-info-deductibles { background: none; border: 1.5px solid var(--success-color); border-radius: 20px; padding: 0 8px; height: 22px; font-size: 0.7rem; cursor: pointer; color: var(--success-color); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: 700; white-space: nowrap; }
+.btn-info-deductibles:hover { background: var(--success-color); color: white; }
 
 /* ===== MOBILE RESPONSIVE ===== */
 @media (max-width: 640px) {

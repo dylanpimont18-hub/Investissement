@@ -97,6 +97,7 @@
                                     <option value="reel">Foncier Réel</option>
                                 </select>
                                 <button type="button" class="btn-info-regime" onclick="openRegimeModal()" title="Détails des régimes fiscaux">i</button>
+                                <button type="button" class="btn-info-deductibles" onclick="openDeductiblesModal()" title="Que peut-on déduire des impôts ?">Que déduire ?</button>
                             </div>
                         </label>
                     </div>
@@ -302,6 +303,58 @@
                     <li>❌ Comptabilité à tenir, déclaration 2044</li>
                 </ul>
             </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal-deductibles" class="modal-overlay" onclick="closeDeductiblesModal(this, event)">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>💶 Ce qui est déductible de vos impôts</h2>
+            <button type="button" class="modal-close" onclick="closeDeductiblesModal(null, null)" title="Fermer">✕</button>
+        </div>
+        <div class="modal-body">
+
+            <div class="regime-info-card foncier-reel">
+                <div class="regime-info-title">📋 Régime Foncier Réel — Ce que vous pouvez déduire</div>
+                <div class="regime-info-subtitle">Ces dépenses viennent en déduction de vos loyers encaissés avant de calculer l'impôt</div>
+                <ul>
+                    <li>✅ <strong>Les intérêts du prêt immobilier</strong> — chaque année, la partie intérêts de votre mensualité est déductible (pas le remboursement du capital)</li>
+                    <li>✅ <strong>L'assurance emprunteur</strong> — la cotisation mensuelle que vous payez pour couvrir votre prêt en cas de décès ou d'invalidité est entièrement déductible</li>
+                    <li>✅ <strong>Les frais d'agence immobilière</strong> — les honoraires versés à l'agence lors de l'achat du bien, déductibles la première année</li>
+                    <li>✅ <strong>Les frais de dossier bancaire</strong> — les frais facturés par la banque pour monter votre dossier de prêt, déductibles la première année</li>
+                    <li>✅ <strong>Les travaux de rénovation et de réparation</strong> — peinture, plomberie, électricité, remplacement de fenêtres… déductibles l'année où vous les payez</li>
+                    <li>✅ <strong>Les charges de copropriété à votre charge</strong> — la part des charges que le locataire ne vous rembourse pas (entretien des parties communes, gardiennage…)</li>
+                    <li>✅ <strong>L'assurance propriétaire non occupant</strong> — l'assurance que vous souscrivez en tant que propriétaire bailleur pour couvrir le logement que vous ne comptez pas occuper</li>
+                    <li>✅ <strong>La taxe foncière</strong> — l'impôt local annuel que vous payez en tant que propriétaire du bien</li>
+                    <li>✅ <strong>Les frais de gestion locative</strong> — les honoraires d'une agence qui gère votre bien à votre place (recherche de locataire, état des lieux, encaissement des loyers…)</li>
+                </ul>
+                <p style="margin-top:12px; font-size:0.85rem; color:#8e8e93;">💡 <em>Si le total de vos charges dépasse vos loyers, vous créez un <strong>déficit foncier</strong>. Ce déficit peut être déduit de vos autres revenus (salaire, etc.) jusqu'à <strong>10 700 € par an</strong>. Ce qui dépasse ce plafond peut être reporté sur vos revenus fonciers des <strong>10 années suivantes</strong>.</em></p>
+            </div>
+
+            <div class="regime-info-card micro-foncier">
+                <div class="regime-info-title">🏠 Régime Micro-Foncier — Un abattement forfaitaire à la place</div>
+                <div class="regime-info-subtitle">Dans ce régime, vous ne déduisez pas vos vraies dépenses : l'administration applique automatiquement une réduction fixe de 30 %</div>
+                <ul>
+                    <li>✅ <strong>30 % de vos loyers bruts</strong> sont déduits automatiquement, sans justificatif, pour représenter l'ensemble de vos charges</li>
+                    <li>❌ Les intérêts de votre prêt ne peuvent <strong>pas</strong> être déduits en plus</li>
+                    <li>❌ Les travaux, charges de copropriété et taxe foncière ne peuvent <strong>pas</strong> être déduits en plus</li>
+                    <li>⚠️ Ce régime n'est accessible que si vos loyers annuels bruts ne dépassent <strong>pas 15 000 €</strong></li>
+                </ul>
+                <p style="margin-top:12px; font-size:0.85rem; color:#8e8e93;">💡 <em>Si vos charges réelles représentent plus de 30 % de vos loyers, le <strong>régime Foncier Réel</strong> vous fera payer moins d'impôts. Consultez la comparaison dans l'onglet Résultats.</em></p>
+            </div>
+
+            <div class="regime-info-card" style="border-left-color:#ff3b30;">
+                <div class="regime-info-title">🚫 Ce qui n'est jamais déductible, quel que soit le régime</div>
+                <div class="regime-info-subtitle">Même en choisissant le régime le plus avantageux, ces dépenses ne réduisent pas votre impôt</div>
+                <ul>
+                    <li>❌ <strong>Les frais de notaire</strong> — payés lors de l'achat, ils ne sont pas déductibles des loyers. En revanche, ils s'ajoutent au prix d'achat pour calculer votre éventuelle plus-value en cas de revente</li>
+                    <li>❌ <strong>Le remboursement du capital de votre prêt</strong> — seule la partie intérêts est déductible. La partie qui rembourse réellement votre dette ne l'est pas</li>
+                    <li>❌ <strong>Le prix d'achat du bien</strong> — en location nue, vous ne pouvez pas déduire la valeur du logement lui-même (contrairement à la location meublée sous certaines conditions)</li>
+                    <li>❌ <strong>Les travaux d'agrandissement ou de construction</strong> — seuls les travaux d'entretien et de réparation sont déductibles. Construire une pièce supplémentaire ou agrandir le bien ne l'est pas</li>
+                </ul>
+            </div>
+
         </div>
     </div>
 </div>
