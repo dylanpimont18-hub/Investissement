@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Investisseur Pro - Outil d'Aide à la Décision</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -32,6 +32,7 @@
     
     <div id="view-inputs" class="view-section active">
         <form id="calc-form">
+            <div id="form-warnings"></div>
             <div class="card" style="margin-bottom: 20px; border: 2px solid var(--primary-color);">
                 <h3>📁 Gestion des Projets</h3>
                 <p class="photo-help" style="margin-bottom: 10px; text-align: left;">Sauvegardez vos visites pour les comparer plus tard.</p>
@@ -79,16 +80,16 @@
                     <summary>📈 Exploitation</summary>
                     <div class="accordion-content">
                         <label>Loyer mensuel HC (€) <input type="number" inputmode="numeric" id="loyer" value="700"></label>
-                        <label class="tooltip-container" title="Part non-récupérable">Charges copro (Proprio)/mois <input type="number" inputmode="numeric" id="copro" value="40"></label>
+                        <label>Charges copropriété/mois (€) <input type="number" inputmode="numeric" id="copro" value="40"></label>
                         <label>Taxe foncière/an (€) <input type="number" inputmode="numeric" id="fonciere" value="1500"></label>
-                        <label>Assur. PNO/an (€) <input type="number" inputmode="numeric" id="pno" value="150"></label>
+                        <label>Assurance propriétaire/an (€) <input type="number" inputmode="numeric" id="pno" value="150"></label>
                         <label>Vacance locative (%) <input type="number" inputmode="decimal" step="0.1" id="vacance" value="5"></label>
                         <label>Frais de gestion (%) <input type="number" inputmode="decimal" step="0.1" id="gestion" value="7"></label>
                     </div>
                 </details>
 
                 <details class="accordion" open>
-                    <summary>⚖️ Fiscalité</summary>
+                    <summary>⚖️ Fiscalité <span class="tmi-accordion-badge" id="tmi-accordion-badge" style="display:none;"></span></summary>
                     <div class="accordion-content">
                         <label>Revenus du foyer (€) <input type="number" inputmode="numeric" id="revenus" value="60000"></label>
                         <label>Enfants à charge <input type="number" inputmode="numeric" id="enfants" value="2"></label>
@@ -193,8 +194,9 @@
                 <div id="nego-table-container" style="overflow-x: auto; max-height: 440px; overflow-y: auto;"></div>
             </div>
 
-            <div class="card" style="margin-top: 20px; overflow-x: auto; text-align: left;">
+            <div class="card" style="margin-top: 20px; text-align: left;">
                 <h3 style="margin-bottom: 15px;">📊 Projection Financière (15 ans)</h3>
+                <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
                 <table class="projection-table">
                     <thead>
                         <tr>
@@ -209,6 +211,7 @@
                     <tbody id="projection-tbody">
                         </tbody>
                 </table>
+                </div>
             </div>
 
             <div class="card" id="comments-export-section" style="display: none; margin-top: 20px; text-align: left;">
@@ -275,10 +278,10 @@
 </div>
 
 <!-- Modal Régimes Fiscaux -->
-<div id="modal-regimes" class="modal-overlay" onclick="closeRegimeModal(this, event)">
+<div id="modal-regimes" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-regimes-title" onclick="closeRegimeModal(this, event)">
     <div class="modal-content">
         <div class="modal-header">
-            <h2>⚖️ Les 2 Régimes Fiscaux</h2>
+            <h2 id="modal-regimes-title">⚖️ Les 2 Régimes Fiscaux</h2>
             <button type="button" class="modal-close" onclick="closeRegimeModal(null, null)" title="Fermer">✕</button>
         </div>
         <div class="modal-body">
@@ -310,10 +313,10 @@
     </div>
 </div>
 
-<div id="modal-deductibles" class="modal-overlay" onclick="closeDeductiblesModal(this, event)">
+<div id="modal-deductibles" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-deductibles-title" onclick="closeDeductiblesModal(this, event)">
     <div class="modal-content">
         <div class="modal-header">
-            <h2>💶 Ce qui est déductible de vos impôts</h2>
+            <h2 id="modal-deductibles-title">💶 Ce qui est déductible de vos impôts</h2>
             <button type="button" class="modal-close" onclick="closeDeductiblesModal(null, null)" title="Fermer">✕</button>
         </div>
         <div class="modal-body">
@@ -362,6 +365,7 @@
     </div>
 </div>
 
+<div id="toast-container" aria-live="polite" aria-atomic="false"></div>
 <script src="script.js"></script>
 </body>
 </html>

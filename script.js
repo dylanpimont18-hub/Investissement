@@ -66,7 +66,7 @@ function triggerCalculations() {
     calcTimeout = setTimeout(() => {
         calculateAndSave();
         calculateVierzonStrategy();
-    }, 150);
+    }, 300);
 }
 
 // ALGORITHME MOTEUR : Calcule le CF Net-Net pour n'importe quelle configuration
@@ -200,6 +200,15 @@ function calculateAndSave() {
 
     const tmi = calculateTMI(inputs.revenus, inputs.enfants);
     document.getElementById('tmi-display').innerText = tmi + ' %';
+
+    // Badge TMI dans le résumé de l'accordéon Fiscalité (visible quand replié)
+    const tmiBadge = document.getElementById('tmi-accordion-badge');
+    if (tmiBadge) {
+        tmiBadge.textContent = 'TMI ' + tmi + ' %';
+        tmiBadge.style.display = '';
+    }
+
+    validateInputs(inputs);
 
     const commSection = document.getElementById('comments-export-section');
     if (inputs['commentaires-input'] && inputs['commentaires-input'].trim() !== '') {
@@ -622,8 +631,87 @@ function initApp() {
     }
 }
 
-document.querySelectorAll('input, select, textarea').forEach(el => el.addEventListener('input', triggerCalculations));
+// N'attache pas triggerCalculations au nom du projet ni à l'input photo
+document.querySelectorAll('input:not(#project-name):not(#photo-input), select, textarea:not(#commentaires-input)').forEach(el => {
+    el.addEventListener('input', triggerCalculations);
+});
 window.onload = initApp;
+
+// --- TOAST NOTIFICATIONS ---
+function showToast(message, type = 'info', duration = 3500) {
+    const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `<span class="toast-icon">${icons[type]}</span><span>${message}</span>`;
+    container.appendChild(toast);
+    requestAnimationFrame(() => { requestAnimationFrame(() => toast.classList.add('show')); });
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
+}
+
+// --- VALIDATION DES SAISIES ---
+function validateInputs(inputs) {
+    const warnings = [];
+    const fields = {};
+
+    if (!inputs['prix'] || inputs['prix'] <= 0) {
+        warnings.push('Le prix affiché doit être supérieur à 0.');
+        fields['prix'] = 'error';
+    }
+    if (!inputs['loyer'] || inputs['loyer'] <= 0) {
+        warnings.push('Le loyer mensuel doit être supérieur à 0.');
+        fields['loyer'] = 'error';
+    }
+    if (!inputs['taux-input'] || inputs['taux-input'] <= 0) {
+        warnings.push('Le taux d\'intérêt doit être supérieur à 0 %.');
+        fields['taux-input'] = 'error';
+    }
+    if (!inputs['duree'] || inputs['duree'] <= 0) {
+        warnings.push('La durée du prêt doit être supérieure à 0 ans.');
+        fields['duree'] = 'error';
+    }
+    if (inputs['vacance'] < 0 || inputs['vacance'] > 100) {
+        warnings.push('La vacance locative doit être entre 0 % et 100 %.');
+        fields['vacance'] = 'warning';
+    }
+    if (inputs['gestion'] < 0 || inputs['gestion'] > 100) {
+        warnings.push('Les frais de gestion doivent être entre 0 % et 100 %.');
+        fields['gestion'] = 'warning';
+    }
+    if (inputs['nego'] < 0) {
+        warnings.push('La négociation obtenue ne peut pas être négative.');
+        fields['nego'] = 'warning';
+    }
+
+    // Mise à jour visuelle des champs
+    document.querySelectorAll('input.input-warning, input.input-error').forEach(el => {
+        el.classList.remove('input-warning', 'input-error');
+    });
+    Object.entries(fields).forEach(([id, level]) => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add(level === 'error' ? 'input-error' : 'input-warning');
+    });
+
+    // Mise à jour du bandeau d'avertissements
+    const container = document.getElementById('form-warnings');
+    if (container) {
+        container.innerHTML = warnings.map(w =>
+            `<div class="form-warning-item">⚠️ ${w}</div>`
+        ).join('');
+    }
+
+    return warnings.length === 0;
+}
+
+// --- FERMETURE MODALES PAR TOUCHE ECHAP ---
+document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (document.getElementById('modal-regimes').classList.contains('open'))    window.closeRegimeModal(null, null);
+    if (document.getElementById('modal-deductibles').classList.contains('open')) window.closeDeductiblesModal(null, null);
+});
 
 // --- MODAL RÉGIMES FISCAUX ---
 window.openRegimeModal = function() {
@@ -816,9 +904,11 @@ ${activePhotos.length ? `<div class="r-page-break"></div><div class="r-card"><h3
     const container = document.createElement('div');
     container.id = 'pdf-render';
     container.setAttribute('aria-hidden', 'true');
-    container.style.cssText = 'position:fixed;left:-9999px;top:0;background:white;z-index:-1;';
+    // L'élément DOIT être dans le viewport pour que html2canvas le capture
+    container.style.cssText = 'position:fixed;top:0;left:0;width:680px;background:white;z-index:99999;pointer-events:none;';
     container.innerHTML = html;
     document.body.appendChild(container);
+    void container.offsetHeight; // force reflow pour que les styles soient appliqués
 
     const projectSlug = (document.getElementById('project-name').value.trim() || 'InvestPro').replace(/\s+/g, '-');
     const filename = `Rapport-${projectSlug}.pdf`;
@@ -842,6 +932,14 @@ function getPDFOptions(filename) {
     };
 }
 
+function showRenderMask() {
+    const mask = document.createElement('div');
+    mask.id = 'pdf-render-mask';
+    mask.style.cssText = 'position:fixed;inset:0;background:white;z-index:99998;pointer-events:none;';
+    document.body.appendChild(mask);
+    return mask;
+}
+
 // Bouton Sauvegarder PDF (téléchargement direct)
 document.getElementById('btn-save-pdf').addEventListener('click', async function() {
     const btn = this;
@@ -849,13 +947,17 @@ document.getElementById('btn-save-pdf').addEventListener('click', async function
     btn.innerText = "⏳ Génération...";
     btn.disabled = true;
 
+    const mask = showRenderMask();
     const { container, styleEl, filename } = buildPDFDOM();
     try {
         await html2pdf().set(getPDFOptions(filename)).from(container).save();
+        showToast('PDF sauvegardé avec succès.', 'success');
     } catch(err) {
         console.error("Erreur PDF :", err);
+        showToast('La génération du PDF a échoué. Réessayez.', 'error');
     } finally {
         cleanupPDFDOM(container, styleEl);
+        mask.remove();
         btn.innerText = textInitial;
         btn.disabled = false;
     }
@@ -868,16 +970,17 @@ document.getElementById('btn-share-pdf').addEventListener('click', async functio
     btn.innerText = "⏳ Génération...";
     btn.disabled = true;
 
+    const mask = showRenderMask();
     const { container, styleEl, filename } = buildPDFDOM();
     try {
         const blob = await html2pdf().set(getPDFOptions(filename)).from(container).outputPdf('blob');
         cleanupPDFDOM(container, styleEl);
+        mask.remove();
 
         const file = new File([blob], filename, { type: 'application/pdf' });
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
             await navigator.share({ files: [file], title: filename });
         } else {
-            // Fallback : téléchargement
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url; a.download = filename;
@@ -886,8 +989,12 @@ document.getElementById('btn-share-pdf').addEventListener('click', async functio
             URL.revokeObjectURL(url);
         }
     } catch(err) {
-        if (err.name !== 'AbortError') console.error("Erreur partage PDF :", err);
+        if (err.name !== 'AbortError') {
+            console.error("Erreur partage PDF :", err);
+            showToast('Le partage a échoué. Le fichier va être téléchargé.', 'error');
+        }
         cleanupPDFDOM(container, styleEl);
+        mask.remove();
     } finally {
         btn.innerText = textInitial;
         btn.disabled = false;
