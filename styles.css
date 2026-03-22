@@ -70,9 +70,13 @@ textarea { width: 100%; margin-top: 10px; padding: 12px; border: 1px solid var(-
 .subtitle { font-size: 0.8rem; color: #8e8e93; margin-top: 4px; }
 .positive { color: var(--success-color); }
 .negative { color: var(--danger-color); }
+.metric-warning { color: #ff9500; }
+.metrics-grid-secondary .card .value { font-size: 1.35rem; }
+.metrics-grid-secondary .card h3 { font-size: 0.85rem; }
 
 .details-section { background: var(--card-bg); padding: 20px; border-radius: var(--border-radius); border: 1px solid var(--border-color); display: flex; flex-wrap: wrap; gap: 20px; box-shadow: var(--shadow-light); margin-top: 20px;}
 .chart-container { flex: 1; min-width: 250px; position: relative; height: 220px; }
+.evolution-chart-container { position: relative; height: 300px; width: 100%; }
 .summary { flex: 1; min-width: 250px; display: flex; flex-direction: column; justify-content: center; }
 .summary h3 { margin-bottom: 15px; font-size: 1.1rem;}
 .summary ul { list-style: none; }
@@ -159,6 +163,80 @@ textarea { width: 100%; margin-top: 10px; padding: 12px; border: 1px solid var(-
 .btn-info-deductibles { background: none; border: 1.5px solid var(--success-color); border-radius: 20px; padding: 0 8px; height: 22px; font-size: 0.7rem; cursor: pointer; color: var(--success-color); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: 700; white-space: nowrap; }
 .btn-info-deductibles:hover { background: var(--success-color); color: white; }
 
+/* ===== FEATURE: Conseils d'Optimisation ===== */
+.tip-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    border-left: 4px solid var(--primary-color);
+}
+.tip-card.tip-fiscal { border-left-color: #af52de; }
+.tip-card.tip-profit { border-left-color: var(--success-color); }
+.tip-icon { font-size: 1.4rem; flex-shrink: 0; width: 32px; text-align: center; }
+.tip-content { flex: 1; }
+.tip-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; }
+.tip-explanation { font-size: 0.88rem; color: #8e8e93; line-height: 1.55; }
+.tip-gain { font-size: 1rem; font-weight: 700; color: var(--success-color); white-space: nowrap; flex-shrink: 0; align-self: center; }
+.tip-optimized { text-align: center; padding: 20px; color: var(--success-color); font-weight: 600; font-size: 0.95rem; }
+
+/* ===== FEATURE: Détail Fiscal ===== */
+.fiscal-breakdown-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    margin-top: 15px;
+}
+.fiscal-breakdown-table th {
+    padding: 8px 10px;
+    text-align: right;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    color: #8e8e93;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+    border-bottom: 2px solid var(--border-color);
+}
+.fiscal-breakdown-table th:first-child { text-align: left; }
+.fiscal-breakdown-table td {
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--border-color);
+    text-align: right;
+}
+.fiscal-breakdown-table td:first-child {
+    text-align: left;
+    color: #8e8e93;
+    font-size: 0.85rem;
+}
+.fiscal-breakdown-table tr:last-child td { border-bottom: none; }
+.fiscal-breakdown-table tr.fiscal-total td {
+    font-weight: 700;
+    padding-top: 10px;
+    border-top: 2px solid var(--border-color);
+}
+.fiscal-breakdown-table .fiscal-best { color: var(--success-color); font-weight: 600; }
+.fiscal-breakdown-table .fiscal-worse { color: var(--danger-color); }
+
+/* ===== FEATURE: Comparateur de Projets ===== */
+.comparator-selectors { display: flex; align-items: center; gap: 15px; }
+.comparator-select-group { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.comparator-select-group label { font-size: 0.85rem; font-weight: 600; color: #8e8e93; margin: 0; display: block; }
+.comparator-select-group select { width: 100% !important; text-align: left; }
+.comparator-vs { font-size: 1.1rem; font-weight: 800; color: #8e8e93; padding-top: 18px; flex-shrink: 0; }
+.comparator-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.comparator-table th { padding: 10px 12px; text-align: center; font-weight: 700; color: var(--primary-color); border-bottom: 2px solid var(--border-color); font-size: 0.85rem; }
+.comparator-table th:first-child { text-align: left; color: #8e8e93; font-weight: 600; text-transform: uppercase; font-size: 0.78rem; letter-spacing: 0.04em; }
+.comparator-table td { padding: 9px 12px; text-align: center; border-bottom: 1px solid var(--border-color); }
+.comparator-table td:first-child { text-align: left; color: #8e8e93; font-size: 0.88rem; }
+.comparator-table tr:last-child td { border-bottom: none; }
+.comparator-winner { color: var(--success-color); font-weight: 700; }
+.comparator-loser { color: var(--danger-color); opacity: 0.7; }
+.comparator-equal { font-weight: 600; }
+
 /* ===== MOBILE RESPONSIVE ===== */
 @media (max-width: 640px) {
     body { padding-bottom: 60px; }
@@ -227,6 +305,19 @@ textarea { width: 100%; margin-top: 10px; padding: 12px; border: 1px solid var(-
     .nego-val { font-size: 1rem; }
     .nego-input-row { flex-direction: column; align-items: flex-start; gap: 8px; }
 
+    /* Graphique évolution */
+    .evolution-chart-container { height: 250px; }
+    /* Conseils d'optimisation */
+    .tip-card { flex-direction: column; }
+    .tip-gain { align-self: flex-start; }
+    /* Détail fiscal */
+    .fiscal-breakdown-table { font-size: 0.8rem; }
+    .fiscal-breakdown-table th, .fiscal-breakdown-table td { padding: 6px 6px; }
+    /* Comparateur */
+    .comparator-selectors { flex-direction: column; }
+    .comparator-vs { padding-top: 0; }
+    .comparator-table { font-size: 0.82rem; }
+    .comparator-table th, .comparator-table td { padding: 7px 8px; }
     /* Bouton simulation */
     .btn-simulate { font-size: 1rem; padding: 14px; }
     /* Tableau de négociation */

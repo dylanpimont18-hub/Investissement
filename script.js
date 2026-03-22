@@ -1,6 +1,7 @@
 const CSG_CRDS_RATE = 0.172; // Taux CSG+CRDS sur revenus du capital (2024)
 
 let myChart = null;
+let evolutionChart = null;
 let uploadedPhotos = [];
 let savedProjects = (() => { try { return JSON.parse(localStorage.getItem('simuImmoProjects')) || []; } catch(e) { return []; } })();
 
@@ -125,6 +126,74 @@ function computeCF(prixVendeur, loyerMensuel, inputs, tmi) {
     return cfNet - (impotsAnnee / 12);
 }
 
+// --- MÉTRIQUES PROJET (pour comparateur) ---
+function computeProjectMetrics(projectData) {
+    const inputs = projectData;
+    const tmi = calculateTMI(inputs.revenus || 0, inputs.enfants || 0);
+    const prixNet = (inputs['prix'] || 0) - (inputs['nego'] || 0);
+    const fraisNotaire = prixNet * ((inputs['notaire'] || 0) / 100);
+    const fraisFixes = (inputs['agence'] || 0) + (inputs['travaux'] || 0) + (inputs['meubles'] || 0) + (inputs['frais-bancaires'] || 0);
+    const coutTotal = prixNet + fraisNotaire + fraisFixes;
+    const montantFinance = Math.max(0, coutTotal - (inputs['apport'] || 0));
+    const loyer = inputs['loyer'] || 0;
+    const loyersAnnuelsTheoriques = loyer * 12;
+    const loyersEncaisses = loyersAnnuelsTheoriques * (1 - ((inputs['vacance'] || 0) / 100));
+    const chargesExploitationAnnuelles = ((inputs['copro'] || 0) * 12) + (inputs['fonciere'] || 0) + (inputs['pno'] || 0) + (loyersEncaisses * ((inputs['gestion'] || 0) / 100));
+    const nMois = (inputs['duree'] || 0) * 12;
+    const tauxMensuel = ((inputs['taux-input'] || 0) / 100) / 12;
+    let mensualiteCredit = 0;
+    if (tauxMensuel > 0 && nMois > 0) mensualiteCredit = (montantFinance * tauxMensuel) / (1 - Math.pow(1 + tauxMensuel, -nMois));
+    else if (nMois > 0) mensualiteCredit = montantFinance / nMois;
+    const coutAssuranceMensuel = (montantFinance * ((inputs['assurance'] || 0) / 100)) / 12;
+    const mensualiteTotale = mensualiteCredit + coutAssuranceMensuel;
+
+    const cfNetNet = computeCF(prixNet, loyer, inputs, tmi);
+    const rentaBrute = coutTotal > 0 ? (loyersAnnuelsTheoriques / coutTotal) * 100 : 0;
+    const rentaNette = coutTotal > 0 ? ((loyersEncaisses - chargesExploitationAnnuelles) / coutTotal) * 100 : 0;
+
+    // Impôts année 1 pour renta nette-nette
+    const tauxGlobalImpot = (tmi / 100) + CSG_CRDS_RATE;
+    let capitalRestant = montantFinance;
+    let firstYearInterets = 0;
+    for (let m = 0; m < 12; m++) {
+        if (capitalRestant > 0) {
+            let interetMois = capitalRestant * tauxMensuel;
+            firstYearInterets += interetMois;
+            capitalRestant -= (mensualiteCredit - interetMois);
+        }
+    }
+    let firstYearImpots = 0;
+    if (inputs['regime'] === 'micro-foncier') {
+        firstYearImpots = (loyersEncaisses * 0.7) * tauxGlobalImpot;
+    } else if (inputs['regime'] === 'reel') {
+        let chargesAnnuees = chargesExploitationAnnuelles + (coutAssuranceMensuel * 12) + (inputs['travaux'] || 0) + (inputs['frais-bancaires'] || 0);
+        let revenusNets = loyersEncaisses - chargesAnnuees - firstYearInterets;
+        if (revenusNets > 0) firstYearImpots = revenusNets * tauxGlobalImpot;
+        else {
+            const soldeHorsInterets = loyersEncaisses - chargesAnnuees;
+            if (soldeHorsInterets < 0) firstYearImpots = -(Math.min(10700, Math.abs(soldeHorsInterets)) * (tmi / 100));
+        }
+    }
+    const rentaNetNet = coutTotal > 0 ? ((loyersEncaisses - chargesExploitationAnnuelles - firstYearImpots) / coutTotal) * 100 : 0;
+
+    const apportVal = inputs['apport'] || 0;
+    const coc = apportVal > 0 ? ((cfNetNet * 12) / apportVal) * 100 : Infinity;
+    const grm = loyersAnnuelsTheoriques > 0 ? coutTotal / loyersAnnuelsTheoriques : Infinity;
+    const dscr = (mensualiteTotale * 12) > 0 ? loyersEncaisses / (mensualiteTotale * 12) : 0;
+
+    const cfMicro = computeCF(prixNet, loyer, Object.assign({}, inputs, { regime: 'micro-foncier' }), tmi);
+    const cfReel = computeCF(prixNet, loyer, Object.assign({}, inputs, { regime: 'reel' }), tmi);
+    const bestRegime = cfMicro >= cfReel ? 'Micro-Foncier' : 'Foncier Réel';
+
+    let pts = 0;
+    if (cfNetNet >= 300) pts += 3; else if (cfNetNet >= 100) pts += 2; else if (cfNetNet >= 0) pts += 1;
+    if (rentaNette >= 7) pts += 3; else if (rentaNette >= 5) pts += 2; else if (rentaNette >= 3.5) pts += 1;
+    let scoreLabel;
+    if (pts >= 5) scoreLabel = '🏆 Excellent'; else if (pts >= 3) scoreLabel = '👍 Bon'; else if (pts >= 1) scoreLabel = '⚠️ Moyen'; else scoreLabel = '🚫 Risqué';
+
+    return { prixNet, coutTotal, loyer, rentaBrute, rentaNette, rentaNetNet, cfNetNet, coc, grm, dscr, bestRegime, scoreLabel };
+}
+
 // --- STRATÉGIE VIERZON (Onglet 3) ---
 function calculateVierzonStrategy() {
     const inputs = getCurrentInputs();
@@ -243,6 +312,14 @@ function calculateAndSave() {
 
     let tbodyHTML = '';
     let firstYearImpots = 0;
+    let firstYearInterets = 0;
+    let cfCumule = 0;
+    let breakEvenYear = null;
+    let capitalAmortiCumule = 0;
+    const chartLabels = [];
+    const dataCapitalRestant = [];
+    const dataCFCumule = [];
+    const dataEnrichissement = [];
 
     for (let annee = 1; annee <= 15; annee++) {
         let interetsAnnee = 0;
@@ -280,8 +357,16 @@ function calculateAndSave() {
             }
         }
 
-        if(annee === 1) firstYearImpots = impotsAnnee;
+        if(annee === 1) { firstYearImpots = impotsAnnee; firstYearInterets = interetsAnnee; }
         let cfNetNetAnnee = loyersEncaisses - (mensualiteTotale * 12) - chargesExploitationAnnuelles - impotsAnnee;
+
+        cfCumule += cfNetNetAnnee;
+        capitalAmortiCumule += capitalAmortiAnnee;
+        if (breakEvenYear === null && cfCumule >= 0) breakEvenYear = annee;
+        chartLabels.push('An ' + annee);
+        dataCapitalRestant.push(Math.round(capitalRestant));
+        dataCFCumule.push(Math.round(cfCumule));
+        dataEnrichissement.push(Math.round(capitalAmortiCumule + cfCumule));
 
         tbodyHTML += `
             <tr>
@@ -311,7 +396,39 @@ function calculateAndSave() {
     document.getElementById('renta-nette').innerText = rentaNette.toFixed(2) + ' %';
     document.getElementById('renta-netnet').innerText = rentaNetNet.toFixed(2) + ' %';
     
-    updateColor('cf-netnet', cfNetNet); 
+    updateColor('cf-netnet', cfNetNet);
+
+    // --- NOUVELLES MÉTRIQUES ---
+    const apport = inputs['apport'];
+    const cfAnnuelNetNet = cfNetNet * 12;
+    const cocEl = document.getElementById('metric-coc');
+    if (apport <= 0) {
+        cocEl.innerText = '∞';
+        cocEl.className = 'value positive';
+    } else {
+        const coc = (cfAnnuelNetNet / apport) * 100;
+        cocEl.innerText = coc.toFixed(1) + ' %';
+        cocEl.className = 'value ' + (coc >= 10 ? 'positive' : (coc >= 0 ? '' : 'negative'));
+    }
+
+    const grm = loyersAnnuelsTheoriques > 0 ? coutTotal / loyersAnnuelsTheoriques : 0;
+    const grmEl = document.getElementById('metric-grm');
+    grmEl.innerText = grm.toFixed(1);
+    grmEl.className = 'value ' + (grm > 0 && grm <= 14 ? 'positive' : (grm <= 20 ? 'metric-warning' : 'negative'));
+
+    const dscr = (mensualiteTotale * 12) > 0 ? loyersEncaisses / (mensualiteTotale * 12) : 0;
+    const dscrEl = document.getElementById('metric-dscr');
+    dscrEl.innerText = dscr.toFixed(2);
+    dscrEl.className = 'value ' + (dscr >= 1.3 ? 'positive' : (dscr >= 1.0 ? 'metric-warning' : 'negative'));
+
+    const beEl = document.getElementById('metric-breakeven');
+    if (breakEvenYear !== null) {
+        beEl.innerText = 'An ' + breakEvenYear;
+        beEl.className = 'value ' + (breakEvenYear <= 5 ? 'positive' : (breakEvenYear <= 10 ? 'metric-warning' : 'negative'));
+    } else {
+        beEl.innerText = 'Jamais';
+        beEl.className = 'value negative';
+    }
 
     document.getElementById('out-prix-net').innerText = Math.round(prixNet).toLocaleString('fr-FR');
     document.getElementById('out-frais-fixes').innerText = Math.round(fraisFixes + fraisNotaire).toLocaleString('fr-FR');
@@ -320,12 +437,16 @@ function calculateAndSave() {
     document.getElementById('out-mensualite').innerText = mensualiteTotale.toFixed(2);
 
     updateChart(mensualiteTotale, chargesExploitationAnnuelles/12, Math.max(0, firstYearImpots/12), cfNetNet);
-    updateScoreBanner(cfNetNet, rentaNette);
-    updateRegimeComparison(prixNet, inputs, tmi);
+    updateEvolutionChart(chartLabels, dataCapitalRestant, dataCFCumule, dataEnrichissement);
+    updateRegimeComparison(prixNet, inputs, tmi, loyersEncaisses, chargesExploitationAnnuelles, coutAssuranceMensuel, firstYearInterets);
+    const computedData = { prixNet, cfNetNet, firstYearImpots, firstYearInterets, loyersEncaisses, chargesExploitationAnnuelles, coutAssuranceMensuel, montantFinance };
+    const tips = generateOptimizationTips(inputs, tmi, computedData);
+    renderOptimizationSection(tips);
+    updateScoreBanner(cfNetNet, rentaNette, tips);
     updateNegoTable(prixNet, inputs['prix'], inputs, tmi);
 }
 
-function updateScoreBanner(cfNetNet, rentaNette) {
+function updateScoreBanner(cfNetNet, rentaNette, tips) {
     let pts = 0;
     if (cfNetNet >= 300) pts += 3; else if (cfNetNet >= 100) pts += 2; else if (cfNetNet >= 0) pts += 1;
     if (rentaNette >= 7) pts += 3; else if (rentaNette >= 5) pts += 2; else if (rentaNette >= 3.5) pts += 1;
@@ -342,10 +463,17 @@ function updateScoreBanner(cfNetNet, rentaNette) {
     document.getElementById('score-label').innerText = label;
     document.getElementById('score-stars').innerText = stars;
     const sign = cfNetNet >= 0 ? '+' : '';
-    document.getElementById('score-detail').innerText = `CF ${sign}${Math.round(cfNetNet)} €/mois · Renta nette ${rentaNette.toFixed(1)} %`;
+    let detailText = `CF ${sign}${Math.round(cfNetNet)} €/mois · Renta nette ${rentaNette.toFixed(1)} %`;
+
+    if (tips && tips.length > 0) {
+        const topTip = tips.find(t => t.gainPerMonth && t.gainPerMonth > 0 && t.shortAdvice);
+        if (topTip) detailText += ` · 💡 ${topTip.shortAdvice}`;
+    }
+
+    document.getElementById('score-detail').innerText = detailText;
 }
 
-function updateRegimeComparison(prixNet, inputs, tmi) {
+function updateRegimeComparison(prixNet, inputs, tmi, loyersEncaisses, chargesExploitationAnnuelles, coutAssuranceMensuel, firstYearInterets) {
     const currentRegime = inputs['regime'];
     const loyer = inputs['loyer'];
 
@@ -373,6 +501,225 @@ function updateRegimeComparison(prixNet, inputs, tmi) {
 
         const cls = ['regime-card', isBest ? 'regime-best' : ''].join(' ').trim();
         return `<div class="${cls}"><div class="regime-name">${r.label}</div><div class="regime-cf">${cfHTML}</div>${badge}</div>`;
+    }).join('');
+
+    // --- Détail fiscal comparatif ---
+    if (loyersEncaisses !== undefined) {
+        const fmt = n => Math.round(n).toLocaleString('fr-FR');
+        const assuranceAnnuelle = coutAssuranceMensuel * 12;
+
+        // Micro-Foncier
+        const microAbattement = loyersEncaisses * 0.30;
+        const microBase = loyersEncaisses * 0.70;
+        const microIR = microBase * (tmi / 100);
+        const microCSG = microBase * CSG_CRDS_RATE;
+        const microTotal = microIR + microCSG;
+
+        // Foncier Réel
+        const chargesReelDeductibles = chargesExploitationAnnuelles + assuranceAnnuelle + firstYearInterets + inputs['travaux'] + inputs['frais-bancaires'];
+        const reelBase = loyersEncaisses - chargesReelDeductibles;
+        let reelIR, reelCSG, reelTotal;
+        let reelBaseLabel, deficitNote = '';
+        if (reelBase > 0) {
+            reelIR = reelBase * (tmi / 100);
+            reelCSG = reelBase * CSG_CRDS_RATE;
+            reelTotal = reelIR + reelCSG;
+            reelBaseLabel = fmt(reelBase) + ' €';
+        } else {
+            // Déficit foncier
+            const soldeHorsInterets = loyersEncaisses - (chargesExploitationAnnuelles + assuranceAnnuelle + inputs['travaux'] + inputs['frais-bancaires']);
+            if (soldeHorsInterets < 0) {
+                const imputable = Math.min(10700, Math.abs(soldeHorsInterets));
+                reelIR = -(imputable * (tmi / 100));
+                reelCSG = 0;
+                reelTotal = reelIR;
+                deficitNote = ` (dont ${fmt(imputable)} € imputés sur revenu global)`;
+            } else {
+                reelIR = 0;
+                reelCSG = 0;
+                reelTotal = 0;
+            }
+            reelBaseLabel = `Déficit ${fmt(Math.abs(reelBase))} €`;
+        }
+
+        const bestTotal = Math.min(microTotal, reelTotal);
+        const clsMicro = microTotal === bestTotal ? 'fiscal-best' : '';
+        const clsReel = reelTotal === bestTotal ? 'fiscal-best' : '';
+
+        document.getElementById('fiscal-breakdown').innerHTML = `
+            <table class="fiscal-breakdown-table">
+                <thead><tr><th></th><th>Micro-Foncier</th><th>Foncier Réel</th></tr></thead>
+                <tbody>
+                    <tr><td>Revenus fonciers bruts</td><td>${fmt(loyersEncaisses)} €</td><td>${fmt(loyersEncaisses)} €</td></tr>
+                    <tr><td>Charges déductibles</td><td>−${fmt(microAbattement)} € (30 %)</td><td>−${fmt(chargesReelDeductibles)} € (réel)</td></tr>
+                    <tr><td>Base imposable</td><td>${fmt(microBase)} €</td><td>${reelBaseLabel}${deficitNote}</td></tr>
+                    <tr><td>Impôt sur le revenu (TMI ${tmi} %)</td><td>${fmt(microIR)} €</td><td>${fmt(reelIR)} €</td></tr>
+                    <tr><td>CSG / CRDS (17,2 %)</td><td>${fmt(microCSG)} €</td><td>${fmt(reelCSG)} €</td></tr>
+                    <tr class="fiscal-total"><td>Total fiscalité / an</td><td class="${clsMicro}">${fmt(microTotal)} €</td><td class="${clsReel}">${fmt(reelTotal)} €</td></tr>
+                    <tr class="fiscal-total"><td>Impact sur le CF / mois</td><td class="${clsMicro}">−${fmt(microTotal / 12)} €</td><td class="${clsReel}">${reelTotal >= 0 ? '−' : '+'}${fmt(Math.abs(reelTotal / 12))} €</td></tr>
+                </tbody>
+            </table>`;
+    }
+}
+
+// ===== CONSEILS D'OPTIMISATION =====
+function generateOptimizationTips(inputs, tmi, data) {
+    const tips = [];
+    const { prixNet, cfNetNet, loyersEncaisses, chargesExploitationAnnuelles, coutAssuranceMensuel, firstYearInterets } = data;
+    const tauxGlobalImpot = (tmi / 100) + CSG_CRDS_RATE;
+    const loyer = inputs['loyer'];
+
+    // --- TIP 1 : Recommandation de régime ---
+    const cfMicro = computeCF(prixNet, loyer, Object.assign({}, inputs, { regime: 'micro-foncier' }), tmi);
+    const cfReel = computeCF(prixNet, loyer, Object.assign({}, inputs, { regime: 'reel' }), tmi);
+    const currentRegime = inputs['regime'];
+    const cfCurrent = currentRegime === 'micro-foncier' ? cfMicro : cfReel;
+    const cfOther = currentRegime === 'micro-foncier' ? cfReel : cfMicro;
+    const otherLabel = currentRegime === 'micro-foncier' ? 'Foncier Réel' : 'Micro-Foncier';
+    const diff = Math.round(cfOther - cfCurrent);
+
+    // Calcul du % de charges réelles par rapport aux loyers
+    const chargesReellesAnnuelles = chargesExploitationAnnuelles + (coutAssuranceMensuel * 12) + firstYearInterets + inputs['travaux'] + inputs['frais-bancaires'];
+    const pctChargesReelles = loyersEncaisses > 0 ? Math.round((chargesReellesAnnuelles / loyersEncaisses) * 100) : 0;
+
+    if (diff > 0) {
+        let expl = '';
+        if (currentRegime === 'micro-foncier') {
+            expl = `Vos charges réelles représentent ${pctChargesReelles} % de vos loyers, soit plus que l'abattement forfaitaire de 30 % du Micro-Foncier. En passant au Foncier Réel, vous déduiriez ${Math.round(chargesReellesAnnuelles).toLocaleString('fr-FR')} € de charges réelles au lieu de ${Math.round(loyersEncaisses * 0.3).toLocaleString('fr-FR')} € d'abattement.`;
+        } else {
+            expl = `Vos charges réelles ne représentent que ${pctChargesReelles} % de vos loyers. L'abattement forfaitaire de 30 % du Micro-Foncier serait plus avantageux et simplifie votre comptabilité.`;
+        }
+        tips.push({ icon: '⚖️', title: `Passez au ${otherLabel}`, explanation: expl, gainPerMonth: diff, shortAdvice: `Passez au ${otherLabel} pour +${diff} €/mois`, category: 'fiscal' });
+    } else {
+        const saving = Math.abs(diff);
+        const currentLabel = currentRegime === 'micro-foncier' ? 'Micro-Foncier' : 'Foncier Réel';
+        tips.push({ icon: '✅', title: `Régime fiscal optimal`, explanation: `Vous êtes déjà sur le régime le plus avantageux (${currentLabel}). Il vous fait économiser ${saving} €/mois par rapport à l'autre régime.`, gainPerMonth: 0, shortAdvice: null, category: 'fiscal' });
+    }
+
+    // --- TIP 2 : Déficit foncier (si réel et en déficit) ---
+    if (currentRegime === 'reel' || cfReel > cfMicro) {
+        const chargesAnnueesReel = chargesExploitationAnnuelles + (coutAssuranceMensuel * 12) + inputs['travaux'] + inputs['frais-bancaires'];
+        const revenusNets = loyersEncaisses - chargesAnnueesReel - firstYearInterets;
+        if (revenusNets < 0) {
+            const soldeHorsInterets = loyersEncaisses - chargesAnnueesReel;
+            if (soldeHorsInterets < 0) {
+                const deficitTotal = Math.abs(revenusNets);
+                const imputable = Math.min(10700, Math.abs(soldeHorsInterets));
+                const economieIR = Math.round(imputable * (tmi / 100));
+                const capaciteRestante = 10700 - imputable;
+                tips.push({
+                    icon: '🏗️', title: 'Déficit foncier actif',
+                    explanation: `Votre déficit foncier est de ${Math.round(deficitTotal).toLocaleString('fr-FR')} €/an. La part imputable sur votre revenu global (hors intérêts) est de ${Math.round(imputable).toLocaleString('fr-FR')} € (plafond 10 700 €). Cela vous fait économiser ${economieIR.toLocaleString('fr-FR')} € d'impôt sur le revenu cette année, soit ${Math.round(economieIR / 12)} €/mois.${capaciteRestante > 0 ? ` Il vous reste ${Math.round(capaciteRestante).toLocaleString('fr-FR')} € de capacité d'imputation.` : ' Vous utilisez 100 % du plafond.'}`,
+                    gainPerMonth: null, shortAdvice: null, category: 'fiscal'
+                });
+
+                // --- TIP 3 : Optimisation travaux (si capacité restante) ---
+                if (capaciteRestante > 0 && tmi > 0) {
+                    const economiePotentielle = Math.round(capaciteRestante * (tmi / 100));
+                    tips.push({
+                        icon: '🔧', title: 'Optimisez via des travaux',
+                        explanation: `Chaque euro de travaux supplémentaires vous fait économiser ${tmi} centimes d'impôt (TMI à ${tmi} %). Vous pouvez encore déduire jusqu'à ${Math.round(capaciteRestante).toLocaleString('fr-FR')} € de travaux avant d'atteindre le plafond de déficit foncier, soit une économie potentielle de ${economiePotentielle.toLocaleString('fr-FR')} €/an (${Math.round(economiePotentielle / 12)} €/mois).`,
+                        gainPerMonth: Math.round(economiePotentielle / 12), shortAdvice: `+${Math.round(economiePotentielle / 12)} €/mois possibles via travaux`, category: 'fiscal'
+                    });
+                }
+            }
+        }
+    }
+
+    // --- TIP 4 : Puissance des intérêts déductibles (si réel) ---
+    if ((currentRegime === 'reel' || cfReel > cfMicro) && firstYearInterets > 0) {
+        const economieInterets = Math.round(firstYearInterets * tauxGlobalImpot);
+        tips.push({
+            icon: '🏦', title: 'Intérêts d\'emprunt déductibles',
+            explanation: `En 1ère année, vous déduisez ${Math.round(firstYearInterets).toLocaleString('fr-FR')} € d'intérêts d'emprunt. Cela représente une économie fiscale potentielle de ${economieInterets.toLocaleString('fr-FR')} €/an (soit ${Math.round(economieInterets / 12)} €/mois). Cette déduction diminue chaque année à mesure que le capital est remboursé.`,
+            gainPerMonth: null, shortAdvice: null, category: 'fiscal'
+        });
+    }
+
+    // --- TIP 5 : Autogestion (si gestion > 0%) ---
+    if (inputs['gestion'] > 0) {
+        const cfSansAgence = computeCF(prixNet, loyer, Object.assign({}, inputs, { gestion: 0 }), tmi);
+        const gain = Math.round(cfSansAgence - cfNetNet);
+        if (gain > 0) {
+            const fraisGestionAnnuels = Math.round(loyersEncaisses * (inputs['gestion'] / 100));
+            tips.push({
+                icon: '🤝', title: 'Gérez vous-même votre bien',
+                explanation: `En gérant vous-même votre bien (sans agence), votre cash-flow augmenterait de ${gain} €/mois. Les frais de gestion actuels de ${inputs['gestion']} % représentent ${fraisGestionAnnuels.toLocaleString('fr-FR')} €/an.`,
+                gainPerMonth: gain, shortAdvice: `Autogestion : +${gain} €/mois`, category: 'profit'
+            });
+        }
+    }
+
+    // --- TIP 6 : Réduction vacance (si vacance > 0%) ---
+    if (inputs['vacance'] > 0) {
+        const cfSansVacance = computeCF(prixNet, loyer, Object.assign({}, inputs, { vacance: 0 }), tmi);
+        const gain = Math.round(cfSansVacance - cfNetNet);
+        if (gain > 0) {
+            tips.push({
+                icon: '🏠', title: 'Réduisez la vacance locative',
+                explanation: `En éliminant la vacance locative de ${inputs['vacance']} %, votre cash-flow augmenterait de ${gain} €/mois. Visez un bail solide et un emplacement attractif pour garder votre bien toujours loué.`,
+                gainPerMonth: gain, shortAdvice: `0 % vacance : +${gain} €/mois`, category: 'profit'
+            });
+        }
+    }
+
+    // --- TIP 7 : Levier négociation ---
+    const prixAffiche = inputs['prix'];
+    if (prixAffiche > 0) {
+        const prixNetMoins1 = prixNet - (prixAffiche * 0.01);
+        const cfGain = Math.round(computeCF(prixNetMoins1, loyer, inputs, tmi) - cfNetNet);
+        if (cfGain > 0) {
+            tips.push({
+                icon: '📉', title: 'Négociez le prix d\'achat',
+                explanation: `Chaque 1 % de négociation supplémentaire sur le prix affiché (soit ${Math.round(prixAffiche * 0.01).toLocaleString('fr-FR')} €) améliorerait votre cash-flow de ${cfGain} €/mois.`,
+                gainPerMonth: cfGain, shortAdvice: `1 % de négo = +${cfGain} €/mois`, category: 'profit'
+            });
+        }
+    }
+
+    // --- TIP 8 : Assurance emprunteur (si > 0.20%) ---
+    if (inputs['assurance'] > 0.20) {
+        const cfMeilleurAssurance = computeCF(prixNet, loyer, Object.assign({}, inputs, { assurance: 0.15 }), tmi);
+        const gain = Math.round(cfMeilleurAssurance - cfNetNet);
+        if (gain > 0) {
+            tips.push({
+                icon: '🛡️', title: 'Renégociez votre assurance emprunteur',
+                explanation: `Votre taux d'assurance emprunteur est de ${inputs['assurance']} %. En le renégociant à 0.15 % (délégation d'assurance), vous économiseriez ${gain} €/mois. La loi Lemoine vous permet de changer à tout moment.`,
+                gainPerMonth: gain, shortAdvice: `Assurance à 0.15 % : +${gain} €/mois`, category: 'profit'
+            });
+        }
+    }
+
+    // Tri : conseils avec gain d'abord (desc), puis informatifs
+    tips.sort((a, b) => {
+        if (a.gainPerMonth && !b.gainPerMonth) return -1;
+        if (!a.gainPerMonth && b.gainPerMonth) return 1;
+        return (b.gainPerMonth || 0) - (a.gainPerMonth || 0);
+    });
+
+    return tips;
+}
+
+function renderOptimizationSection(tips) {
+    const container = document.getElementById('optimization-tips-container');
+    if (!container) return;
+
+    if (tips.length === 0) {
+        container.innerHTML = '<div class="tip-optimized">✅ Votre investissement est déjà bien optimisé !</div>';
+        return;
+    }
+
+    container.innerHTML = tips.map(t => {
+        const cls = t.category === 'fiscal' ? 'tip-fiscal' : 'tip-profit';
+        const gainHTML = (t.gainPerMonth && t.gainPerMonth > 0) ? `<div class="tip-gain">+${t.gainPerMonth} €/mois</div>` : '';
+        return `<div class="tip-card ${cls}">
+            <div class="tip-icon">${t.icon}</div>
+            <div class="tip-content">
+                <div class="tip-title">${t.title}</div>
+                <div class="tip-explanation">${t.explanation}</div>
+            </div>
+            ${gainHTML}
+        </div>`;
     }).join('');
 }
 
@@ -463,6 +810,46 @@ function updateChart(credit, charges, impots, cf) {
     });
 }
 
+function updateEvolutionChart(labels, capitalRestant, cfCumule, enrichissement) {
+    const textColor = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? '#f5f5f7' : '#1c1e21';
+    const cfColor = cfCumule[cfCumule.length - 1] >= 0 ? '#34c759' : '#ff3b30';
+
+    const datasets = [
+        { label: 'Capital Restant Dû', data: capitalRestant, borderColor: '#007aff', borderWidth: 2, tension: 0.3, fill: false, pointRadius: 3, pointHoverRadius: 5 },
+        { label: 'Cash-Flow Cumulé', data: cfCumule, borderColor: cfColor, borderWidth: 2, tension: 0.3, fill: false, pointRadius: 3, pointHoverRadius: 5 },
+        { label: 'Enrichissement Total', data: enrichissement, borderColor: '#d4af37', borderWidth: 2.5, tension: 0.3, fill: false, pointRadius: 3, pointHoverRadius: 5 }
+    ];
+
+    if (evolutionChart) {
+        evolutionChart.data.labels = labels;
+        evolutionChart.data.datasets = datasets;
+        evolutionChart.options.plugins.legend.labels.color = textColor;
+        evolutionChart.options.scales.x.ticks.color = textColor;
+        evolutionChart.options.scales.y.ticks.color = textColor;
+        evolutionChart.update();
+        return;
+    }
+
+    const ctx = document.getElementById('evolutionChart').getContext('2d');
+    evolutionChart = new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { position: 'top', labels: { color: textColor, usePointStyle: true, padding: 15, font: { size: 11 } } },
+                tooltip: { callbacks: { label: function(ctx) { return ctx.dataset.label + ' : ' + Math.round(ctx.raw).toLocaleString('fr-FR') + ' €'; } } }
+            },
+            scales: {
+                x: { ticks: { color: textColor }, grid: { display: false } },
+                y: { ticks: { color: textColor, callback: function(v) { return Math.round(v / 1000) + 'k €'; } }, grid: { color: 'rgba(142,142,147,0.15)' } }
+            }
+        }
+    });
+}
+
 // --- GESTION DES PHOTOS ---
 document.getElementById('photo-input').addEventListener('change', function(event) {
     const files = event.target.files;
@@ -545,6 +932,9 @@ window.savePhotoToGallery = async function(index) {
 function renderProjectsList() {
     const listEl = document.getElementById('projects-list');
     listEl.innerHTML = '';
+    const compareBtn = document.getElementById('btn-compare-projects');
+    if (compareBtn) compareBtn.style.display = savedProjects.length >= 2 ? 'block' : 'none';
+
     if(savedProjects.length === 0) return;
 
     savedProjects.forEach((project, index) => {
@@ -711,6 +1101,7 @@ document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
     if (document.getElementById('modal-regimes').classList.contains('open'))    window.closeRegimeModal(null, null);
     if (document.getElementById('modal-deductibles').classList.contains('open')) window.closeDeductiblesModal(null, null);
+    if (document.getElementById('modal-comparator').classList.contains('open')) window.closeComparatorModal(null, null);
 });
 
 // --- MODAL RÉGIMES FISCAUX ---
@@ -733,6 +1124,72 @@ window.closeDeductiblesModal = function(overlay, event) {
     document.getElementById('modal-deductibles').classList.remove('open');
     document.body.style.overflow = '';
 };
+
+// --- COMPARATEUR DE PROJETS ---
+window.openComparatorModal = function() {
+    const selA = document.getElementById('compare-project-a');
+    const selB = document.getElementById('compare-project-b');
+    const options = savedProjects.map((p, i) => `<option value="${i}">${p._projectName}</option>`).join('');
+    selA.innerHTML = options;
+    selB.innerHTML = options;
+    if (savedProjects.length > 1) selB.selectedIndex = 1;
+    document.getElementById('comparator-results').innerHTML = '';
+    document.getElementById('modal-comparator').classList.add('open');
+    document.body.style.overflow = 'hidden';
+};
+window.closeComparatorModal = function(overlay, event) {
+    if (overlay && event && event.target !== overlay) return;
+    document.getElementById('modal-comparator').classList.remove('open');
+    document.body.style.overflow = '';
+};
+
+document.getElementById('btn-compare-projects').addEventListener('click', (e) => {
+    e.preventDefault();
+    openComparatorModal();
+});
+
+document.getElementById('btn-run-compare').addEventListener('click', function() {
+    const idxA = parseInt(document.getElementById('compare-project-a').value);
+    const idxB = parseInt(document.getElementById('compare-project-b').value);
+    if (idxA === idxB) { showToast('Sélectionnez deux projets différents.', 'error'); return; }
+
+    const mA = computeProjectMetrics(savedProjects[idxA]);
+    const mB = computeProjectMetrics(savedProjects[idxB]);
+    const fmt = n => Math.round(n).toLocaleString('fr-FR');
+    const fmtPct = n => n.toFixed(2) + ' %';
+
+    const rows = [
+        { label: 'Prix net vendeur',   valA: fmt(mA.prixNet) + ' €',   valB: fmt(mB.prixNet) + ' €',   rawA: mA.prixNet,   rawB: mB.prixNet,   hib: false },
+        { label: 'Coût total',         valA: fmt(mA.coutTotal) + ' €', valB: fmt(mB.coutTotal) + ' €', rawA: mA.coutTotal, rawB: mB.coutTotal, hib: false },
+        { label: 'Loyer mensuel',      valA: fmt(mA.loyer) + ' €',     valB: fmt(mB.loyer) + ' €',     rawA: mA.loyer,     rawB: mB.loyer,     hib: true },
+        { label: 'Rentabilité brute',  valA: fmtPct(mA.rentaBrute),    valB: fmtPct(mB.rentaBrute),    rawA: mA.rentaBrute, rawB: mB.rentaBrute, hib: true },
+        { label: 'Rentabilité nette',  valA: fmtPct(mA.rentaNette),    valB: fmtPct(mB.rentaNette),    rawA: mA.rentaNette, rawB: mB.rentaNette, hib: true },
+        { label: 'Renta. nette-nette', valA: fmtPct(mA.rentaNetNet),   valB: fmtPct(mB.rentaNetNet),   rawA: mA.rentaNetNet, rawB: mB.rentaNetNet, hib: true },
+        { label: 'Cash-Flow net-net',  valA: mA.cfNetNet.toFixed(2) + ' €', valB: mB.cfNetNet.toFixed(2) + ' €', rawA: mA.cfNetNet, rawB: mB.cfNetNet, hib: true },
+        { label: 'Cash-on-Cash',       valA: mA.coc === Infinity ? '∞' : mA.coc.toFixed(1) + ' %', valB: mB.coc === Infinity ? '∞' : mB.coc.toFixed(1) + ' %', rawA: mA.coc, rawB: mB.coc, hib: true },
+        { label: 'GRM',               valA: mA.grm === Infinity ? 'N/A' : mA.grm.toFixed(1), valB: mB.grm === Infinity ? 'N/A' : mB.grm.toFixed(1), rawA: mA.grm, rawB: mB.grm, hib: false },
+        { label: 'DSCR',              valA: mA.dscr.toFixed(2), valB: mB.dscr.toFixed(2), rawA: mA.dscr, rawB: mB.dscr, hib: true },
+        { label: 'Régime optimal',    valA: mA.bestRegime, valB: mB.bestRegime, rawA: null, rawB: null, hib: null },
+        { label: 'Score',             valA: mA.scoreLabel, valB: mB.scoreLabel, rawA: null, rawB: null, hib: null },
+    ];
+
+    const nameA = savedProjects[idxA]._projectName;
+    const nameB = savedProjects[idxB]._projectName;
+    let html = `<table class="comparator-table"><thead><tr><th>Métrique</th><th>${nameA}</th><th>${nameB}</th></tr></thead><tbody>`;
+    rows.forEach(r => {
+        let cA = '', cB = '';
+        if (r.hib !== null && r.rawA !== null && r.rawB !== null && r.rawA !== r.rawB) {
+            const aWins = r.hib ? r.rawA > r.rawB : r.rawA < r.rawB;
+            cA = aWins ? 'comparator-winner' : 'comparator-loser';
+            cB = aWins ? 'comparator-loser' : 'comparator-winner';
+        } else if (r.rawA !== null && r.rawA === r.rawB) {
+            cA = 'comparator-equal'; cB = 'comparator-equal';
+        }
+        html += `<tr><td>${r.label}</td><td class="${cA}">${r.valA}</td><td class="${cB}">${r.valB}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    document.getElementById('comparator-results').innerHTML = html;
+});
 
 // --- Affiche le bouton Partager uniquement si le navigateur le supporte ---
 (function() {
@@ -766,10 +1223,20 @@ function buildPDFDOM() {
     const outFinancement = document.getElementById('out-financement').innerText;
     const outMensualite  = document.getElementById('out-mensualite').innerText;
 
+    const cocVal  = document.getElementById('metric-coc').innerText;
+    const grmVal  = document.getElementById('metric-grm').innerText;
+    const dscrVal = document.getElementById('metric-dscr').innerText;
+    const beVal   = document.getElementById('metric-breakeven').innerText;
+
     const chartCanvas = document.getElementById('cashflowChart');
     const chartImg = chartCanvas ? chartCanvas.toDataURL('image/png') : null;
 
+    const evolutionCanvas = document.getElementById('evolutionChart');
+    const evolutionImg = evolutionCanvas ? evolutionCanvas.toDataURL('image/png') : null;
+
     const regimeHTML = document.getElementById('regime-compare-grid').innerHTML;
+    const fiscalBreakdownHTML = document.getElementById('fiscal-breakdown').innerHTML;
+    const optimizationHTML = document.getElementById('optimization-tips-container').innerHTML;
     const negoHTML   = document.getElementById('nego-table-container').innerHTML;
     const projHTML   = document.getElementById('projection-tbody').innerHTML;
 
@@ -843,6 +1310,22 @@ function buildPDFDOM() {
 #pdf-render .r-photo-grid { display:flex; flex-wrap:wrap; gap:10px; margin-top:8px; }
 #pdf-render .r-photo-img  { width:calc(50% - 5px); height:170px; object-fit:cover; border-radius:8px; }
 #pdf-render .r-notes      { white-space:pre-wrap; font-size:10px; line-height:1.65; margin-top:8px; }
+#pdf-render .tip-card { display:flex; align-items:flex-start; gap:8px; padding:8px 10px; border:1px solid #e5e5ea; border-radius:8px; margin-bottom:6px; border-left:3px solid #007aff; page-break-inside:avoid; }
+#pdf-render .tip-card.tip-fiscal { border-left-color:#af52de; }
+#pdf-render .tip-card.tip-profit { border-left-color:#34c759; }
+#pdf-render .tip-icon { font-size:12px; width:20px; text-align:center; flex-shrink:0; }
+#pdf-render .tip-content { flex:1; }
+#pdf-render .tip-title { font-size:9.5px; font-weight:700; margin-bottom:2px; }
+#pdf-render .tip-explanation { font-size:8.5px; color:#8e8e93; line-height:1.5; }
+#pdf-render .tip-gain { font-size:9.5px; font-weight:700; color:#34c759; white-space:nowrap; flex-shrink:0; }
+#pdf-render .tip-optimized { text-align:center; padding:12px; color:#34c759; font-weight:600; font-size:9.5px; }
+#pdf-render .fiscal-breakdown-table { width:100%; border-collapse:collapse; font-size:8.5px; margin-top:10px; }
+#pdf-render .fiscal-breakdown-table th { padding:4px 6px; font-size:7.5px; text-transform:uppercase; color:#8e8e93; letter-spacing:.3px; font-weight:600; background:#f2f2f7; text-align:right; }
+#pdf-render .fiscal-breakdown-table th:first-child { text-align:left; }
+#pdf-render .fiscal-breakdown-table td { padding:4px 6px; border-bottom:1px solid #f2f2f7; text-align:right; }
+#pdf-render .fiscal-breakdown-table td:first-child { text-align:left; color:#8e8e93; }
+#pdf-render .fiscal-breakdown-table tr.fiscal-total td { font-weight:700; border-top:1.5px solid #e5e5ea; }
+#pdf-render .fiscal-breakdown-table .fiscal-best { color:#34c759; font-weight:600; }
 `;
 
     const html = `
@@ -859,6 +1342,12 @@ function buildPDFDOM() {
   <div class="r-kpi"><div class="r-kpi-lbl">Rentabilité Nette</div><div class="r-kpi-val">${rentaNette}</div></div>
   <div class="r-kpi gold"><div class="r-kpi-lbl">Renta. Nette-Nette</div><div class="r-kpi-val">${rentaNetnet}</div><div class="r-kpi-s">Après Impôts</div></div>
   <div class="r-kpi blue"><div class="r-kpi-lbl">Cash-Flow Net-Net</div><div class="r-kpi-val ${cfIsNeg ? 'neg' : 'pos'}">${cfNetnet}</div><div class="r-kpi-s">Dans votre poche / mois</div></div>
+</div>
+<div class="r-kpi-grid" style="margin-bottom:12px;">
+  <div class="r-kpi"><div class="r-kpi-lbl">Cash-on-Cash</div><div class="r-kpi-val">${cocVal}</div><div class="r-kpi-s">Rendement sur apport</div></div>
+  <div class="r-kpi"><div class="r-kpi-lbl">GRM</div><div class="r-kpi-val">${grmVal}</div><div class="r-kpi-s">Coût / Loyers</div></div>
+  <div class="r-kpi"><div class="r-kpi-lbl">DSCR</div><div class="r-kpi-val">${dscrVal}</div><div class="r-kpi-s">Couverture dette</div></div>
+  <div class="r-kpi"><div class="r-kpi-lbl">Break-even</div><div class="r-kpi-val">${beVal}</div><div class="r-kpi-s">CF cumulé positif</div></div>
 </div>
 <div class="r-summary-row">
   <div class="r-summary">
@@ -877,6 +1366,12 @@ function buildPDFDOM() {
   <h3>⚖️ Comparaison des Régimes Fiscaux</h3>
   <div class="r-card-sub">CF net-net mensuel estimé pour chaque régime avec vos paramètres actuels.</div>
   <div class="regime-compare-grid">${regimeHTML}</div>
+  ${fiscalBreakdownHTML}
+</div>
+<div class="r-card">
+  <h3>💡 Conseils d'Optimisation</h3>
+  <div class="r-card-sub">Recommandations personnalisées basées sur vos chiffres.</div>
+  ${optimizationHTML}
 </div>
 <div class="r-page-break"></div>
 <div class="r-card" style="page-break-inside:auto;">
@@ -884,6 +1379,7 @@ function buildPDFDOM() {
   <div class="r-card-sub">CF net-net mensuel selon le niveau de négociation sur le prix affiché (0 → 25 %).</div>
   ${negoHTML}
 </div>
+${evolutionImg ? `<div class="r-card"><h3>📈 Évolution sur 15 ans</h3><img src="${evolutionImg}" style="width:100%;max-height:200px;object-fit:contain;margin-top:8px;" alt="Évolution 15 ans"></div>` : ''}
 <div class="r-page-break"></div>
 <div class="r-card" style="page-break-inside:auto;">
   <h3>📊 Projection Financière (15 ans)</h3>

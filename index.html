@@ -41,6 +41,7 @@
                     <button type="button" id="btn-save-project" class="btn-primary" style="padding: 10px; white-space: nowrap;">💾 Sauvegarder</button>
                 </div>
                 <ul id="projects-list" class="projects-list"></ul>
+                <button type="button" id="btn-compare-projects" class="btn-secondary" style="width: 100%; margin-top: 10px; display: none;">📊 Comparer 2 projets</button>
             </div>
 
             <div class="grid-2-cols">
@@ -157,6 +158,29 @@
                 </div>
             </div>
 
+            <div class="metrics-grid metrics-grid-secondary" style="margin-top: 15px;">
+                <div class="card">
+                    <h3>Cash-on-Cash (CoC)</h3>
+                    <div class="value" id="metric-coc">-- %</div>
+                    <p class="subtitle">Rendement sur apport</p>
+                </div>
+                <div class="card">
+                    <h3>Multiplicateur (GRM)</h3>
+                    <div class="value" id="metric-grm">--</div>
+                    <p class="subtitle">Coût Total / Loyers</p>
+                </div>
+                <div class="card">
+                    <h3>DSCR</h3>
+                    <div class="value" id="metric-dscr">--</div>
+                    <p class="subtitle">Couverture de dette</p>
+                </div>
+                <div class="card">
+                    <h3>Seuil de Rentabilité</h3>
+                    <div class="value" id="metric-breakeven">--</div>
+                    <p class="subtitle">CF cumulé positif</p>
+                </div>
+            </div>
+
             <div class="details-section">
                 <div class="summary">
                     <h3>Résumé de l'Enveloppe</h3>
@@ -181,6 +205,14 @@
                 </div>
                 <p class="subtitle" style="margin-bottom: 15px;">CF net-net mensuel estimé pour chaque régime avec vos paramètres actuels.</p>
                 <div id="regime-compare-grid" class="regime-compare-grid"></div>
+                <div id="fiscal-breakdown"></div>
+            </div>
+
+            <!-- Conseils d'Optimisation -->
+            <div class="card" id="optimization-card" style="margin-top: 20px; text-align: left;">
+                <h3 style="margin-bottom: 8px;">💡 Conseils d'Optimisation</h3>
+                <p class="subtitle" style="margin-bottom: 14px;">Recommandations personnalisées pour améliorer votre investissement.</p>
+                <div id="optimization-tips-container"></div>
             </div>
 
             <!-- Simulation de négociation -->
@@ -192,6 +224,13 @@
                     <button type="button" class="table-toggle-btn" id="toggle-amount">Par Régime Fiscal</button>
                 </div>
                 <div id="nego-table-container" style="overflow-x: auto; max-height: 440px; overflow-y: auto;"></div>
+            </div>
+
+            <div class="card" style="margin-top: 20px; text-align: left;">
+                <h3 style="margin-bottom: 15px;">📈 Évolution sur 15 ans</h3>
+                <div class="evolution-chart-container">
+                    <canvas id="evolutionChart"></canvas>
+                </div>
             </div>
 
             <div class="card" style="margin-top: 20px; text-align: left;">
@@ -361,6 +400,31 @@
                 </ul>
             </div>
 
+        </div>
+    </div>
+</div>
+
+<!-- Modal Comparateur de Projets -->
+<div id="modal-comparator" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-comparator-title" onclick="closeComparatorModal(this, event)">
+    <div class="modal-content" style="max-width: 750px;">
+        <div class="modal-header">
+            <h2 id="modal-comparator-title">📊 Comparateur de Projets</h2>
+            <button type="button" class="modal-close" onclick="closeComparatorModal(null, null)" title="Fermer">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="comparator-selectors">
+                <div class="comparator-select-group">
+                    <label>Projet A</label>
+                    <select id="compare-project-a"></select>
+                </div>
+                <div class="comparator-vs">VS</div>
+                <div class="comparator-select-group">
+                    <label>Projet B</label>
+                    <select id="compare-project-b"></select>
+                </div>
+            </div>
+            <button type="button" id="btn-run-compare" class="btn-primary" style="width: 100%; margin-top: 15px;">⚡ Comparer</button>
+            <div id="comparator-results" style="margin-top: 20px;"></div>
         </div>
     </div>
 </div>
