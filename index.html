@@ -48,54 +48,54 @@
                 <details class="accordion" open>
                     <summary>🛒 Acquisition</summary>
                     <div class="accordion-content">
-                        <label>Prix affiché (€) <input type="number" inputmode="numeric" id="prix" value="107000"></label>
-                        <label>Négociation obtenue (€) <input type="number" inputmode="numeric" id="nego" value="0"></label>
-                        <label>Frais d'agence (€) <input type="number" inputmode="numeric" id="agence" value="0"></label>
-                        <label>Type de bien 
+                        <label><span>Prix affiché (€) <span class="help-tip" data-tip="Le prix de vente annoncé par le vendeur ou l'agence, avant toute négociation de votre part.">?</span></span> <input type="number" inputmode="numeric" id="prix" value="107000"></label>
+                        <label><span>Négociation obtenue (€) <span class="help-tip" data-tip="La réduction que vous avez négociée sur le prix affiché. Prix réellement payé = prix affiché − négociation.">?</span></span> <input type="number" inputmode="numeric" id="nego" value="0"></label>
+                        <label><span>Frais d'agence (€) <span class="help-tip" data-tip="La commission payée à l'agence immobilière. Parfois déjà incluse dans le prix affiché (FAI = Frais d'Agence Inclus).">?</span></span> <input type="number" inputmode="numeric" id="agence" value="0"></label>
+                        <label><span>Type de bien <span class="help-tip" data-tip="Ancien = bien de plus de 5 ans (~8% de frais de notaire). Neuf = moins de 5 ans (~2.5% de frais de notaire).">?</span></span>
                             <select id="type-bien">
                                 <option value="ancien">Ancien (~8%)</option>
                                 <option value="neuf">Neuf (~2.5%)</option>
                             </select>
                         </label>
-                        <label>Frais notaire (%) <input type="number" inputmode="decimal" step="0.1" id="notaire" value="8"></label>
-                        <label>Travaux estim. (€) <input type="number" inputmode="numeric" id="travaux" value="5000"></label>
-                        <label>Mobilier (€) <input type="number" inputmode="numeric" id="meubles" value="4000"></label>
-                        <label>Frais bancaires (€) <input type="number" inputmode="numeric" id="frais-bancaires" value="1500"></label>
+                        <label><span>Frais notaire (%) <span class="help-tip" data-tip="Frais obligatoires payés au notaire lors de l'achat : taxes, droits d'enregistrement et honoraires. ~8% dans l'ancien, ~2.5% dans le neuf.">?</span></span> <input type="number" inputmode="decimal" step="0.1" id="notaire" value="8"></label>
+                        <label><span>Travaux estim. (€) <span class="help-tip" data-tip="Budget prévu pour les rénovations : peinture, plomberie, électricité, sols… Déductible des impôts en régime Foncier Réel.">?</span></span> <input type="number" inputmode="numeric" id="travaux" value="5000"></label>
+                        <label><span>Mobilier (€) <span class="help-tip" data-tip="Coût de l'ameublement si vous louez en meublé : lit, canapé, table, électroménager…">?</span></span> <input type="number" inputmode="numeric" id="meubles" value="4000"></label>
+                        <label><span>Frais bancaires (€) <span class="help-tip" data-tip="Frais de dossier et de garantie facturés par la banque pour monter votre prêt immobilier.">?</span></span> <input type="number" inputmode="numeric" id="frais-bancaires" value="1500"></label>
                     </div>
                 </details>
 
                 <details class="accordion" open>
                     <summary>🏦 Financement</summary>
                     <div class="accordion-content">
-                        <label>Apport personnel (€) <input type="number" inputmode="numeric" id="apport" value="0"></label>
+                        <label><span>Apport personnel (€) <span class="help-tip" data-tip="L'argent que vous investissez de votre poche, sans emprunter. Plus l'apport est élevé, moins vous empruntez et moins la mensualité est forte.">?</span></span> <input type="number" inputmode="numeric" id="apport" value="0"></label>
                         <div class="complex-input">
-                            <label>Taux d'intérêt annuel (%) <input type="number" inputmode="decimal" step="0.01" id="taux-input" value="3.17"></label>
+                            <label><span>Taux d'intérêt annuel (%) <span class="help-tip" data-tip="Le pourcentage annuel que la banque vous facture pour vous prêter l'argent. Ex : 3% sur 100 000 € = ~3 000 €/an d'intérêts la 1re année.">?</span></span> <input type="number" inputmode="decimal" step="0.01" id="taux-input" value="3.17"></label>
                             <input type="range" id="taux-slider" class="styled-slider" min="0.5" max="6" step="0.05" value="3.17">
                         </div>
-                        <label>Durée du prêt (Années) <input type="number" inputmode="numeric" id="duree" value="20"></label>
-                        <label>Taux assurance (%) <input type="number" inputmode="decimal" step="0.01" id="assurance" value="0.30"></label>
+                        <label><span>Durée du prêt (Années) <span class="help-tip" data-tip="Nombre d'années de remboursement. Plus c'est long, moins la mensualité est élevée, mais plus le coût total du crédit augmente.">?</span></span> <input type="number" inputmode="numeric" id="duree" value="20"></label>
+                        <label><span>Taux assurance (%) <span class="help-tip" data-tip="Coût de l'assurance emprunteur (décès, invalidité), en % du capital emprunté par an. Obligatoire pour obtenir le prêt.">?</span></span> <input type="number" inputmode="decimal" step="0.01" id="assurance" value="0.30"></label>
                     </div>
                 </details>
 
                 <details class="accordion" open>
                     <summary>📈 Exploitation</summary>
                     <div class="accordion-content">
-                        <label>Loyer mensuel HC (€) <input type="number" inputmode="numeric" id="loyer" value="700"></label>
-                        <label>Charges copropriété/mois (€) <input type="number" inputmode="numeric" id="copro" value="40"></label>
-                        <label>Taxe foncière/an (€) <input type="number" inputmode="numeric" id="fonciere" value="1500"></label>
-                        <label>Assurance propriétaire/an (€) <input type="number" inputmode="numeric" id="pno" value="150"></label>
-                        <label>Vacance locative (%) <input type="number" inputmode="decimal" step="0.1" id="vacance" value="5"></label>
-                        <label>Frais de gestion (%) <input type="number" inputmode="decimal" step="0.1" id="gestion" value="7"></label>
+                        <label><span>Loyer mensuel HC (€) <span class="help-tip" data-tip="Loyer Hors Charges : le montant que le locataire vous verse chaque mois, sans compter les charges récupérables (eau, ordures…).">?</span></span> <input type="number" inputmode="numeric" id="loyer" value="700"></label>
+                        <label><span>Charges copropriété/mois (€) <span class="help-tip" data-tip="Votre part mensuelle des frais de l'immeuble : entretien des parties communes, ascenseur, gardien… La part non récupérable sur le locataire.">?</span></span> <input type="number" inputmode="numeric" id="copro" value="40"></label>
+                        <label><span>Taxe foncière/an (€) <span class="help-tip" data-tip="Impôt annuel payé par le propriétaire. Son montant dépend de la commune et de la valeur du bien. Non récupérable sur le locataire.">?</span></span> <input type="number" inputmode="numeric" id="fonciere" value="1500"></label>
+                        <label><span>Assurance propriétaire/an (€) <span class="help-tip" data-tip="Assurance PNO (Propriétaire Non Occupant). Obligatoire quand on loue un bien. Couvre les dégâts quand le logement est vide ou en complément de l'assurance du locataire.">?</span></span> <input type="number" inputmode="numeric" id="pno" value="150"></label>
+                        <label><span>Vacance locative (%) <span class="help-tip" data-tip="Le % du temps où le logement est vide entre deux locataires. 5% ≈ 18 jours/an sans loyer. Prévoyez 5 à 8% pour être prudent.">?</span></span> <input type="number" inputmode="decimal" step="0.1" id="vacance" value="5"></label>
+                        <label><span>Frais de gestion (%) <span class="help-tip" data-tip="Commission versée à une agence pour gérer la location : recherche de locataires, états des lieux, encaissement des loyers. Si vous gérez seul, mettez 0%.">?</span></span> <input type="number" inputmode="decimal" step="0.1" id="gestion" value="7"></label>
                     </div>
                 </details>
 
                 <details class="accordion" open>
                     <summary>⚖️ Fiscalité <span class="tmi-accordion-badge" id="tmi-accordion-badge" style="display:none;"></span></summary>
                     <div class="accordion-content">
-                        <label>Revenus du foyer (€) <input type="number" inputmode="numeric" id="revenus" value="60000"></label>
-                        <label>Enfants à charge <input type="number" inputmode="numeric" id="enfants" value="2"></label>
-                        <div class="tmi-box">Votre TMI : <strong id="tmi-display">-- %</strong></div>
-                        <label>Régime fiscal
+                        <label><span>Revenus du foyer (€) <span class="help-tip" data-tip="Total des revenus annuels de votre couple (salaires, pensions…). Sert à calculer votre tranche d'imposition (TMI).">?</span></span> <input type="number" inputmode="numeric" id="revenus" value="60000"></label>
+                        <label><span>Enfants à charge <span class="help-tip" data-tip="Nombre d'enfants rattachés à votre foyer fiscal. Chaque enfant réduit vos impôts grâce au quotient familial.">?</span></span> <input type="number" inputmode="numeric" id="enfants" value="2"></label>
+                        <div class="tmi-box">Votre TMI <span class="help-tip" data-tip="Taux Marginal d'Imposition : la tranche la plus haute de votre barème d'impôt sur le revenu. C'est à ce taux que seront taxés vos revenus locatifs en plus.">?</span> : <strong id="tmi-display">-- %</strong></div>
+                        <label><span>Régime fiscal <span class="help-tip" data-tip="Le mode de calcul de l'impôt sur vos loyers. Micro-Foncier : abattement simple de 30%. Foncier Réel : déduction de toutes vos charges réelles (souvent plus avantageux si vous avez des travaux ou un crédit).">?</span></span>
                             <div style="display:flex; align-items:center; gap:6px;">
                                 <select id="regime">
                                     <option value="micro-foncier">Micro-Foncier (-30%)</option>
@@ -139,20 +139,20 @@
 
             <div class="metrics-grid">
                 <div class="card">
-                    <h3>Rentabilité Brute</h3>
+                    <h3>Rentabilité Brute <span class="help-tip" data-tip="Loyers annuels ÷ Coût total × 100. Un premier aperçu rapide, mais qui ne tient pas compte des charges ni des impôts.">?</span></h3>
                     <div class="value" id="renta-brute">-- %</div>
                 </div>
                 <div class="card">
-                    <h3>Rentabilité Nette</h3>
+                    <h3>Rentabilité Nette <span class="help-tip" data-tip="(Loyers − Charges annuelles) ÷ Coût total × 100. Plus réaliste que la brute, mais ne compte pas encore les impôts.">?</span></h3>
                     <div class="value" id="renta-nette">-- %</div>
                 </div>
                 <div class="card highlight-gold">
-                    <h3>Renta. Nette-Nette</h3>
+                    <h3>Renta. Nette-Nette <span class="help-tip" data-tip="La rentabilité finale après charges ET impôts. C'est LE chiffre le plus fiable pour comparer des investissements entre eux.">?</span></h3>
                     <div class="value" id="renta-netnet">-- %</div>
                     <p class="subtitle">Après Impôts</p>
                 </div>
                 <div class="card highlight">
-                    <h3>Cash-Flow Net-Net</h3>
+                    <h3>Cash-Flow Net-Net <span class="help-tip" data-tip="Ce qui reste dans votre poche chaque mois après avoir tout payé : crédit, charges, impôts. Positif = vous gagnez de l'argent. Négatif = vous devez en rajouter.">?</span></h3>
                     <div class="value" id="cf-netnet">-- €</div>
                     <p class="subtitle">Dans votre poche / mois</p>
                 </div>
@@ -160,22 +160,22 @@
 
             <div class="metrics-grid metrics-grid-secondary" style="margin-top: 15px;">
                 <div class="card">
-                    <h3>Cash-on-Cash (CoC)</h3>
+                    <h3>Cash-on-Cash <span class="help-tip" data-tip="Rendement annuel sur votre apport personnel. Ex : 1 200 € de gain/an avec 10 000 € d'apport = 12%. Mesure l'effet de levier de votre investissement.">?</span></h3>
                     <div class="value" id="metric-coc">-- %</div>
                     <p class="subtitle">Rendement sur apport</p>
                 </div>
                 <div class="card">
-                    <h3>Multiplicateur (GRM)</h3>
+                    <h3>Multiplicateur (GRM) <span class="help-tip" data-tip="Nombre d'années de loyers bruts pour « rembourser » le coût total du bien. Plus c'est bas, mieux c'est. Bon < 14, Correct < 20, Cher > 20.">?</span></h3>
                     <div class="value" id="metric-grm">--</div>
                     <p class="subtitle">Coût Total / Loyers</p>
                 </div>
                 <div class="card">
-                    <h3>DSCR</h3>
+                    <h3>DSCR <span class="help-tip" data-tip="Ratio de couverture de dette : Loyers annuels ÷ Remboursements annuels du crédit. > 1 = les loyers couvrent le crédit. > 1.3 = confortable pour la banque.">?</span></h3>
                     <div class="value" id="metric-dscr">--</div>
                     <p class="subtitle">Couverture de dette</p>
                 </div>
                 <div class="card">
-                    <h3>Seuil de Rentabilité</h3>
+                    <h3>Seuil de Rentabilité <span class="help-tip" data-tip="L'année à partir de laquelle le total de vos cash-flows cumulés devient positif. Avant ce seuil, l'investissement vous a coûté plus qu'il n'a rapporté.">?</span></h3>
                     <div class="value" id="metric-breakeven">--</div>
                     <p class="subtitle">CF cumulé positif</p>
                 </div>
@@ -185,11 +185,11 @@
                 <div class="summary">
                     <h3>Résumé de l'Enveloppe</h3>
                     <ul>
-                        <li><span>Prix net vendeur estimé</span> <strong><span id="out-prix-net">--</span> €</strong></li>
-                        <li><span>Frais fixes (Notaire, Travaux...)</span> <strong><span id="out-frais-fixes">--</span> €</strong></li>
-                        <li><span>Coût total de l'opération</span> <strong style="color: var(--primary-color);"><span id="out-cout-total">--</span> €</strong></li>
-                        <li><span>Montant de l'emprunt</span> <strong><span id="out-financement">--</span> €</strong></li>
-                        <li><span>Mensualité de crédit</span> <strong><span id="out-mensualite">--</span> €</strong></li>
+                        <li><span>Prix net vendeur estimé <span class="help-tip" data-tip="Le prix réellement versé au vendeur : prix affiché − négociation obtenue.">?</span></span> <strong><span id="out-prix-net">--</span> €</strong></li>
+                        <li><span>Frais fixes (Notaire, Travaux...) <span class="help-tip" data-tip="La somme de tous les frais annexes à l'achat : notaire + travaux + mobilier + frais bancaires + agence.">?</span></span> <strong><span id="out-frais-fixes">--</span> €</strong></li>
+                        <li><span>Coût total de l'opération <span class="help-tip" data-tip="Le coût complet de l'opération : prix net vendeur + tous les frais. C'est cette somme qu'il faut financer.">?</span></span> <strong style="color: var(--primary-color);"><span id="out-cout-total">--</span> €</strong></li>
+                        <li><span>Montant de l'emprunt <span class="help-tip" data-tip="La somme empruntée à la banque = Coût total − Apport personnel.">?</span></span> <strong><span id="out-financement">--</span> €</strong></li>
+                        <li><span>Mensualité de crédit <span class="help-tip" data-tip="Ce que vous remboursez chaque mois à la banque : une part de capital + intérêts + assurance emprunteur.">?</span></span> <strong><span id="out-mensualite">--</span> €</strong></li>
                     </ul>
                 </div>
                 <div class="chart-container">
@@ -240,11 +240,11 @@
                     <thead>
                         <tr>
                             <th>Année</th>
-                            <th>Capital Amorti</th>
-                            <th>Capital Restant</th>
-                            <th>Intérêts</th>
-                            <th>Impôts</th>
-                            <th>Cash-Flow Net</th>
+                            <th>Capital Amorti <span class="help-tip" data-tip="La part du prêt remboursée cette année. Cet argent devient votre patrimoine : vous possédez cette part du bien.">?</span></th>
+                            <th>Capital Restant <span class="help-tip" data-tip="Ce que vous devez encore à la banque à la fin de l'année.">?</span></th>
+                            <th>Intérêts <span class="help-tip" data-tip="La part d'intérêts payée à la banque cette année. Diminue chaque année car le capital restant baisse.">?</span></th>
+                            <th>Impôts <span class="help-tip" data-tip="Impôt dû sur vos revenus locatifs (IR + CSG/CRDS). Si négatif = économie d'impôt grâce au déficit foncier.">?</span></th>
+                            <th>Cash-Flow Net <span class="help-tip" data-tip="Bilan annuel : loyers encaissés − mensualités − charges − impôts. Le gain (ou la perte) réel de l'année.">?</span></th>
                         </tr>
                     </thead>
                     <tbody id="projection-tbody">
@@ -272,7 +272,7 @@
             <p style="font-size: 0.95rem; margin-bottom: 15px; color: #8e8e93;">Définissez le Cash-Flow Net-Net (après tous les impôts et charges) que vous voulez absolument dégager chaque mois sur votre investissement.</p>
             
             <div class="vierzon-cf-row" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--bg-color); padding: 15px; border-radius: 10px;">
-                <label style="margin:0; font-weight:bold; font-size: 1.1rem;">Je veux un Cash-Flow de :</label>
+                <label style="margin:0; font-weight:bold; font-size: 1.1rem;">Je veux un Cash-Flow de <span class="help-tip" data-tip="Le montant net que vous voulez gagner chaque mois après avoir tout payé : crédit, charges et impôts.">?</span> :</label>
                 <div style="display: flex; align-items: center; gap: 5px;">
                     <input type="number" id="vierzon-target-cf" value="100" step="10" style="width: 100px; font-size: 1.2rem; font-weight: bold; text-align: center; border: 2px solid var(--gold-color); color: var(--gold-color);"> <strong>€ / mois</strong>
                 </div>
@@ -290,7 +290,7 @@
                 </label>
                 
                 <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color);">
-                    <div style="font-size: 0.9rem; color: #8e8e93; margin-bottom: 5px;">Prix d'achat Max (Frais agence inclus) :</div>
+                    <div style="font-size: 0.9rem; color: #8e8e93; margin-bottom: 5px;">Prix d'achat Max (FAI) <span class="help-tip" data-tip="Le prix maximum que vous pouvez payer (frais d'agence inclus) pour atteindre votre objectif de cash-flow avec ce loyer.">?</span> :</div>
                     <div id="vierzon-prix-max" style="font-size: 1.8rem; font-weight: bold; color: var(--text-color);">-- €</div>
                 </div>
             </div>
@@ -299,12 +299,12 @@
                 <h3 style="color: var(--success-color); font-size: 1.1rem; margin-bottom: 10px;">Scénario B : J'ai repéré une annonce</h3>
                 <p style="font-size: 0.85rem; color: #8e8e93; margin-bottom: 15px;">Vous avez vu un bien à la vente. A combien devrez-vous le louer au minimum ?</p>
                 
-                <label style="font-weight: 600;">Prix de l'annonce : 
+                <label style="font-weight: 600;"><span>Prix de l'annonce <span class="help-tip" data-tip="FAI = Frais d'Agence Inclus. C'est le prix affiché dans l'annonce, qui inclut déjà la commission de l'agence.">?</span> :</span>
                     <div><input type="number" id="vierzon-prix-annonce" value="80000" style="width: 90px;"> € FAI</div>
                 </label>
                 
                 <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color);">
-                    <div style="font-size: 0.9rem; color: #8e8e93; margin-bottom: 5px;">Loyer Minimum à exiger :</div>
+                    <div style="font-size: 0.9rem; color: #8e8e93; margin-bottom: 5px;">Loyer Minimum à exiger <span class="help-tip" data-tip="Le loyer mensuel minimum que vous devez demander pour atteindre votre objectif de cash-flow avec ce prix d'achat.">?</span> :</div>
                     <div id="vierzon-loyer-min" style="font-size: 1.8rem; font-weight: bold; color: var(--text-color);">-- € /mois</div>
                 </div>
             </div>
@@ -429,6 +429,7 @@
     </div>
 </div>
 
+<div id="tooltip-bubble" class="tooltip-bubble"></div>
 <div id="toast-container" aria-live="polite" aria-atomic="false"></div>
 <script src="script.js"></script>
 </body>

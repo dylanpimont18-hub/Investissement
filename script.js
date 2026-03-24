@@ -108,7 +108,7 @@ function computeCF(prixVendeur, loyerMensuel, inputs, tmi) {
         // Abattement forfaitaire 30% → base imposable = 70% des loyers encaissés
         impotsAnnee = (loyersEncaisses * 0.7) * tauxGlobalImpot;
     } else if (inputs['regime'] === 'reel') {
-        let chargesAnnuees = chargesExploitationAnnuelles + (coutAssuranceMensuel * 12);
+        let chargesAnnuees = chargesExploitationAnnuelles + (coutAssuranceMensuel * 12) + inputs['travaux'] + inputs['frais-bancaires'];
         let revenusNets = loyersEncaisses - chargesAnnuees - interetsAnnee1;
         if (revenusNets > 0) {
             impotsAnnee = revenusNets * tauxGlobalImpot;
@@ -350,6 +350,8 @@ function calculateAndSave() {
                 impotsAnnee = revenusNets * tauxGlobalImpot;
             } else {
                 // Déficit foncier : seule la partie hors intérêts est imputable sur revenu global (plafond 10 700 €/an)
+                // TODO: Implémenter le report de déficit (art. 156 I 3° CGI) — le déficit d'intérêts non imputé
+                // devrait être reportable 10 ans sur les revenus fonciers futurs, ce qui réduirait l'impôt des années suivantes.
                 const soldeHorsInterets = loyersEncaisses - chargesAnnuees;
                 if (soldeHorsInterets < 0) {
                     impotsAnnee = -(Math.min(10700, Math.abs(soldeHorsInterets)) * (tmi / 100));
@@ -1496,4 +1498,41 @@ document.getElementById('btn-share-pdf').addEventListener('click', async functio
         btn.disabled = false;
     }
 });
+
+// === SYSTÈME DE BULLES D'AIDE (TOOLTIPS) ===
+(function() {
+    const bubble = document.getElementById('tooltip-bubble');
+    if (!bubble) return;
+    let activeTip = null;
+
+    function show(tip) {
+        bubble.textContent = tip.dataset.tip;
+        bubble.style.display = 'block';
+        const rect = tip.getBoundingClientRect();
+        const bw = bubble.offsetWidth, bh = bubble.offsetHeight;
+        let top = rect.bottom + 8;
+        let left = rect.left + rect.width / 2 - bw / 2;
+        left = Math.max(10, Math.min(left, window.innerWidth - bw - 10));
+        if (top + bh > window.innerHeight - 10) top = rect.top - bh - 8;
+        bubble.style.top = top + 'px';
+        bubble.style.left = left + 'px';
+        activeTip = tip;
+    }
+
+    function hide() { bubble.style.display = 'none'; activeTip = null; }
+
+    document.addEventListener('click', (e) => {
+        const tip = e.target.closest('.help-tip');
+        if (tip) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (activeTip === tip) hide(); else show(tip);
+        } else if (activeTip) hide();
+    });
+
+    document.querySelectorAll('.help-tip').forEach(tip => {
+        tip.addEventListener('mouseenter', () => show(tip));
+        tip.addEventListener('mouseleave', () => { if (activeTip === tip) hide(); });
+    });
+})();
 

@@ -358,3 +358,30 @@ input.input-error   { border-color: var(--danger-color) !important; box-shadow: 
 /* ===== GESTION PROJETS — mise en forme cohérente ===== */
 #pdf-btns { display: none; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 #pdf-btns.visible { display: flex; }
+
+/* ===== BULLES D'AIDE (TOOLTIPS) ===== */
+.help-tip {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--primary-color); color: white;
+    font-size: 0.68rem; font-weight: 700; cursor: pointer;
+    flex-shrink: 0; line-height: 1; vertical-align: middle; margin-left: 4px;
+    user-select: none; -webkit-user-select: none;
+}
+.help-tip:hover { opacity: 0.85; }
+.tooltip-bubble {
+    position: fixed; display: none;
+    background: #1c1e21; color: #f5f5f7;
+    padding: 12px 16px; border-radius: 10px;
+    font-size: 0.85rem; font-weight: 400; line-height: 1.55;
+    max-width: 320px; width: max-content;
+    z-index: 1000; pointer-events: none;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.3);
+    text-align: left; animation: fadeIn 0.15s ease;
+}
+@media (prefers-color-scheme: dark) {
+    .tooltip-bubble { background: #2c2c2e; color: #f5f5f7; }
+}
+@media (max-width: 640px) {
+    .tooltip-bubble { max-width: calc(100vw - 30px); font-size: 0.82rem; }
+}

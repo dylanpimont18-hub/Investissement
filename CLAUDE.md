@@ -38,15 +38,14 @@ External CDN dependencies (loaded in `index.html`):
 ## Key Calculations
 
 - **TMI** (tax bracket): computed by `calculateTMI(revenus, enfants)` using the French quotient familial system
-- **Tax regimes**: `micro-foncier`, `micro-bic`, `reel` (foncier réel), `lmnp-reel` — each has its own deduction logic in both `calculateAndSave()` and `computeCF()`
-- **LMNP Réel** depreciation: building at 85% over 30 years + furniture over 5 years + works over 15 years, with carry-forward of accounting deficits
+- **Tax regimes**: `micro-foncier`, `reel` (foncier réel) — each has its own deduction logic in both `calculateAndSave()` and `computeCF()`
 - **Vierzon Strategy tab**: uses binary search (40 iterations) on `computeCF()` to find max purchase price or minimum rent needed to hit a target cash-flow
 
 ## Results View Helpers
 
 After `calculateAndSave()` computes the main figures, three helpers update the results tab:
 - `updateScoreBanner(cfNetNet, rentaNette)` — color-coded investment score
-- `updateRegimeComparison(prixNet, inputs, tmi)` — side-by-side table comparing all four tax regimes
+- `updateRegimeComparison(prixNet, inputs, tmi)` — side-by-side table comparing the two tax regimes
 - `updateNegoCalc(prixNet, prixAffiche, inputs, tmi)` — negotiation calculator showing price reduction impact
 
 ## Key Constants
