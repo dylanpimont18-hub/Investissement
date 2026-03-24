@@ -1504,35 +1504,42 @@ document.getElementById('btn-share-pdf').addEventListener('click', async functio
     const bubble = document.getElementById('tooltip-bubble');
     if (!bubble) return;
     let activeTip = null;
+    let hoverLocked = false; // empêche mouseleave de fermer après un tap
 
     function show(tip) {
         bubble.textContent = tip.dataset.tip;
         bubble.style.display = 'block';
         const rect = tip.getBoundingClientRect();
         const bw = bubble.offsetWidth, bh = bubble.offsetHeight;
-        let top = rect.bottom + 8;
+        let top = rect.bottom + 10;
         let left = rect.left + rect.width / 2 - bw / 2;
-        left = Math.max(10, Math.min(left, window.innerWidth - bw - 10));
-        if (top + bh > window.innerHeight - 10) top = rect.top - bh - 8;
+        left = Math.max(8, Math.min(left, window.innerWidth - bw - 8));
+        if (top + bh > window.innerHeight - 10) top = rect.top - bh - 10;
         bubble.style.top = top + 'px';
         bubble.style.left = left + 'px';
         activeTip = tip;
     }
 
-    function hide() { bubble.style.display = 'none'; activeTip = null; }
+    function hide() { bubble.style.display = 'none'; activeTip = null; hoverLocked = false; }
 
+    // Touch/click : ouvre et reste ouvert, ferme au 2e tap ou tap ailleurs
     document.addEventListener('click', (e) => {
         const tip = e.target.closest('.help-tip');
         if (tip) {
             e.preventDefault();
             e.stopPropagation();
-            if (activeTip === tip) hide(); else show(tip);
-        } else if (activeTip) hide();
+            if (activeTip === tip) { hide(); }
+            else { show(tip); hoverLocked = true; }
+        } else if (activeTip) { hide(); }
     });
 
-    document.querySelectorAll('.help-tip').forEach(tip => {
-        tip.addEventListener('mouseenter', () => show(tip));
-        tip.addEventListener('mouseleave', () => { if (activeTip === tip) hide(); });
-    });
+    // Hover desktop uniquement (pas de conflit avec touch)
+    const isTouch = matchMedia('(pointer: coarse)').matches;
+    if (!isTouch) {
+        document.querySelectorAll('.help-tip').forEach(tip => {
+            tip.addEventListener('mouseenter', () => { if (!hoverLocked) show(tip); });
+            tip.addEventListener('mouseleave', () => { if (!hoverLocked) hide(); });
+        });
+    }
 })();
 

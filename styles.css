@@ -362,11 +362,17 @@ input.input-error   { border-color: var(--danger-color) !important; box-shadow: 
 /* ===== BULLES D'AIDE (TOOLTIPS) ===== */
 .help-tip {
     display: inline-flex; align-items: center; justify-content: center;
-    width: 18px; height: 18px; border-radius: 50%;
+    width: 20px; height: 20px; border-radius: 50%;
     background: var(--primary-color); color: white;
-    font-size: 0.68rem; font-weight: 700; cursor: pointer;
+    font-size: 0.7rem; font-weight: 700; cursor: pointer;
     flex-shrink: 0; line-height: 1; vertical-align: middle; margin-left: 4px;
     user-select: none; -webkit-user-select: none;
+    position: relative;
+}
+/* Zone de tap agrandie invisible (44px = minimum recommandé par Apple/Google) */
+.help-tip::before {
+    content: ''; position: absolute;
+    top: -12px; left: -12px; right: -12px; bottom: -12px;
 }
 .help-tip:hover { opacity: 0.85; }
 .tooltip-bubble {
