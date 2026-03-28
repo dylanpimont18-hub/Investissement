@@ -321,6 +321,9 @@ function calculateAndSave() {
     const dataCFCumule = [];
     const dataEnrichissement = [];
 
+    // NOUVEAU : On initialise la réserve de déficit reportable
+    let deficitReportable = 0;
+
     for (let annee = 1; annee <= 15; annee++) {
         let interetsAnnee = 0;
         let capitalAmortiAnnee = 0;
@@ -346,15 +349,40 @@ function calculateAndSave() {
             if(annee === 1) chargesAnnuees += inputs['travaux'] + inputs['frais-bancaires'];
 
             let revenusNets = loyersEncaisses - chargesAnnuees - interetsAnnee;
+            
             if (revenusNets > 0) {
+                // On a un bénéfice foncier cette année
+                if (deficitReportable > 0) {
+                    // On éponge le bénéfice avec le déficit des années précédentes
+                    if (deficitReportable >= revenusNets) {
+                        deficitReportable -= revenusNets; // On entame la réserve
+                        revenusNets = 0; // L'impôt devient nul
+                    } else {
+                        revenusNets -= deficitReportable; // On vide la réserve
+                        deficitReportable = 0;
+                    }
+                }
                 impotsAnnee = revenusNets * tauxGlobalImpot;
             } else {
-                // Déficit foncier : seule la partie hors intérêts est imputable sur revenu global (plafond 10 700 €/an)
-                // TODO: Implémenter le report de déficit (art. 156 I 3° CGI) — le déficit d'intérêts non imputé
-                // devrait être reportable 10 ans sur les revenus fonciers futurs, ce qui réduirait l'impôt des années suivantes.
+                // On a un déficit foncier cette année
                 const soldeHorsInterets = loyersEncaisses - chargesAnnuees;
+                
                 if (soldeHorsInterets < 0) {
-                    impotsAnnee = -(Math.min(10700, Math.abs(soldeHorsInterets)) * (tmi / 100));
+                    // Le déficit provient en partie des charges (travaux, copro, etc.)
+                    const deficitCharges = Math.abs(soldeHorsInterets);
+                    const imputableGlobal = Math.min(10700, deficitCharges);
+                    
+                    // Économie d'impôt immédiate sur le revenu global
+                    impotsAnnee = -(imputableGlobal * (tmi / 100));
+                    
+                    // Le reste (charges non imputées + tous les intérêts) part dans la réserve des 10 ans
+                    const resteCharges = deficitCharges - imputableGlobal;
+                    deficitReportable += (resteCharges + interetsAnnee);
+                } else {
+                    // Les loyers couvrent les charges, mais pas les intérêts.
+                    // Aucun déficit imputable sur le revenu global, 100% part dans la réserve.
+                    deficitReportable += Math.abs(revenusNets);
+                    impotsAnnee = 0;
                 }
             }
         }
