@@ -16,48 +16,36 @@ npx serve .
 python -m http.server
 ```
 
-## Architecture
+## Architecture (ES Modules)
 
-Three files make up the entire app:
+The application logic is modularized. The core files are:
 
-- **[index.html](index.html)** — UI structure with three tab views: `view-inputs`, `view-results`, `view-vierzon`
-- **[script.js](script.js)** — All logic (no framework)
-- **[styles.css](styles.css)** — CSS custom properties for theming, dark mode via `prefers-color-scheme`
+- **`index.html`** — UI structure with three tab views: `view-inputs`, `view-results`, `view-vierzon`. Loads Chart.js and html2pdf from CDN.
+- **`styles.css`** — CSS custom properties for theming, dark mode via `prefers-color-scheme`, responsive mobile design.
+- **`main.js`** — Main controller: lifecycle, events, input reading, saved projects (localStorage), and a large portion of DOM updates (textual results injection, 25-year projection table, Vierzon tab logic).
+- **`calculs.js`** — Pure math and tax engine. No DOM access. Contains `calculateTMI`, `computeCF` (net-net cash-flow), and `computeProjectMetrics`.
+- **`ui.js`** — Complex display components: Chart.js charts, comparison/negotiation tables, score banner, tooltips, toasts, field validation errors, and Simple/Expert mode toggle.
+- **`pdf.js`** — PDF export logic (virtual DOM construction and html2pdf configuration).
+
+*Note: `script.js` is kept only for historical reference and should not be used.*
 
 External CDN dependencies (loaded in `index.html`):
-- **Chart.js** — doughnut chart for cash-flow breakdown
-- **html2pdf.js** — PDF export of the results view
+- **Chart.js** — doughnut chart for cash-flow breakdown and evolution lines.
+- **html2pdf.js** — PDF export of the results view.
 
-## Core Data Flow
+## Core Data Flow & Key Calculations
 
-1. All form inputs are read by `getCurrentInputs()` into a flat object keyed by element `id`
-2. `triggerCalculations()` calls both `calculateAndSave()` (tab 2) and `calculateVierzonStrategy()` (tab 3) on every input change
-3. `calculateAndSave()` also persists the current form state to `localStorage` key `simuImmoDraft`
-4. `computeCF(prixVendeur, loyerMensuel, inputs, tmi)` is the core engine — it is the single source of truth for net-net cash-flow calculation, shared between tabs 2 and 3
+1. **Input Reading**: All form inputs are read into a flat object keyed by element `id`.
+2. **Debounced Calculations**: `triggerCalculations()` (in `main.js`) calls the main calculation pipelines on every input change.
+3. **Core Engine**: `computeCF(prixVendeur, loyerMensuel, inputs, tmi)` in `calculs.js` is the single source of truth for net-net cash-flow calculation.
+4. **Tax regimes**: `micro-foncier`, `reel` (foncier réel), and `sci-is` — handled directly within the calculation engine.
+5. **Persistence**: `simuImmoDraft` for auto-saving current form state, and `simuImmoProjects` for named saved projects.
 
-## Key Calculations
+## WORKFLOW OBLIGATOIRE ET GESTION DES TOKENS
 
-- **TMI** (tax bracket): computed by `calculateTMI(revenus, enfants)` using the French quotient familial system
-- **Tax regimes**: `micro-foncier`, `reel` (foncier réel) — each has its own deduction logic in both `calculateAndSave()` and `computeCF()`
-- **Vierzon Strategy tab**: uses binary search (40 iterations) on `computeCF()` to find max purchase price or minimum rent needed to hit a target cash-flow
+Tous les fichiers sont bloqués par défaut via `.claudesignore`. Pour naviguer dans le projet, tu DOIS suivre ce workflow strict :
 
-## Results View Helpers
-
-After `calculateAndSave()` computes the main figures, three helpers update the results tab:
-- `updateScoreBanner(cfNetNet, rentaNette)` — color-coded investment score
-- `updateRegimeComparison(prixNet, inputs, tmi)` — side-by-side table comparing the two tax regimes
-- `updateNegoCalc(prixNet, prixAffiche, inputs, tmi)` — negotiation calculator showing price reduction impact
-
-## Key Constants
-
-- `CSG_CRDS_RATE = 0.172` — CSG+CRDS rate on capital income (2024), used across all tax regime calculations
-- `triggerCalculations()` debounces recalculation by 150 ms on every input event
-
-## Persistence
-
-- `simuImmoDraft` — auto-saved current form state on every input
-- `simuImmoProjects` — array of named saved projects; each project is the `getCurrentInputs()` snapshot plus a `_projectName` key and an optional `photos` array (base64 data URLs from file uploads)
-
-## PWA
-
-`manifest.json` declares this as an installable PWA. An `icon.png` (192×192) is expected at the root but not tracked in git.
+1. **ANALYSE :** Commence TOUJOURS par lire `contenu.md`. Ce fichier contient la cartographie du projet.
+2. **CIBLAGE :** Sur la base de `contenu.md`, détermine le(s) fichier(s) strictement nécessaire(s) à la tâche et utilise tes outils pour lire uniquement ces fichiers spécifiques.
+3. **MODIFICATION :** Effectue les changements demandés dans le code.
+4. **MISE À JOUR DE L'INDEX :** Si tu crées un fichier, supprimes un fichier, ou modifies substantiellement la responsabilité d'un fichier existant, tu DOIS impérativement mettre à jour `contenu.md` pour refléter la nouvelle architecture.

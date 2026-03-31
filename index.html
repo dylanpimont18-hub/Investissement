@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Investisseur Pro - Outil d'Aide à la Décision</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -32,6 +32,48 @@
     
     <div id="view-inputs" class="view-section active">
         <form id="calc-form">
+            <div class="mode-toggle-container">
+    <span class="toggle-label active" id="label-simple">Simplifié</span>
+    <label class="toggle-switch" aria-label="Basculer mode saisie">
+        <input type="checkbox" id="mode-toggle">
+        <span class="toggle-track"></span>
+    </label>
+    <span class="toggle-label" id="label-expert">Expert</span>
+</div>
+<div id="simplified-inputs">
+    <div class="card" style="margin-bottom:15px;">
+        <div class="simple-fields-grid">
+            <div class="simple-field">
+                <div class="simple-label">🏠 Prix du bien</div>
+                <div class="simple-input-wrap">
+                    <input type="number" id="simple-prix" inputmode="numeric" class="simple-input" data-real-id="prix" value="107000">
+                    <span class="simple-unit">€</span>
+                </div>
+            </div>
+            <div class="simple-field">
+                <div class="simple-label">💰 Loyer mensuel</div>
+                <div class="simple-input-wrap">
+                    <input type="number" id="simple-loyer" inputmode="numeric" class="simple-input" data-real-id="loyer" value="700">
+                    <span class="simple-unit">€/mois</span>
+                </div>
+            </div>
+            <div class="simple-field">
+                <div class="simple-label">💵 Apport</div>
+                <div class="simple-input-wrap">
+                    <input type="number" id="simple-apport" inputmode="numeric" class="simple-input" data-real-id="apport" value="0">
+                    <span class="simple-unit">€</span>
+                </div>
+            </div>
+            <div class="simple-field">
+                <div class="simple-label">📅 Durée</div>
+                <div class="simple-input-wrap">
+                    <input type="number" id="simple-duree" inputmode="numeric" class="simple-input" data-real-id="duree" value="20">
+                    <span class="simple-unit">ans</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
             <div id="form-warnings"></div>
             <div class="card" style="margin-bottom: 20px; border: 2px solid var(--primary-color);">
                 <h3>📁 Gestion des Projets</h3>
@@ -95,14 +137,21 @@
                         <label><span>Revenus du foyer (€) <span class="help-tip" data-tip="Total des revenus annuels de votre couple (salaires, pensions…). Sert à calculer votre tranche d'imposition (TMI).">?</span></span> <input type="number" inputmode="numeric" id="revenus" value="60000"></label>
                         <label><span>Enfants à charge <span class="help-tip" data-tip="Nombre d'enfants rattachés à votre foyer fiscal. Chaque enfant réduit vos impôts grâce au quotient familial.">?</span></span> <input type="number" inputmode="numeric" id="enfants" value="2"></label>
                         <div class="tmi-box">Votre TMI <span class="help-tip" data-tip="Taux Marginal d'Imposition : la tranche la plus haute de votre barème d'impôt sur le revenu. C'est à ce taux que seront taxés vos revenus locatifs en plus.">?</span> : <strong id="tmi-display">-- %</strong></div>
-                        <label><span>Régime fiscal <span class="help-tip" data-tip="Le mode de calcul de l'impôt sur vos loyers. Micro-Foncier : abattement simple de 30%. Foncier Réel : déduction de toutes vos charges réelles (souvent plus avantageux si vous avez des travaux ou un crédit).">?</span></span>
+                        <label><span>Régime fiscal <span class="help-tip" data-tip="Le mode de calcul de l'impôt sur vos loyers. Micro-Foncier : abattement simple de 30%. Foncier Réel : déduction de toutes vos charges réelles. SCI à l'IS : impôt société 15% jusqu'à 42 500 € de bénéfice, 25% au-delà, avec amortissement comptable du bâti.">?</span></span>
                             <div style="display:flex; align-items:center; gap:6px;">
                                 <select id="regime">
                                     <option value="micro-foncier">Micro-Foncier (-30%)</option>
                                     <option value="reel">Foncier Réel</option>
+                                    <option value="sci-is">SCI à l'IS</option>
                                 </select>
                                 <button type="button" class="btn-info-regime" onclick="openRegimeModal()" title="Détails des régimes fiscaux">i</button>
                                 <button type="button" class="btn-info-deductibles" onclick="openDeductiblesModal()" title="Que peut-on déduire des impôts ?">Que déduire ?</button>
+                            </div>
+                        </label>
+                        <label><span>Inflation annuelle (%) <span class="help-tip" data-tip="Taux d'augmentation annuelle des loyers et des charges. 0% = pas d'inflation (scénario conservateur). 2% = scénario moyen. Impacte la projection sur 25 ans.">?</span></span>
+                            <div class="complex-input">
+                                <input type="number" inputmode="decimal" step="0.5" id="inflation" value="0" min="0" max="5">
+                                <input type="range" id="inflation-slider" class="styled-slider" min="0" max="5" step="0.5" value="0">
                             </div>
                         </label>
                     </div>
@@ -227,14 +276,14 @@
             </div>
 
             <div class="card" style="margin-top: 20px; text-align: left;">
-                <h3 style="margin-bottom: 15px;">📈 Évolution sur 15 ans</h3>
+                <h3 style="margin-bottom: 15px;">📈 Évolution sur 25 ans</h3>
                 <div class="evolution-chart-container">
                     <canvas id="evolutionChart"></canvas>
                 </div>
             </div>
 
             <div class="card" style="margin-top: 20px; text-align: left;">
-                <h3 style="margin-bottom: 15px;">📊 Projection Financière (15 ans)</h3>
+                <h3 style="margin-bottom: 15px;">📊 Projection Financière (25 ans)</h3>
                 <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
                 <table class="projection-table">
                     <thead>
@@ -324,6 +373,19 @@
             <button type="button" class="modal-close" onclick="closeRegimeModal(null, null)" title="Fermer">✕</button>
         </div>
         <div class="modal-body">
+            <div class="regime-info-card" style="border-left-color:#5856d6;">
+                <div class="regime-info-title">🏢 SCI à l'IS</div>
+                <div class="regime-info-subtitle">Société Civile Immobilière soumise à l'Impôt sur les Sociétés</div>
+                <p>Imposition du <strong>bénéfice comptable</strong> (loyers − charges − amortissement du bâti). Taux : <strong>15 %</strong> jusqu'à 42 500 €, <strong>25 %</strong> au-delà. L'amortissement comptable (80 % du prix sur 30 ans) réduit significativement la base imposable.</p>
+                <ul>
+                    <li>✅ Amortissement du bâti déductible (contrairement à la location nue)</li>
+                    <li>✅ Très avantageux sur de longs horizons avec un prix d'achat élevé</li>
+                    <li>✅ Séparation du patrimoine personnel et professionnel</li>
+                    <li>❌ Double imposition lors de la revente (IS sur plus-value + IR sur dividendes)</li>
+                    <li>❌ Comptabilité obligatoire, coûts de gestion (expert-comptable)</li>
+                    <li>❌ Pas de régime des plus-values immobilières des particuliers</li>
+                </ul>
+            </div>
             <div class="regime-info-card micro-foncier">
                 <div class="regime-info-title">🏠 Micro-Foncier</div>
                 <div class="regime-info-subtitle">Location nue · Revenus fonciers bruts &lt; 15 000 €/an</div>
@@ -429,8 +491,18 @@
     </div>
 </div>
 
+<div id="tip-sheet-overlay" class="bottom-sheet-overlay">
+    <div class="bottom-sheet" id="tip-sheet">
+        <div class="bottom-sheet-handle"></div>
+        <div class="bottom-sheet-header">
+            <span style="font-weight:700;font-size:1.05rem;">ℹ️ Information</span>
+            <button class="modal-close" id="tip-sheet-close">✕</button>
+        </div>
+        <div id="tip-sheet-body" class="bottom-sheet-body"></div>
+    </div>
+</div>
 <div id="tooltip-bubble" class="tooltip-bubble"></div>
 <div id="toast-container" aria-live="polite" aria-atomic="false"></div>
-<script src="script.js"></script>
+<script type="module" src="main.js"></script>
 </body>
 </html>
