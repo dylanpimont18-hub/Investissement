@@ -162,7 +162,7 @@
                             </div>
                         </label>
                         <label><span>Frais de revente (%) <span class="help-tip" data-tip="Frais globaux estimés à la revente (agence, frais administratifs, etc.). Déduits du prix de vente.">?</span></span> <input type="number" inputmode="decimal" step="0.1" id="frais-revente" value="7"></label>
-                        <label><span>Taux fiscal plus-value (%) <span class="help-tip" data-tip="Taux simplifié appliqué à la plus-value brute. Valeur usuelle de travail: 36.2% (IR + prélèvements sociaux), hors abattements de durée.">?</span></span> <input type="number" inputmode="decimal" step="0.1" id="taux-pv" value="36.2"></label>
+                        <label><span>Taux fiscal sortie SCI-IS (%) <span class="help-tip" data-tip="Utilisé en SCI à l'IS pour estimer l'impôt de sortie. En Micro-Foncier et Foncier Réel, l'app applique automatiquement les abattements de durée de détention.">?</span></span> <input type="number" inputmode="decimal" step="0.1" id="taux-pv" value="25"></label>
                     </div>
                 </details>
 
@@ -313,7 +313,7 @@
 
             <div class="card" id="revente-results-section" style="display: none; margin-top: 20px; text-align: left;">
                 <h3 style="margin-bottom: 15px;">💰 Quand Revendre ?</h3>
-                <p class="subtitle" style="margin-bottom: 12px;">Simulation de sortie annuelle selon votre prix estimé, les frais de revente et la fiscalité de plus-value simplifiée.</p>
+                <p class="subtitle" style="margin-bottom: 12px;">Simulation de sortie annuelle selon votre prix estimé, les frais de revente et la fiscalité de plus-value (abattements automatiques en Micro/Reel).</p>
                 <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
                     <table class="resale-table">
                         <thead>

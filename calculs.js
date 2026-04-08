@@ -150,13 +150,53 @@ export function computeProjectMetrics(projectData) {
     return { prixNet, coutTotal, loyer, rentaBrute, rentaNette, rentaNetNet, cfNetNet, coc, grm, dscr, bestRegime, scoreLabel };
 }
 
+function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+}
+
+function getResaleAbatementsYears(year) {
+    const y = Math.max(1, Math.floor(year));
+
+    let ir = 0;
+    if (y <= 5) ir = 0;
+    else if (y <= 21) ir = (y - 5) * 0.06;
+    else if (y === 22) ir = 0.98;
+    else ir = 1;
+
+    let ps = 0;
+    if (y <= 5) ps = 0;
+    else if (y <= 21) ps = (y - 5) * 0.0165;
+    else if (y === 22) ps = 0.28;
+    else if (y <= 30) ps = 0.28 + ((y - 22) * 0.09);
+    else ps = 1;
+
+    return { ir: clamp(ir, 0, 1), ps: clamp(ps, 0, 1) };
+}
+
+function computeResaleTax(plusValueTaxable, year, regime, tauxPvInput) {
+    if (plusValueTaxable <= 0) return 0;
+
+    if (regime === 'sci-is') {
+        const sciRate = clamp((tauxPvInput || 25) / 100, 0, 1);
+        return plusValueTaxable * sciRate;
+    }
+
+    const abatements = getResaleAbatementsYears(year);
+    const baseIR = plusValueTaxable * (1 - abatements.ir);
+    const basePS = plusValueTaxable * (1 - abatements.ps);
+    return (baseIR * 0.19) + (basePS * CSG_CRDS_RATE);
+}
+
 export function computeResaleTimeline(prixNet, capitalRestantSeries, cfCumuleSeries, inputs) {
     const rows = [];
     const basePrice = (inputs['prix-revente-estime'] && inputs['prix-revente-estime'] > 0) ? inputs['prix-revente-estime'] : prixNet;
     const growth = (inputs['appreciation'] || 0) / 100;
     const fraisRate = Math.max(0, (inputs['frais-revente'] || 0) / 100);
-    const tauxPv = Math.max(0, (inputs['taux-pv'] || 0) / 100);
+    const tauxPv = Math.max(0, inputs['taux-pv'] || 0);
     const apport = inputs['apport'] || 0;
+    const regime = inputs['regime'] || 'micro-foncier';
+    const fraisNotaireAchat = prixNet * ((inputs['notaire'] || 0) / 100);
+    const acquisitionBase = prixNet + fraisNotaireAchat + (inputs['agence'] || 0) + (inputs['travaux'] || 0);
 
     let firstInterestingYear = null;
     let bestYear = 1;
@@ -167,8 +207,9 @@ export function computeResaleTimeline(prixNet, capitalRestantSeries, cfCumuleSer
         const year = i + 1;
         const prixVente = basePrice * Math.pow(1 + growth, i);
         const fraisVente = prixVente * fraisRate;
-        const plusValueBrute = prixVente - prixNet;
-        const impotPv = plusValueBrute > 0 ? plusValueBrute * tauxPv : 0;
+        const prixVenteNetFrais = prixVente - fraisVente;
+        const plusValueTaxable = prixVenteNetFrais - acquisitionBase;
+        const impotPv = computeResaleTax(plusValueTaxable, year, regime, tauxPv);
         const netVendeur = prixVente - fraisVente - impotPv;
         const crd = Math.max(0, capitalRestantSeries[i] || 0);
         const cashNetSortie = netVendeur - crd;
@@ -186,6 +227,7 @@ export function computeResaleTimeline(prixNet, capitalRestantSeries, cfCumuleSer
             year,
             prixVente,
             fraisVente,
+            plusValueTaxable,
             impotPv,
             netVendeur,
             crd,
