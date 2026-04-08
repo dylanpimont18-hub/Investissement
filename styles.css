@@ -88,6 +88,11 @@ textarea { width: 100%; margin-top: 10px; padding: 12px; border: 1px solid var(-
 .projection-table th { color: #8e8e93; font-weight: 500; }
 .projection-table th:first-child, .projection-table td:first-child { text-align: left; font-weight: bold;}
 
+.resale-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; min-width: 760px; }
+.resale-table th, .resale-table td { padding: 10px; border-bottom: 1px solid var(--border-color); text-align: right; }
+.resale-table th { color: #8e8e93; font-weight: 500; position: sticky; top: 0; background: var(--card-bg); z-index: 1; white-space: nowrap; }
+.resale-table th:first-child, .resale-table td:first-child { text-align: left; font-weight: bold; }
+
 .photo-help { font-size: 0.85rem; color: #8e8e93; margin-bottom: 15px; text-align: center; }
 .photo-upload-btn { display: block; width: 100%; padding: 12px; background-color: var(--primary-color); color: white; text-align: center; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 10px; }
 .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
@@ -285,6 +290,8 @@ textarea { width: 100%; margin-top: 10px; padding: 12px; border: 1px solid var(-
     /* Table de projection : scroll horizontal visible */
     .projection-table { font-size: 0.78rem; }
     .projection-table th, .projection-table td { padding: 7px 5px; }
+    .resale-table { font-size: 0.78rem; min-width: 620px; }
+    .resale-table th, .resale-table td { padding: 7px 6px; }
 
     /* Liste des projets : actions en ligne pleine largeur */
     .projects-list li { flex-direction: column; align-items: flex-start; gap: 8px; }

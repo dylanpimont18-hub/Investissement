@@ -16,4 +16,5 @@ Ce fichier liste les responsabilités de chaque fichier du dépôt. Lisez ceci p
 ## Configuration et Métadonnées
 * **`manifest.json`** : Configuration de la PWA (nom, couleurs, icône).
 * **`CLAUDE.md`** : Instructions système et architecture pour Claude Code.
+* **`WORKFLOW.md`** : Méthode de pilotage des tâches (anti-surcharge conversationnelle, checklist de suivi, et optimisation tokens via regroupement des changements par fichier).
 * **`.claudesignore`** / **`.gitattributes`** : Règles d'exclusion et configuration Git.

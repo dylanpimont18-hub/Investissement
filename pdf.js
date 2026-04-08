@@ -36,6 +36,10 @@ export function buildPDFDOM(uploadedPhotos) {
     const optimizationHTML = document.getElementById('optimization-tips-container').innerHTML;
     const negoHTML         = document.getElementById('nego-table-container').innerHTML;
     const projHTML         = document.getElementById('projection-tbody').innerHTML;
+    const reventeSection = document.getElementById('revente-results-section');
+    const reventeVisible = reventeSection && reventeSection.style.display !== 'none';
+    const reventeSummary = document.getElementById('revente-summary');
+    const reventeTableBody = document.getElementById('revente-tbody');
 
     const notesEl   = document.getElementById('commentaires-display');
     const notesText = notesEl ? notesEl.innerText.trim() : '';
@@ -185,6 +189,15 @@ ${evolutionImg ? `<div class="r-card"><h3>📈 Évolution sur 15 ans</h3><img sr
     <tbody>${projHTML}</tbody>
   </table>
 </div>
+${reventeVisible ? `<div class="r-card" style="page-break-inside:auto;">
+  <h3>💰 Quand Revendre ?</h3>
+  <div class="r-card-sub">Simulation de sortie annuelle selon vos hypothèses de revente.</div>
+  ${reventeSummary ? `<div style="font-size:9px; color:#8e8e93; margin-bottom:8px;">${reventeSummary.innerText}</div>` : ''}
+  <table class="nego-table">
+    <thead><tr><th>Année</th><th>Prix de vente</th><th>Frais</th><th>Impôt PV</th><th>Net vendeur</th><th>CRD</th><th>Cash net sortie</th><th>Gain global</th><th>Verdict</th></tr></thead>
+    <tbody>${reventeTableBody ? reventeTableBody.innerHTML : ''}</tbody>
+  </table>
+</div>` : ''}
 ${notesText ? `<div class="r-page-break"></div><div class="r-card"><h3>📝 Notes &amp; Commentaires</h3><p class="r-notes">${notesText}</p></div>` : ''}
 ${activePhotos.length ? `<div class="r-page-break"></div><div class="r-card"><h3>📷 Galerie Photos</h3><div class="r-photo-grid">${photosHTML}</div></div>` : ''}
 `;

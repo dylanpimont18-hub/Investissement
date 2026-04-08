@@ -1,4 +1,4 @@
-import { calculateTMI, computeCF, computeProjectMetrics } from './calculs.js';
+import { calculateTMI, computeCF, computeProjectMetrics, computeResaleTimeline } from './calculs.js';
 import {
     setNegoTableMode,
     updateColor, updateChart, updateEvolutionChart,
@@ -195,6 +195,39 @@ function calculateAndSave() {
     }
     document.getElementById('projection-tbody').innerHTML = tbodyHTML;
 
+    const reventeSection = document.getElementById('revente-results-section');
+    const reventeTbody = document.getElementById('revente-tbody');
+    const reventeSummary = document.getElementById('revente-summary');
+    const resaleTimeline = computeResaleTimeline(prixNet, dataCapitalRestant, dataCFCumule, inputs);
+    if (reventeSection && reventeTbody && reventeSummary && resaleTimeline.rows.length > 0) {
+        reventeSection.style.display = 'block';
+        reventeTbody.innerHTML = resaleTimeline.rows.map(row => {
+            const gainColor = row.gainGlobal >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+            const verdict = row.interesting ? 'Interessant' : 'Attendre';
+            return `
+                <tr>
+                    <td>An ${row.year}</td>
+                    <td>${Math.round(row.prixVente).toLocaleString('fr-FR')} €</td>
+                    <td>${Math.round(row.fraisVente).toLocaleString('fr-FR')} €</td>
+                    <td>${Math.round(row.impotPv).toLocaleString('fr-FR')} €</td>
+                    <td>${Math.round(row.netVendeur).toLocaleString('fr-FR')} €</td>
+                    <td>${Math.round(row.crd).toLocaleString('fr-FR')} €</td>
+                    <td>${Math.round(row.cashNetSortie).toLocaleString('fr-FR')} €</td>
+                    <td style="color:${gainColor}; font-weight:700;">${Math.round(row.gainGlobal).toLocaleString('fr-FR')} €</td>
+                    <td style="color:${row.interesting ? 'var(--success-color)' : '#ff9500'}; font-weight:700;">${verdict}</td>
+                </tr>
+            `;
+        }).join('');
+
+        if (resaleTimeline.firstInterestingYear !== null) {
+            reventeSummary.innerText = `Premiere annee interessante: An ${resaleTimeline.firstInterestingYear} - Meilleur gain estime: ${Math.round(resaleTimeline.bestGain).toLocaleString('fr-FR')} € (An ${resaleTimeline.bestYear})`;
+        } else {
+            reventeSummary.innerText = `Aucune annee positive sur 25 ans avec vos hypotheses actuelles. Meilleur scenario: ${Math.round(resaleTimeline.bestGain).toLocaleString('fr-FR')} € (An ${resaleTimeline.bestYear}).`;
+        }
+    } else if (reventeSection) {
+        reventeSection.style.display = 'none';
+    }
+
     const rentaBrute = coutTotal > 0 ? (loyersAnnuelsTheoriques / coutTotal) * 100 : 0;
     const rentaNette = coutTotal > 0 ? ((loyersEncaisses - chargesExploitationAnnuelles) / coutTotal) * 100 : 0;
     const rentaNetNet = coutTotal > 0 ? ((loyersEncaisses - chargesExploitationAnnuelles - firstYearImpots) / coutTotal) * 100 : 0;
@@ -342,6 +375,7 @@ function loadProject(index) {
             if (el) {
                 el.value = data[id];
                 if (id === 'taux-input') document.getElementById('taux-slider').value = data[id];
+                if (id === 'appreciation') document.getElementById('appreciation-slider').value = data[id];
             }
         }
         if (data['regime']) document.getElementById('regime').value = data['regime'];
@@ -370,6 +404,7 @@ function initApp() {
                 if (el) {
                     el.value = data[id];
                     if (id === 'taux-input') document.getElementById('taux-slider').value = data[id];
+                    if (id === 'appreciation') document.getElementById('appreciation-slider').value = data[id];
                 }
             }
             if (data['regime']) document.getElementById('regime').value = data['regime'];
@@ -495,6 +530,14 @@ const inflationSlider = document.getElementById('inflation-slider');
 if (inflationInput && inflationSlider) {
     inflationInput.addEventListener('input',  (e) => { inflationSlider.value = e.target.value; triggerCalculations(); });
     inflationSlider.addEventListener('input', (e) => { inflationInput.value  = e.target.value; triggerCalculations(); });
+}
+
+// Synchronisation appreciation slider ↔ input
+const appreciationInput  = document.getElementById('appreciation');
+const appreciationSlider = document.getElementById('appreciation-slider');
+if (appreciationInput && appreciationSlider) {
+    appreciationInput.addEventListener('input',  (e) => { appreciationSlider.value = e.target.value; triggerCalculations(); });
+    appreciationSlider.addEventListener('input', (e) => { appreciationInput.value  = e.target.value; triggerCalculations(); });
 }
 
 // Type de bien → frais notaire

@@ -154,6 +154,15 @@
                                 <input type="range" id="inflation-slider" class="styled-slider" min="0" max="5" step="0.5" value="0">
                             </div>
                         </label>
+                        <label><span>Prix de revente estimé (€) <span class="help-tip" data-tip="Prix de vente cible que vous estimez pouvoir obtenir aujourd'hui pour ce bien. Sert de base au scénario de revente.">?</span></span> <input type="number" inputmode="numeric" id="prix-revente-estime" value="120000"></label>
+                        <label><span>Evolution prix revente/an (%) <span class="help-tip" data-tip="Hypothèse d'évolution annuelle du prix de revente. 0% = prix constant, 2% = hausse moyenne de 2% par an.">?</span></span>
+                            <div class="complex-input">
+                                <input type="number" inputmode="decimal" step="0.5" id="appreciation" value="0" min="-5" max="10">
+                                <input type="range" id="appreciation-slider" class="styled-slider" min="-5" max="10" step="0.5" value="0" aria-label="Evolution annuelle du prix de revente">
+                            </div>
+                        </label>
+                        <label><span>Frais de revente (%) <span class="help-tip" data-tip="Frais globaux estimés à la revente (agence, frais administratifs, etc.). Déduits du prix de vente.">?</span></span> <input type="number" inputmode="decimal" step="0.1" id="frais-revente" value="7"></label>
+                        <label><span>Taux fiscal plus-value (%) <span class="help-tip" data-tip="Taux simplifié appliqué à la plus-value brute. Valeur usuelle de travail: 36.2% (IR + prélèvements sociaux), hors abattements de durée.">?</span></span> <input type="number" inputmode="decimal" step="0.1" id="taux-pv" value="36.2"></label>
                     </div>
                 </details>
 
@@ -300,6 +309,30 @@
                         </tbody>
                 </table>
                 </div>
+            </div>
+
+            <div class="card" id="revente-results-section" style="display: none; margin-top: 20px; text-align: left;">
+                <h3 style="margin-bottom: 15px;">💰 Quand Revendre ?</h3>
+                <p class="subtitle" style="margin-bottom: 12px;">Simulation de sortie annuelle selon votre prix estimé, les frais de revente et la fiscalité de plus-value simplifiée.</p>
+                <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                    <table class="resale-table">
+                        <thead>
+                            <tr>
+                                <th>Année</th>
+                                <th>Prix de vente</th>
+                                <th>Frais de revente</th>
+                                <th>Impôt PV</th>
+                                <th>Net vendeur</th>
+                                <th>CRD</th>
+                                <th>Cash net sortie</th>
+                                <th>Gain global</th>
+                                <th>Verdict</th>
+                            </tr>
+                        </thead>
+                        <tbody id="revente-tbody"></tbody>
+                    </table>
+                </div>
+                <div id="revente-summary" class="subtitle" style="margin-top: 10px;"></div>
             </div>
 
             <div class="card" id="comments-export-section" style="display: none; margin-top: 20px; text-align: left;">

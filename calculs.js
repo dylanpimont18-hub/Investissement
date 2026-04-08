@@ -149,3 +149,51 @@ export function computeProjectMetrics(projectData) {
 
     return { prixNet, coutTotal, loyer, rentaBrute, rentaNette, rentaNetNet, cfNetNet, coc, grm, dscr, bestRegime, scoreLabel };
 }
+
+export function computeResaleTimeline(prixNet, capitalRestantSeries, cfCumuleSeries, inputs) {
+    const rows = [];
+    const basePrice = (inputs['prix-revente-estime'] && inputs['prix-revente-estime'] > 0) ? inputs['prix-revente-estime'] : prixNet;
+    const growth = (inputs['appreciation'] || 0) / 100;
+    const fraisRate = Math.max(0, (inputs['frais-revente'] || 0) / 100);
+    const tauxPv = Math.max(0, (inputs['taux-pv'] || 0) / 100);
+    const apport = inputs['apport'] || 0;
+
+    let firstInterestingYear = null;
+    let bestYear = 1;
+    let bestGain = -Infinity;
+
+    const horizon = Math.min(capitalRestantSeries.length, cfCumuleSeries.length, 25);
+    for (let i = 0; i < horizon; i++) {
+        const year = i + 1;
+        const prixVente = basePrice * Math.pow(1 + growth, i);
+        const fraisVente = prixVente * fraisRate;
+        const plusValueBrute = prixVente - prixNet;
+        const impotPv = plusValueBrute > 0 ? plusValueBrute * tauxPv : 0;
+        const netVendeur = prixVente - fraisVente - impotPv;
+        const crd = Math.max(0, capitalRestantSeries[i] || 0);
+        const cashNetSortie = netVendeur - crd;
+        const cfCumule = cfCumuleSeries[i] || 0;
+        const gainGlobal = cfCumule + cashNetSortie - apport;
+        const interesting = gainGlobal >= 0;
+
+        if (interesting && firstInterestingYear === null) firstInterestingYear = year;
+        if (gainGlobal > bestGain) {
+            bestGain = gainGlobal;
+            bestYear = year;
+        }
+
+        rows.push({
+            year,
+            prixVente,
+            fraisVente,
+            impotPv,
+            netVendeur,
+            crd,
+            cashNetSortie,
+            gainGlobal,
+            interesting
+        });
+    }
+
+    return { rows, firstInterestingYear, bestYear, bestGain };
+}
