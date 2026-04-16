@@ -507,7 +507,7 @@ function haptic() { if (navigator.vibrate) navigator.vibrate(10); }
         'travaux': 0, 'meubles': 0, 'frais-bancaires': 1500,
         'taux-input': 3.17, 'taux-slider': 3.17, 'assurance': 0.30,
         'copro': 40, 'fonciere': 1500, 'pno': 150, 'vacance': 5,
-        'gestion': 7, 'revenus': 60000, 'enfants': 2, 'regime': 'micro-foncier'
+        'gestion': 7, 'revenus': 60000, 'regime': 'micro-foncier'
     };
     const PROXY_FIELDS = [
         { simpleId: 'simple-prix',   realId: 'prix'   },

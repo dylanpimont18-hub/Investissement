@@ -77,7 +77,7 @@ export function computeCF(prixVendeur, loyerMensuel, inputs, tmi) {
 // --- MÉTRIQUES PROJET (pour comparateur) ---
 export function computeProjectMetrics(projectData) {
     const inputs = projectData;
-    const tmi = calculateTMI(inputs.revenus || 0, inputs.enfants || 0);
+    const tmi = calculateTMI(inputs.revenus || 0, 2);
     const prixNet = (inputs['prix'] || 0) - (inputs['nego'] || 0);
     const fraisNotaire = prixNet * ((inputs['notaire'] || 0) / 100);
     const fraisFixes = (inputs['agence'] || 0) + (inputs['travaux'] || 0) + (inputs['meubles'] || 0) + (inputs['frais-bancaires'] || 0);

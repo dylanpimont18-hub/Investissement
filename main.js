@@ -36,7 +36,7 @@ function calculateAndSave() {
     const inputs = getCurrentInputs();
     localStorage.setItem('simuImmoDraft', JSON.stringify(inputs));
 
-    const tmi = calculateTMI(inputs.revenus, inputs.enfants);
+    const tmi = calculateTMI(inputs.revenus, 2);
     document.getElementById('tmi-display').innerText = tmi + ' %';
 
     const tmiBadge = document.getElementById('tmi-accordion-badge');
@@ -293,7 +293,7 @@ function calculateAndSave() {
 // --- STRATÉGIE VIERZON (Onglet 3) ---
 function calculateVierzonStrategy() {
     const inputs  = getCurrentInputs();
-    const tmi     = calculateTMI(inputs.revenus, inputs.enfants);
+    const tmi     = calculateTMI(inputs.revenus, 2);
     const targetCF = parseFloat(document.getElementById('vierzon-target-cf').value) || 0;
 
     // Scénario A : Je fixe le loyer, quel prix max ?
