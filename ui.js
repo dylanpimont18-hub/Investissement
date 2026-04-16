@@ -571,8 +571,9 @@ function haptic() { if (navigator.vibrate) navigator.vibrate(10); }
         });
     });
 
-    // Init : mode simplifié par défaut (toggle non coché)
-    setMode(false);
+    // Init : mode Expert par défaut (toggle coché)
+    toggle.checked = true;
+    setMode(true);
 })();
 
 // === HAPTIQUE SUR BOUTONS PRINCIPAUX ===

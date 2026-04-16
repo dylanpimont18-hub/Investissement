@@ -571,8 +571,8 @@ document.getElementById('toggle-amount').addEventListener('click', () => {
     document.getElementById(id).addEventListener('input', calculateVierzonStrategy);
 });
 
-// Photo input
-document.getElementById('photo-input').addEventListener('change', function(event) {
+// Photo input — handler partagé galerie + caméra
+function handlePhotoFiles(event) {
     const files       = event.target.files;
     const previewGrid = document.getElementById('photo-gallery-preview');
     const exportGrid  = document.getElementById('photo-gallery');
@@ -604,7 +604,10 @@ document.getElementById('photo-input').addEventListener('change', function(event
         reader.readAsDataURL(file);
     }
     event.target.value = '';
-});
+}
+
+document.getElementById('photo-input').addEventListener('change', handlePhotoFiles);
+document.getElementById('photo-input-camera').addEventListener('change', handlePhotoFiles);
 
 // Sauvegarde de projet
 document.getElementById('btn-save-project').addEventListener('click', () => {

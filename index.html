@@ -170,10 +170,16 @@
                     <summary>📝 Notes & Photos</summary>
                     <div class="accordion-content">
                         <textarea id="commentaires-input" rows="3" placeholder="Notes sur la visite, l'état du bien..."></textarea>
-                        <label class="photo-upload-btn">
-                            <span>📸 Ajouter une photo</span>
-                            <input type="file" id="photo-input" accept="image/*" capture="environment" multiple style="display: none;">
-                        </label>
+                        <div class="photo-upload-btns">
+                            <label class="photo-upload-btn">
+                                <span>🖼️ Galerie</span>
+                                <input type="file" id="photo-input" accept="image/*" multiple style="display: none;">
+                            </label>
+                            <label class="photo-upload-btn photo-upload-btn-camera">
+                                <span>📷 Caméra</span>
+                                <input type="file" id="photo-input-camera" accept="image/*" capture="environment" style="display: none;">
+                            </label>
+                        </div>
                         <div class="photo-grid" id="photo-gallery-preview" style="margin-top: 10px;"></div>
                     </div>
                 </details>
