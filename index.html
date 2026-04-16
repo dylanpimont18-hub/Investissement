@@ -238,6 +238,11 @@
                     <div class="value" id="metric-breakeven">--</div>
                     <p class="subtitle">CF cumulé positif</p>
                 </div>
+                <div class="card">
+                    <h3>Équité An 1 <span class="help-tip" data-tip="Votre patrimoine net après la 1ère année : apport + capital remboursé. C'est la partie du bien que vous possédez réellement, sans dette.">?</span></h3>
+                    <div class="value" id="metric-equity">-- €</div>
+                    <p class="subtitle">Patrimoine net</p>
+                </div>
             </div>
 
             <div class="details-section">
@@ -265,6 +270,9 @@
                 <p class="subtitle" style="margin-bottom: 15px;">CF net-net mensuel estimé pour chaque régime avec vos paramètres actuels.</p>
                 <div id="regime-compare-grid" class="regime-compare-grid"></div>
                 <div id="fiscal-breakdown"></div>
+                <div id="micro-foncier-alert" class="regime-alert-warning" style="display:none; margin-top:12px;">
+                    ⚠️ <strong>Attention :</strong> vos loyers encaissés dépassent 15 000 €/an — le régime <strong>Micro-Foncier</strong> n'est plus accessible légalement. Passez au Foncier Réel.
+                </div>
             </div>
 
             <!-- Conseils d'Optimisation -->
@@ -285,6 +293,20 @@
                 <div id="nego-table-container" style="overflow-x: auto; max-height: 440px; overflow-y: auto;"></div>
             </div>
 
+            <!-- Analyse de sensibilité -->
+            <div class="card" style="margin-top: 20px; text-align: left;">
+                <h3 style="margin-bottom: 8px;">🎯 Analyse de Sensibilité</h3>
+                <p class="subtitle" style="margin-bottom: 14px;">Impact de différents scénarios sur votre cash-flow net-net mensuel.</p>
+                <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                    <table class="projection-table" id="sensitivity-table">
+                        <thead>
+                            <tr><th>Scénario</th><th>CF Net-Net / mois</th><th>Variation</th></tr>
+                        </thead>
+                        <tbody id="sensitivity-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
             <div class="card" style="margin-top: 20px; text-align: left;">
                 <h3 style="margin-bottom: 15px;">📈 Évolution sur 25 ans</h3>
                 <div class="evolution-chart-container">
@@ -293,7 +315,10 @@
             </div>
 
             <div class="card" style="margin-top: 20px; text-align: left;">
-                <h3 style="margin-bottom: 15px;">📊 Projection Financière (25 ans)</h3>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+                    <h3 style="margin:0;">📊 Projection Financière (25 ans)</h3>
+                    <button type="button" id="btn-export-csv" class="btn-small btn-load" title="Exporter en CSV">📥 CSV</button>
+                </div>
                 <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
                 <table class="projection-table">
                     <thead>
@@ -310,6 +335,13 @@
                         </tbody>
                 </table>
                 </div>
+            </div>
+
+            <!-- Section après le crédit -->
+            <div class="card" id="post-credit-section" style="display:none; margin-top: 20px; text-align: left;">
+                <h3 style="margin-bottom: 8px;">🏁 Après le Crédit</h3>
+                <p class="subtitle" style="margin-bottom: 14px;">Estimation de votre situation une fois le crédit entièrement remboursé.</p>
+                <div id="post-credit-content"></div>
             </div>
 
             <div class="card" id="revente-results-section" style="display: none; margin-top: 20px; text-align: left;">

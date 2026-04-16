@@ -12,6 +12,7 @@ import { buildPDFDOM, cleanupPDFDOM, getPDFOptions, showRenderMask } from './pdf
 let uploadedPhotos = [];
 let savedProjects = (() => { try { return JSON.parse(localStorage.getItem('simuImmoProjects')) || []; } catch(e) { return []; } })();
 let calcTimeout = null;
+let projectionData = [];
 
 // --- LECTURE DES INPUTS ---
 function getCurrentInputs() {
@@ -89,6 +90,7 @@ function calculateAndSave() {
     const dataCFCumule      = [];
     const dataEnrichissement = [];
     let deficitReportable = 0;
+    projectionData = [];
 
     for (let annee = 1; annee <= 25; annee++) {
         let interetsAnnee = 0;
@@ -122,7 +124,7 @@ function calculateAndSave() {
             const chargesAnnueesTmp = chargesExploitationCetteAnnee + assuranceAnnee + (annee === 1 ? inputs['travaux'] + inputs['frais-bancaires'] : 0);
             revenuLocatifImposable = Math.max(0, loyersEncaissesCetteAnnee - chargesAnnueesTmp - interetsAnnee);
         }
-        const tmiCetteAnnee = calculateTMI((inputs['revenus'] || 0) + revenuLocatifImposable, inputs['enfants'] || 0);
+        const tmiCetteAnnee = calculateTMI((inputs['revenus'] || 0) + revenuLocatifImposable, 2);
         const tauxGlobalImpot = (tmiCetteAnnee / 100) + 0.172;
 
         let impotsAnnee = 0;
@@ -160,7 +162,7 @@ function calculateAndSave() {
             }
         } else if (inputs['regime'] === 'sci-is') {
             const amortissement = prixNet * 0.80 / 30;
-            const chargesDeductibles = chargesExploitationCetteAnnee + assuranceAnnee + interetsAnnee;
+            const chargesDeductibles = chargesExploitationCetteAnnee + assuranceAnnee + interetsAnnee + (annee === 1 ? inputs['travaux'] + inputs['frais-bancaires'] : 0);
             const benefice = loyersEncaissesCetteAnnee - chargesDeductibles - amortissement;
             if (benefice > 0) {
                 impotsAnnee = Math.min(benefice, 42500) * 0.15 + Math.max(0, benefice - 42500) * 0.25;
@@ -192,6 +194,7 @@ function calculateAndSave() {
                 </td>
             </tr>
         `;
+        projectionData.push({ annee, capitalAmortiAnnee, capitalRestant, interetsAnnee, impotsAnnee, cfNetNetAnnee });
     }
     document.getElementById('projection-tbody').innerHTML = tbodyHTML;
 
@@ -288,6 +291,89 @@ function calculateAndSave() {
     renderOptimizationSection(tips);
     updateScoreBanner(cfNetNet, rentaNette, tips);
     updateNegoTable(prixNet, inputs['prix'], inputs, tmi);
+
+    // --- ÉQUITÉ AN 1 ---
+    const equityAn1 = (inputs['apport'] || 0) + (montantFinance - (dataCapitalRestant[0] || 0));
+    const equityEl = document.getElementById('metric-equity');
+    if (equityEl) {
+        equityEl.innerText = Math.round(equityAn1).toLocaleString('fr-FR') + ' €';
+        equityEl.className = 'value ' + (equityAn1 > 0 ? 'positive' : 'negative');
+    }
+
+    // --- ALERTE MICRO-FONCIER ---
+    const alertMicro = document.getElementById('micro-foncier-alert');
+    if (alertMicro) alertMicro.style.display = (inputs['regime'] === 'micro-foncier' && loyersEncaisses > 15000) ? 'block' : 'none';
+
+    // --- ANALYSE DE SENSIBILITÉ ---
+    const sensitivityScenarios = [
+        { label: 'Scénario de base', loyer: inputs['loyer'], overrides: {} },
+        { label: 'Taux + 0,5 %',    loyer: inputs['loyer'], overrides: { 'taux-input': (inputs['taux-input'] || 0) + 0.5 } },
+        { label: 'Taux + 1 %',      loyer: inputs['loyer'], overrides: { 'taux-input': (inputs['taux-input'] || 0) + 1.0 } },
+        { label: 'Vacance 10 %',    loyer: inputs['loyer'], overrides: { 'vacance': 10 } },
+        { label: 'Loyer − 5 %',     loyer: (inputs['loyer'] || 0) * 0.95, overrides: { 'loyer': (inputs['loyer'] || 0) * 0.95 } },
+        { label: 'Loyer − 10 %',    loyer: (inputs['loyer'] || 0) * 0.90, overrides: { 'loyer': (inputs['loyer'] || 0) * 0.90 } },
+    ];
+    const sensitivityTbody = document.getElementById('sensitivity-tbody');
+    if (sensitivityTbody) {
+        sensitivityTbody.innerHTML = sensitivityScenarios.map((sc, i) => {
+            const scInputs = Object.assign({}, inputs, sc.overrides);
+            const cf = computeCF(prixNet, sc.loyer, scInputs, tmi);
+            const delta = cf - cfNetNet;
+            const cfColor = cf >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+            const deltaColor = delta >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+            const deltaStr = i === 0 ? '—' : `<span style="color:${deltaColor}">${delta >= 0 ? '+' : ''}${Math.round(delta)} €</span>`;
+            return `<tr>
+                <td>${sc.label}</td>
+                <td style="font-weight:700;color:${cfColor}">${cf.toFixed(0)} €/mois</td>
+                <td>${deltaStr}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    // --- PROJECTION POST-CRÉDIT ---
+    const duree = inputs['duree'] || 20;
+    const postCreditSection = document.getElementById('post-credit-section');
+    const postCreditContent = document.getElementById('post-credit-content');
+    if (postCreditSection && postCreditContent && duree > 0) {
+        const facteurPost = Math.pow(1 + inflationRate, duree - 1);
+        const loyersPost = loyersEncaisses * facteurPost;
+        const chargesPost = chargesExploitationAnnuelles * facteurPost;
+        const tmiPost = calculateTMI(inputs['revenus'] || 0, 2);
+        const tauxGlobalPost = (tmiPost / 100) + 0.172;
+        let impotsPost = 0;
+        if (inputs['regime'] === 'micro-foncier') {
+            impotsPost = (loyersPost * 0.7) * tauxGlobalPost;
+        } else if (inputs['regime'] === 'reel') {
+            const revNets = loyersPost - chargesPost;
+            if (revNets > 0) impotsPost = revNets * tauxGlobalPost;
+        } else if (inputs['regime'] === 'sci-is') {
+            const amort = duree < 30 ? prixNet * 0.80 / 30 : 0;
+            const benefice = loyersPost - chargesPost - amort;
+            if (benefice > 0) impotsPost = Math.min(benefice, 42500) * 0.15 + Math.max(0, benefice - 42500) * 0.25;
+        }
+        const cfPost = (loyersPost - chargesPost - impotsPost) / 12;
+        const gainPost = cfPost - cfNetNet;
+        const cfPostColor = cfPost >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+        const gainPostColor = gainPost >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+        postCreditSection.style.display = 'block';
+        postCreditContent.innerHTML = `
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;">
+                <div style="background:var(--bg-color);border-radius:10px;padding:14px;text-align:center;">
+                    <div style="font-size:0.78rem;color:#8e8e93;margin-bottom:4px;">CF mensuel post-crédit</div>
+                    <div style="font-size:1.4rem;font-weight:700;color:${cfPostColor}">${Math.round(cfPost).toLocaleString('fr-FR')} €</div>
+                </div>
+                <div style="background:var(--bg-color);border-radius:10px;padding:14px;text-align:center;">
+                    <div style="font-size:0.78rem;color:#8e8e93;margin-bottom:4px;">Gain vs maintenant</div>
+                    <div style="font-size:1.4rem;font-weight:700;color:${gainPostColor}">${gainPost >= 0 ? '+' : ''}${Math.round(gainPost).toLocaleString('fr-FR')} €/mois</div>
+                </div>
+                <div style="background:var(--bg-color);border-radius:10px;padding:14px;text-align:center;">
+                    <div style="font-size:0.78rem;color:#8e8e93;margin-bottom:4px;">Revenus nets / an</div>
+                    <div style="font-size:1.4rem;font-weight:700;">${Math.round(loyersPost - chargesPost - impotsPost).toLocaleString('fr-FR')} €</div>
+                </div>
+            </div>
+            <p style="font-size:0.78rem;color:#8e8e93;margin-top:10px;">* Estimation à l'an ${duree} avec ${((inputs['inflation'] || 0)).toFixed(1)} % d'inflation/an sur loyers et charges. Crédit et assurance emprunteur soldés.</p>
+        `;
+    }
 }
 
 // --- STRATÉGIE VIERZON (Onglet 3) ---
@@ -799,6 +885,55 @@ document.getElementById('btn-share-pdf').addEventListener('click', async functio
         document.getElementById('btn-share-pdf').style.display = 'inline-flex';
         document.getElementById('btn-preview-share').style.display = 'inline-flex';
     }
+})();
+
+// --- EXPORT CSV ---
+document.getElementById('btn-export-csv').addEventListener('click', function() {
+    if (!projectionData.length) { showToast('Lancez d\'abord une simulation.', 'error'); return; }
+    const bom = '\ufeff';
+    const header = ['Année', 'Capital Amorti (€)', 'Capital Restant (€)', 'Intérêts (€)', 'Impôts (€)', 'Cash-Flow Net (€)'].join(';');
+    const rows = projectionData.map(r => [
+        `An ${r.annee}`,
+        Math.round(r.capitalAmortiAnnee),
+        Math.round(r.capitalRestant),
+        Math.round(r.interetsAnnee),
+        Math.round(r.impotsAnnee),
+        Math.round(r.cfNetNetAnnee)
+    ].join(';'));
+    const csv = bom + header + '\n' + rows.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'projection-investissement.csv';
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('CSV exporté avec succès.', 'success');
+});
+
+// --- SWIPE HORIZONTAL (navigation par onglets) ---
+(function() {
+    const tabIds = ['view-inputs', 'view-results', 'view-vierzon'];
+    const tabBtns = Array.from(document.querySelectorAll('.tab-btn'));
+    let touchStartX = 0;
+    let touchStartY = 0;
+    const container = document.querySelector('.container');
+    container.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+    container.addEventListener('touchend', (e) => {
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dy = e.changedTouches[0].clientY - touchStartY;
+        if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) * 0.8) return;
+        const activeSection = document.querySelector('.view-section.active');
+        const currentIdx = tabIds.indexOf(activeSection ? activeSection.id : '');
+        if (currentIdx === -1) return;
+        const newIdx = dx < 0
+            ? Math.min(currentIdx + 1, tabIds.length - 1)
+            : Math.max(currentIdx - 1, 0);
+        if (newIdx !== currentIdx) tabBtns[newIdx].click();
+    }, { passive: true });
 })();
 
 // --- INITIALISATION ---

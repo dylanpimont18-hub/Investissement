@@ -63,7 +63,7 @@ export function computeCF(prixVendeur, loyerMensuel, inputs, tmi) {
         // IS sur bénéfice comptable : 15% jusqu'à 42 500 €, 25% au-delà
         // Amortissement simplifié : 80% du prix (bâti) sur 30 ans
         const amortissement = prixVendeur * 0.80 / 30;
-        const chargesDeductibles = chargesExploitationAnnuelles + (coutAssuranceMensuel * 12) + interetsAnnee1;
+        const chargesDeductibles = chargesExploitationAnnuelles + (coutAssuranceMensuel * 12) + interetsAnnee1 + (inputs['travaux'] || 0) + (inputs['frais-bancaires'] || 0);
         const benefice = loyersEncaisses - chargesDeductibles - amortissement;
         if (benefice > 0) {
             impotsAnnee = Math.min(benefice, 42500) * 0.15 + Math.max(0, benefice - 42500) * 0.25;
@@ -122,7 +122,7 @@ export function computeProjectMetrics(projectData) {
         }
     } else if (inputs['regime'] === 'sci-is') {
         const amortissement = prixNet * 0.80 / 30;
-        const chargesDeductibles = chargesExploitationAnnuelles + (coutAssuranceMensuel * 12) + firstYearInterets;
+        const chargesDeductibles = chargesExploitationAnnuelles + (coutAssuranceMensuel * 12) + firstYearInterets + (inputs['travaux'] || 0) + (inputs['frais-bancaires'] || 0);
         const benefice = loyersEncaisses - chargesDeductibles - amortissement;
         if (benefice > 0) {
             firstYearImpots = Math.min(benefice, 42500) * 0.15 + Math.max(0, benefice - 42500) * 0.25;
