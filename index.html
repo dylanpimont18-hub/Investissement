@@ -16,10 +16,6 @@
 
 <div class="header">
     <h1>📊 Investisseur Pro</h1>
-    <div id="pdf-btns" style="display:none; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
-        <button id="btn-save-pdf" class="btn-primary">💾 Sauvegarder PDF</button>
-        <button id="btn-share-pdf" class="btn-secondary" style="display:none;">📤 Partager PDF</button>
-    </div>
 </div>
 
 <nav class="tabs-nav">
@@ -542,6 +538,29 @@
 </div>
 <div id="tooltip-bubble" class="tooltip-bubble"></div>
 <div id="toast-container" aria-live="polite" aria-atomic="false"></div>
+
+<!-- Barre PDF flottante (au-dessus des onglets, visible sur l'onglet Analyse) -->
+<div id="pdf-action-bar" style="display:none;">
+    <button id="btn-preview-pdf" class="btn-pdf-action btn-pdf-preview">🔍 Aperçu</button>
+    <button id="btn-save-pdf" class="btn-pdf-action btn-pdf-save">💾 PDF</button>
+    <button id="btn-share-pdf" class="btn-pdf-action btn-pdf-share" style="display:none;">📤</button>
+</div>
+
+<!-- Modale de prévisualisation PDF -->
+<div id="modal-pdf-preview" class="pdf-preview-overlay" style="display:none;" role="dialog" aria-modal="true" aria-label="Aperçu du rapport PDF">
+    <div class="pdf-preview-panel">
+        <div class="pdf-preview-topbar">
+            <span class="pdf-preview-title">Aperçu du rapport</span>
+            <div class="pdf-preview-actions">
+                <button id="btn-preview-dl" class="btn-primary">💾 Télécharger</button>
+                <button id="btn-preview-share" class="btn-secondary" style="display:none;">📤 Partager</button>
+                <button id="btn-preview-close" class="btn-secondary">✕ Fermer</button>
+            </div>
+        </div>
+        <div id="pdf-preview-scroll" class="pdf-preview-scroll"></div>
+    </div>
+</div>
+
 <script type="module" src="main.js"></script>
 </body>
 </html>

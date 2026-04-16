@@ -364,9 +364,55 @@ input.input-error   { border-color: var(--danger-color) !important; box-shadow: 
 .score-banner { transition: background 0.4s ease, border-color 0.4s ease, color 0.4s ease; }
 #score-label, #score-stars { transition: opacity 0.2s; }
 
-/* ===== GESTION PROJETS — mise en forme cohérente ===== */
-#pdf-btns { display: none; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-#pdf-btns.visible { display: flex; }
+/* ===== BARRE D'ACTION PDF (flottante, au-dessus de la nav) ===== */
+#pdf-action-bar {
+    position: fixed;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 56px);
+    right: 14px;
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    z-index: 150;
+}
+.btn-pdf-action {
+    border: none; border-radius: 22px; font-size: 0.85rem; font-weight: 700;
+    cursor: pointer; padding: 10px 16px; white-space: nowrap;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.18);
+    transition: opacity 0.2s, transform 0.1s;
+}
+.btn-pdf-action:active { transform: scale(0.96); opacity: 0.85; }
+.btn-pdf-preview { background: #5856d6; color: white; }
+.btn-pdf-save    { background: var(--primary-color); color: white; }
+.btn-pdf-share   { background: var(--success-color); color: white; padding: 10px 14px; }
+
+/* ===== MODALE PRÉVISUALISATION PDF ===== */
+.pdf-preview-overlay {
+    position: fixed; inset: 0; z-index: 9100;
+    background: rgba(0,0,0,0.55);
+    display: flex; align-items: stretch; justify-content: center;
+}
+.pdf-preview-panel {
+    background: #f1f5f9; width: 100%; max-width: 740px;
+    display: flex; flex-direction: column; overflow: hidden;
+}
+.pdf-preview-topbar {
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
+    padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px 12px;
+    background: var(--card-bg); border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+.pdf-preview-title { font-weight: 700; font-size: 1rem; }
+.pdf-preview-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.pdf-preview-scroll {
+    flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    padding: 16px; display: flex; justify-content: center;
+}
+.pdf-preview-scroll #pdf-render {
+    position: static !important;
+    pointer-events: auto !important;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.15);
+    max-width: 100%;
+}
 
 /* ===== BULLES D'AIDE (TOOLTIPS) ===== */
 .help-tip {

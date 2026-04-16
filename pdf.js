@@ -366,7 +366,6 @@ ${activePhotos.length ? `
   <h3>📷 Galerie Photos</h3>
   <div class="r-photo-grid">${photosHTML}</div>
 </div>` : ''}
->>>>>>> 2be5435 (Ajout galerie photos, mode Expert par défaut, refonte visuelle PDF)
 `;
 
     const styleEl = document.createElement('style');
@@ -395,12 +394,12 @@ export function cleanupPDFDOM(container, styleEl) {
 
 export function getPDFOptions(filename) {
     return {
-        margin:      [8, 8, 8, 8],
+        margin:      10,
         filename,
         image:       { type: 'jpeg', quality: 0.97 },
         html2canvas: { scale: 2, useCORS: true, scrollY: 0, logging: false, windowWidth: 680 },
         jsPDF:       { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak:   { mode: ['css'], before: '.r-page-break', avoid: ['.r-kpi', '.tip-card', '.regime-card', '.r-proj-table tr', '.nego-table tr', '.fiscal-breakdown-table tr'] }
+        pagebreak:   { mode: ['css', 'avoid-all'], before: '.r-page-break' }
     };
 }
 

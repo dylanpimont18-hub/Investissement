@@ -505,15 +505,15 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
         document.getElementById(btn.dataset.target).classList.add('active');
         window.scrollTo(0, 0);
 
-        const pdfBtns = document.getElementById('pdf-btns');
+        const pdfBar = document.getElementById('pdf-action-bar');
         if (btn.dataset.target === 'view-results') {
-            pdfBtns.style.display = 'flex';
+            pdfBar.style.display = 'flex';
             calculateAndSave();
         } else if (btn.dataset.target === 'view-vierzon') {
-            pdfBtns.style.display = 'none';
+            pdfBar.style.display = 'none';
             calculateVierzonStrategy();
         } else {
-            pdfBtns.style.display = 'none';
+            pdfBar.style.display = 'none';
         }
     });
 });
@@ -684,71 +684,120 @@ document.querySelectorAll('input:not(#project-name):not(#photo-input), select, t
     el.addEventListener('input', triggerCalculations);
 });
 
-// --- BOUTONS PDF ---
-document.getElementById('btn-save-pdf').addEventListener('click', async function() {
-    const btn = this;
-    const textInitial = btn.innerText;
-    btn.innerText  = "⏳ Génération...";
-    btn.disabled   = true;
+// --- PRÉVISUALISATION PDF ---
+let _previewStyleEl = null;
 
+function openPdfPreview() {
+    const mask = showRenderMask();
+    const { container, styleEl } = buildPDFDOM(uploadedPhotos);
+    mask.remove();
+
+    // Cloner le style pour le garder actif dans la modale
+    if (_previewStyleEl) _previewStyleEl.remove();
+    _previewStyleEl = styleEl.cloneNode(true);
+    _previewStyleEl.id = 'pdf-preview-temp-style';
+    document.head.appendChild(_previewStyleEl);
+
+    // Déplacer le container dans la zone de scroll de la modale
+    container.style.cssText = 'width:680px;max-width:100%;background:white;';
+    const scrollEl = document.getElementById('pdf-preview-scroll');
+    scrollEl.innerHTML = '';
+    scrollEl.appendChild(container);
+
+    // Nettoyer uniquement le styleEl original (container est réutilisé dans la modale)
+    styleEl.remove();
+
+    document.getElementById('modal-pdf-preview').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function closePdfPreview() {
+    document.getElementById('modal-pdf-preview').style.display = 'none';
+    document.getElementById('pdf-preview-scroll').innerHTML = '';
+    if (_previewStyleEl) { _previewStyleEl.remove(); _previewStyleEl = null; }
+    document.body.style.overflow = '';
+}
+
+async function generatePdfFromScratch(mode) {
     const mask = showRenderMask();
     const { container, styleEl, filename } = buildPDFDOM(uploadedPhotos);
     try {
-        await html2pdf().set(getPDFOptions(filename)).from(container).save();
-        showToast('PDF sauvegardé avec succès.', 'success');
-    } catch(err) {
-        console.error("Erreur PDF :", err);
-        showToast('La génération du PDF a échoué. Réessayez.', 'error');
-    } finally {
-        cleanupPDFDOM(container, styleEl);
-        mask.remove();
-        btn.innerText = textInitial;
-        btn.disabled  = false;
-    }
-});
-
-document.getElementById('btn-share-pdf').addEventListener('click', async function() {
-    const btn = this;
-    const textInitial = btn.innerText;
-    btn.innerText = "⏳ Génération...";
-    btn.disabled  = true;
-
-    const mask = showRenderMask();
-    const { container, styleEl, filename } = buildPDFDOM(uploadedPhotos);
-    try {
-        const blob = await html2pdf().set(getPDFOptions(filename)).from(container).outputPdf('blob');
-        cleanupPDFDOM(container, styleEl);
-        mask.remove();
-
-        const file = new File([blob], filename, { type: 'application/pdf' });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({ files: [file], title: filename });
+        if (mode === 'save') {
+            await html2pdf().set(getPDFOptions(filename)).from(container).save();
+            showToast('PDF sauvegardé avec succès.', 'success');
         } else {
-            const url = URL.createObjectURL(blob);
-            const a   = document.createElement('a');
-            a.href = url; a.download = filename;
-            document.body.appendChild(a); a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            const blob = await html2pdf().set(getPDFOptions(filename)).from(container).outputPdf('blob');
+            cleanupPDFDOM(container, styleEl);
+            mask.remove();
+            const file = new File([blob], filename, { type: 'application/pdf' });
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({ files: [file], title: filename });
+            } else {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = filename;
+                document.body.appendChild(a); a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+            return;
         }
     } catch(err) {
         if (err.name !== 'AbortError') {
-            console.error("Erreur partage PDF :", err);
-            showToast('Le partage a échoué. Le fichier va être téléchargé.', 'error');
+            console.error('Erreur PDF :', err);
+            showToast('La génération du PDF a échoué. Réessayez.', 'error');
         }
+    } finally {
         cleanupPDFDOM(container, styleEl);
         mask.remove();
-    } finally {
-        btn.innerText = textInitial;
-        btn.disabled  = false;
+    }
+}
+
+document.getElementById('btn-preview-pdf').addEventListener('click', openPdfPreview);
+document.getElementById('btn-preview-close').addEventListener('click', closePdfPreview);
+
+document.getElementById('btn-preview-dl').addEventListener('click', async function() {
+    closePdfPreview();
+    const btn = this;
+    btn.disabled = true;
+    await generatePdfFromScratch('save');
+    btn.disabled = false;
+});
+
+document.getElementById('btn-preview-share').addEventListener('click', async function() {
+    closePdfPreview();
+    const btn = this;
+    btn.disabled = true;
+    await generatePdfFromScratch('share');
+    btn.disabled = false;
+});
+
+// Fermeture modale preview via Échap
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.getElementById('modal-pdf-preview').style.display !== 'none') {
+        closePdfPreview();
     }
 });
 
-// Affiche le bouton Partager uniquement si le navigateur le supporte
+// --- BOUTONS PDF (barre d'action flottante) ---
+document.getElementById('btn-save-pdf').addEventListener('click', async function() {
+    this.disabled = true;
+    await generatePdfFromScratch('save');
+    this.disabled = false;
+});
+
+document.getElementById('btn-share-pdf').addEventListener('click', async function() {
+    this.disabled = true;
+    await generatePdfFromScratch('share');
+    this.disabled = false;
+});
+
+// Affiche les boutons Partager uniquement si le navigateur le supporte
 (function() {
     const testFile = new File([''], 'test.pdf', { type: 'application/pdf' });
     if (navigator.canShare && navigator.canShare({ files: [testFile] })) {
         document.getElementById('btn-share-pdf').style.display = 'inline-flex';
+        document.getElementById('btn-preview-share').style.display = 'inline-flex';
     }
 })();
 
