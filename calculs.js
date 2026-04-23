@@ -133,7 +133,7 @@ export function computeProjectMetrics(projectData) {
     const apportVal = inputs['apport'] || 0;
     const coc = apportVal > 0 ? ((cfNetNet * 12) / apportVal) * 100 : Infinity;
     const grm = loyersAnnuelsTheoriques > 0 ? coutTotal / loyersAnnuelsTheoriques : Infinity;
-    const dscr = (mensualiteTotale * 12) > 0 ? loyersEncaisses / (mensualiteTotale * 12) : 0;
+    const dscr = (mensualiteTotale * 12) > 0 ? (loyersEncaisses - chargesExploitationAnnuelles) / (mensualiteTotale * 12) : 0;
 
     const cfMicro = computeCF(prixNet, loyer, Object.assign({}, inputs, { regime: 'micro-foncier' }), tmi);
     const cfReel  = computeCF(prixNet, loyer, Object.assign({}, inputs, { regime: 'reel' }), tmi);
@@ -202,13 +202,23 @@ export function computeResaleTimeline(prixNet, capitalRestantSeries, cfCumuleSer
     let bestYear = 1;
     let bestGain = -Infinity;
 
+    const amortAnnuelSciIs = prixNet * 0.80 / 30;
+
     const horizon = Math.min(capitalRestantSeries.length, cfCumuleSeries.length, 25);
     for (let i = 0; i < horizon; i++) {
         const year = i + 1;
         const prixVente = basePrice * Math.pow(1 + growth, i);
         const fraisVente = prixVente * fraisRate;
         const prixVenteNetFrais = prixVente - fraisVente;
-        const plusValueTaxable = prixVenteNetFrais - acquisitionBase;
+        // En SCI-IS, la base fiscale est la valeur nette comptable (après amortissements cumulés)
+        let plusValueTaxable;
+        if (regime === 'sci-is') {
+            const amortCumule = Math.min(amortAnnuelSciIs * year, prixNet * 0.80);
+            const valeurComptableNette = Math.max(0, acquisitionBase - amortCumule);
+            plusValueTaxable = prixVenteNetFrais - valeurComptableNette;
+        } else {
+            plusValueTaxable = prixVenteNetFrais - acquisitionBase;
+        }
         const impotPv = computeResaleTax(plusValueTaxable, year, regime, tauxPv);
         const netVendeur = prixVente - fraisVente - impotPv;
         const crd = Math.max(0, capitalRestantSeries[i] || 0);

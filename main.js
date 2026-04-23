@@ -89,7 +89,7 @@ function calculateAndSave() {
     const dataCapitalRestant = [];
     const dataCFCumule      = [];
     const dataEnrichissement = [];
-    let deficitReportable = 0;
+    const deficitMap = new Map(); // yearCreated -> amount (cap 10 ans)
     projectionData = [];
 
     for (let annee = 1; annee <= 25; annee++) {
@@ -136,14 +136,22 @@ function calculateAndSave() {
 
             let revenusNets = loyersEncaissesCetteAnnee - chargesAnnuees - interetsAnnee;
 
+            // Expirer les déficits de plus de 10 ans
+            for (const yr of [...deficitMap.keys()]) {
+                if (annee - yr > 10) deficitMap.delete(yr);
+            }
+            const deficitReportable = [...deficitMap.values()].reduce((s, v) => s + v, 0);
+
             if (revenusNets > 0) {
                 if (deficitReportable > 0) {
-                    if (deficitReportable >= revenusNets) {
-                        deficitReportable -= revenusNets;
-                        revenusNets = 0;
-                    } else {
-                        revenusNets -= deficitReportable;
-                        deficitReportable = 0;
+                    let remaining = Math.min(deficitReportable, revenusNets);
+                    revenusNets -= remaining;
+                    for (const [yr, amt] of deficitMap) {
+                        if (remaining <= 0) break;
+                        const used = Math.min(amt, remaining);
+                        remaining -= used;
+                        if (used >= amt) deficitMap.delete(yr);
+                        else deficitMap.set(yr, amt - used);
                     }
                 }
                 impotsAnnee = revenusNets * tauxGlobalImpot;
@@ -154,9 +162,11 @@ function calculateAndSave() {
                     const imputableGlobal = Math.min(10700, deficitCharges);
                     impotsAnnee = -(imputableGlobal * (tmiCetteAnnee / 100));
                     const resteCharges = deficitCharges - imputableGlobal;
-                    deficitReportable += (resteCharges + interetsAnnee);
+                    const newDeficit = resteCharges + interetsAnnee;
+                    if (newDeficit > 0) deficitMap.set(annee, (deficitMap.get(annee) || 0) + newDeficit);
                 } else {
-                    deficitReportable += Math.abs(revenusNets);
+                    const newDeficit = Math.abs(revenusNets);
+                    if (newDeficit > 0) deficitMap.set(annee, (deficitMap.get(annee) || 0) + newDeficit);
                     impotsAnnee = 0;
                 }
             }
@@ -262,7 +272,7 @@ function calculateAndSave() {
     grmEl.innerText = grm.toFixed(1);
     grmEl.className = 'value ' + (grm > 0 && grm <= 14 ? 'positive' : (grm <= 20 ? 'metric-warning' : 'negative'));
 
-    const dscr   = (mensualiteTotale * 12) > 0 ? loyersEncaisses / (mensualiteTotale * 12) : 0;
+    const dscr   = (mensualiteTotale * 12) > 0 ? (loyersEncaisses - chargesExploitationAnnuelles) / (mensualiteTotale * 12) : 0;
     const dscrEl = document.getElementById('metric-dscr');
     dscrEl.innerText = dscr.toFixed(2);
     dscrEl.className = 'value ' + (dscr >= 1.3 ? 'positive' : (dscr >= 1.0 ? 'metric-warning' : 'negative'));
@@ -338,7 +348,14 @@ function calculateAndSave() {
         const facteurPost = Math.pow(1 + inflationRate, duree - 1);
         const loyersPost = loyersEncaisses * facteurPost;
         const chargesPost = chargesExploitationAnnuelles * facteurPost;
-        const tmiPost = calculateTMI(inputs['revenus'] || 0, 2);
+        // TMI recalculé en incluant le revenu locatif net imposable post-crédit
+        let revLocatifImposablePost = 0;
+        if (inputs['regime'] === 'micro-foncier') {
+            revLocatifImposablePost = loyersPost * 0.7;
+        } else if (inputs['regime'] === 'reel') {
+            revLocatifImposablePost = Math.max(0, loyersPost - chargesPost);
+        }
+        const tmiPost = calculateTMI((inputs['revenus'] || 0) + revLocatifImposablePost, 2);
         const tauxGlobalPost = (tmiPost / 100) + 0.172;
         let impotsPost = 0;
         if (inputs['regime'] === 'micro-foncier') {
@@ -910,31 +927,6 @@ document.getElementById('btn-export-csv').addEventListener('click', function() {
     URL.revokeObjectURL(url);
     showToast('CSV exporté avec succès.', 'success');
 });
-
-// --- SWIPE HORIZONTAL (navigation par onglets) ---
-(function() {
-    const tabIds = ['view-inputs', 'view-results', 'view-vierzon'];
-    const tabBtns = Array.from(document.querySelectorAll('.tab-btn'));
-    let touchStartX = 0;
-    let touchStartY = 0;
-    const container = document.querySelector('.container');
-    container.addEventListener('touchstart', (e) => {
-        touchStartX = e.touches[0].clientX;
-        touchStartY = e.touches[0].clientY;
-    }, { passive: true });
-    container.addEventListener('touchend', (e) => {
-        const dx = e.changedTouches[0].clientX - touchStartX;
-        const dy = e.changedTouches[0].clientY - touchStartY;
-        if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) * 0.8) return;
-        const activeSection = document.querySelector('.view-section.active');
-        const currentIdx = tabIds.indexOf(activeSection ? activeSection.id : '');
-        if (currentIdx === -1) return;
-        const newIdx = dx < 0
-            ? Math.min(currentIdx + 1, tabIds.length - 1)
-            : Math.max(currentIdx - 1, 0);
-        if (newIdx !== currentIdx) tabBtns[newIdx].click();
-    }, { passive: true });
-})();
 
 // --- INITIALISATION ---
 window.onload = initApp;
