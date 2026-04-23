@@ -59,6 +59,7 @@ export function buildPDFDOM(uploadedPhotos) {
     color: #1e293b;
     background: white;
     width: 680px;
+    color-scheme: light;
 }
 #pdf-render * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -376,7 +377,7 @@ ${activePhotos.length ? `
     const container = document.createElement('div');
     container.id = 'pdf-render';
     container.setAttribute('aria-hidden', 'true');
-    container.style.cssText = 'position:fixed;top:0;left:0;width:680px;background:white;z-index:99999;pointer-events:none;';
+    container.style.cssText = 'position:fixed;top:0;left:0;width:680px;background:white;z-index:99999;pointer-events:none;color-scheme:light;';
     container.innerHTML = html;
     document.body.appendChild(container);
     void container.offsetHeight;
@@ -397,7 +398,18 @@ export function getPDFOptions(filename) {
         margin:      10,
         filename,
         image:       { type: 'jpeg', quality: 0.97 },
-        html2canvas: { scale: 2, useCORS: true, scrollY: 0, logging: false, windowWidth: 680 },
+        html2canvas: {
+            scale: 2,
+            useCORS: true,
+            scrollY: 0,
+            logging: false,
+            windowWidth: 680,
+            backgroundColor: '#ffffff',
+            onclone: (doc) => {
+                doc.documentElement.classList.remove('theme-dark');
+                doc.documentElement.classList.add('theme-light');
+            }
+        },
         jsPDF:       { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak:   { mode: ['css', 'avoid-all'], before: '.r-page-break' }
     };
