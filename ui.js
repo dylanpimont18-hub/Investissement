@@ -12,9 +12,16 @@ export function updateColor(id, value) {
     el.className = 'value ' + (value >= 0 ? 'positive' : 'negative');
 }
 
+function getThemeTextColor() {
+    const isDark = document.documentElement.classList.contains('theme-dark') ||
+        (!document.documentElement.classList.contains('theme-light') &&
+         window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    return isDark ? '#E6EDF3' : '#1C2128';
+}
+
 export function updateChart(credit, charges, impots, cf) {
     const cfDisplay = cf > 0 ? cf : 0;
-    const textColor = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? '#f5f5f7' : '#1c1e21';
+    const textColor = getThemeTextColor();
 
     if (myChart) {
         myChart.data.datasets[0].data = [credit, charges, impots, cfDisplay];
@@ -27,20 +34,20 @@ export function updateChart(credit, charges, impots, cf) {
         type: 'doughnut',
         data: {
             labels: ['Banque', 'Charges', 'Impôts', 'Cash-Flow'],
-            datasets: [{ data: [credit, charges, impots, cfDisplay], backgroundColor: ['#ff3b30', '#ff9500', '#af52de', '#34c759'], borderWidth: 0 }]
+            datasets: [{ data: [credit, charges, impots, cfDisplay], backgroundColor: ['#F85149', '#ff9500', '#af52de', '#3FB950'], borderWidth: 0 }]
         },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: textColor } } } }
     });
 }
 
 export function updateEvolutionChart(labels, capitalRestant, cfCumule, enrichissement) {
-    const textColor = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? '#f5f5f7' : '#1c1e21';
-    const cfColor = cfCumule[cfCumule.length - 1] >= 0 ? '#34c759' : '#ff3b30';
+    const textColor = getThemeTextColor();
+    const cfColor = cfCumule[cfCumule.length - 1] >= 0 ? '#3FB950' : '#F85149';
 
     const datasets = [
-        { label: 'Capital Restant Dû',   data: capitalRestant,  borderColor: '#007aff', borderWidth: 2,   tension: 0.3, fill: false, pointRadius: 3, pointHoverRadius: 5 },
+        { label: 'Capital Restant Dû',   data: capitalRestant,  borderColor: '#3B82F6', borderWidth: 2,   tension: 0.3, fill: false, pointRadius: 3, pointHoverRadius: 5 },
         { label: 'Cash-Flow Cumulé',      data: cfCumule,        borderColor: cfColor,   borderWidth: 2,   tension: 0.3, fill: false, pointRadius: 3, pointHoverRadius: 5 },
-        { label: 'Enrichissement Total',  data: enrichissement,  borderColor: '#d4af37', borderWidth: 2.5, tension: 0.3, fill: false, pointRadius: 3, pointHoverRadius: 5 }
+        { label: 'Enrichissement Total',  data: enrichissement,  borderColor: '#C9A84C', borderWidth: 2.5, tension: 0.3, fill: false, pointRadius: 3, pointHoverRadius: 5 }
     ];
 
     if (evolutionChart) {

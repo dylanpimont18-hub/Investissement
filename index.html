@@ -8,6 +8,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="icon.png"> 
     <link rel="manifest" href="manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -16,6 +19,7 @@
 
 <div class="header">
     <h1>📊 Investisseur Pro</h1>
+    <button class="btn-theme-toggle" id="btn-theme-toggle" title="Basculer thème clair/sombre">☀️</button>
 </div>
 
 <nav class="tabs-nav">
@@ -82,6 +86,11 @@
                 <button type="button" id="btn-compare-projects" class="btn-secondary" style="width: 100%; margin-top: 10px; display: none;">📊 Comparer 2 projets</button>
             </div>
 
+            <div class="form-progress">
+                <div class="form-progress-bar-track"><div class="form-progress-bar-fill" id="form-progress-fill"></div></div>
+                <div class="form-progress-label" id="form-progress-label">1 / 4 sections remplies</div>
+            </div>
+
             <div class="grid-2-cols">
                 <details class="accordion" open>
                     <summary>🛒 Acquisition</summary>
@@ -102,7 +111,7 @@
                     </div>
                 </details>
 
-                <details class="accordion" open>
+                <details class="accordion">
                     <summary>🏦 Financement</summary>
                     <div class="accordion-content">
                         <label><span>Apport personnel (€) <span class="help-tip" data-tip="L'argent que vous investissez de votre poche, sans emprunter. Plus l'apport est élevé, moins vous empruntez et moins la mensualité est forte.">?</span></span> <input type="number" inputmode="numeric" id="apport" value="0"></label>
@@ -115,7 +124,7 @@
                     </div>
                 </details>
 
-                <details class="accordion" open>
+                <details class="accordion">
                     <summary>📈 Exploitation</summary>
                     <div class="accordion-content">
                         <label><span>Loyer mensuel HC (€) <span class="help-tip" data-tip="Loyer Hors Charges : le montant que le locataire vous verse chaque mois, sans compter les charges récupérables (eau, ordures…).">?</span></span> <input type="number" inputmode="numeric" id="loyer" value="700"></label>
@@ -127,7 +136,7 @@
                     </div>
                 </details>
 
-                <details class="accordion" open>
+                <details class="accordion">
                     <summary>⚖️ Fiscalité <span class="tmi-accordion-badge" id="tmi-accordion-badge" style="display:none;"></span></summary>
                     <div class="accordion-content">
                         <label><span>Revenus du foyer (€) <span class="help-tip" data-tip="Total des revenus annuels de votre couple (salaires, pensions…). Sert à calculer votre tranche d'imposition (TMI). Foyer : 2 adultes + 2 enfants (3 parts).">?</span></span> <input type="number" inputmode="numeric" id="revenus" value="60000"></label>
@@ -205,12 +214,12 @@
                     <h3>Rentabilité Nette <span class="help-tip" data-tip="(Loyers − Charges annuelles) ÷ Coût total × 100. Plus réaliste que la brute, mais ne compte pas encore les impôts.">?</span></h3>
                     <div class="value" id="renta-nette">-- %</div>
                 </div>
-                <div class="card highlight-gold">
+                <div class="card highlight-gold kpi-hero">
                     <h3>Renta. Nette-Nette <span class="help-tip" data-tip="La rentabilité finale après charges ET impôts. C'est LE chiffre le plus fiable pour comparer des investissements entre eux.">?</span></h3>
                     <div class="value" id="renta-netnet">-- %</div>
                     <p class="subtitle">Après Impôts</p>
                 </div>
-                <div class="card highlight">
+                <div class="card highlight kpi-hero">
                     <h3>Cash-Flow Net-Net <span class="help-tip" data-tip="Ce qui reste dans votre poche chaque mois après avoir tout payé : crédit, charges, impôts. Positif = vous gagnez de l'argent. Négatif = vous devez en rajouter.">?</span></h3>
                     <div class="value" id="cf-netnet">-- €</div>
                     <p class="subtitle">Dans votre poche / mois</p>

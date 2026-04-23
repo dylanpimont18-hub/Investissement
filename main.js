@@ -248,11 +248,12 @@ function calculateAndSave() {
     const cfNet    = (loyersEncaisses / 12) - mensualiteTotale - (chargesExploitationAnnuelles / 12);
     const cfNetNet = cfNet - (firstYearImpots / 12);
 
-    document.getElementById('renta-brute').innerText  = rentaBrute.toFixed(2)  + ' %';
-    document.getElementById('renta-nette').innerText  = rentaNette.toFixed(2)  + ' %';
-    document.getElementById('renta-netnet').innerText = rentaNetNet.toFixed(2) + ' %';
+    animateValue(document.getElementById('renta-brute'), rentaBrute, ' %', 600);
+    animateValue(document.getElementById('renta-nette'), rentaNette, ' %', 600);
+    animateValue(document.getElementById('renta-netnet'), rentaNetNet, ' %', 600);
 
     updateColor('cf-netnet', cfNetNet);
+    animateValue(document.getElementById('cf-netnet'), cfNetNet, ' €', 600);
 
     // --- NOUVELLES MÉTRIQUES ---
     const apport = inputs['apport'];
@@ -493,25 +494,6 @@ function deleteProject(index) {
         savedProjects.splice(index, 1);
         localStorage.setItem('simuImmoProjects', JSON.stringify(savedProjects));
         renderProjectsList();
-    }
-}
-
-function initApp() {
-    renderProjectsList();
-    const savedDraft = localStorage.getItem('simuImmoDraft');
-    if (savedDraft) {
-        try {
-            const data = JSON.parse(savedDraft);
-            for (const id in data) {
-                const el = document.getElementById(id);
-                if (el) {
-                    el.value = data[id];
-                    if (id === 'taux-input') document.getElementById('taux-slider').value = data[id];
-                    if (id === 'appreciation') document.getElementById('appreciation-slider').value = data[id];
-                }
-            }
-            if (data['regime']) document.getElementById('regime').value = data['regime'];
-        } catch (e) {}
     }
 }
 
@@ -928,5 +910,104 @@ document.getElementById('btn-export-csv').addEventListener('click', function() {
     showToast('CSV exporté avec succès.', 'success');
 });
 
+// --- THÈME DARK/LIGHT ---
+function initTheme() {
+    const saved = localStorage.getItem('simuImmoTheme');
+    const btn = document.getElementById('btn-theme-toggle');
+    if (saved === 'dark') {
+        document.documentElement.classList.add('theme-dark');
+        if (btn) btn.textContent = '☀️';
+    } else if (saved === 'light') {
+        document.documentElement.classList.add('theme-light');
+        if (btn) btn.textContent = '🌙';
+    } else {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (btn) btn.textContent = prefersDark ? '☀️' : '🌙';
+    }
+}
+
+document.getElementById('btn-theme-toggle').addEventListener('click', function() {
+    const html = document.documentElement;
+    const isDark = html.classList.contains('theme-dark') ||
+        (!html.classList.contains('theme-light') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+    if (isDark) {
+        html.classList.remove('theme-dark');
+        html.classList.add('theme-light');
+        localStorage.setItem('simuImmoTheme', 'light');
+        this.textContent = '🌙';
+    } else {
+        html.classList.remove('theme-light');
+        html.classList.add('theme-dark');
+        localStorage.setItem('simuImmoTheme', 'dark');
+        this.textContent = '☀️';
+    }
+});
+
+// --- BARRE DE PROGRESSION FORMULAIRE ---
+function updateFormProgress() {
+    const sections = [
+        ['prix'],
+        ['apport', 'taux-input', 'duree'],
+        ['loyer', 'copro'],
+        ['revenus', 'regime'],
+    ];
+    let filled = 0;
+    sections.forEach(ids => {
+        const ok = ids.some(id => {
+            const el = document.getElementById(id);
+            return el && parseFloat(el.value) > 0;
+        });
+        if (ok) filled++;
+    });
+    const pct = Math.round((filled / sections.length) * 100);
+    const fill = document.getElementById('form-progress-fill');
+    const label = document.getElementById('form-progress-label');
+    if (fill) fill.style.width = pct + '%';
+    if (label) label.textContent = filled + ' / ' + sections.length + ' sections remplies';
+}
+
+// --- ANIMATION KPI ---
+function animateValue(el, target, suffix, duration) {
+    if (!el) return;
+    const start = performance.now();
+    const from = parseFloat(el.dataset.animated) || 0;
+    function step(now) {
+        const progress = Math.min((now - start) / duration, 1);
+        const ease = 1 - Math.pow(1 - progress, 3);
+        const current = from + (target - from) * ease;
+        el.textContent = (target % 1 === 0 ? Math.round(current) : current.toFixed(2)) + suffix;
+        if (progress < 1) requestAnimationFrame(step);
+        else el.dataset.animated = target;
+    }
+    requestAnimationFrame(step);
+}
+
 // --- INITIALISATION ---
+function initApp() {
+    renderProjectsList();
+    initTheme();
+    const savedDraft = localStorage.getItem('simuImmoDraft');
+    if (savedDraft) {
+        try {
+            const data = JSON.parse(savedDraft);
+            for (const id in data) {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.value = data[id];
+                    if (id === 'taux-input') document.getElementById('taux-slider').value = data[id];
+                    if (id === 'appreciation') document.getElementById('appreciation-slider').value = data[id];
+                }
+            }
+            if (data['regime']) document.getElementById('regime').value = data['regime'];
+        } catch (e) {}
+    }
+    updateFormProgress();
+}
+
+// Déclencher la barre de progression à chaque saisie
+document.querySelectorAll('#calc-form input, #calc-form select').forEach(el => {
+    el.addEventListener('change', updateFormProgress);
+});
+
 window.onload = initApp;
