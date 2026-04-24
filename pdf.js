@@ -377,7 +377,7 @@ ${activePhotos.length ? `
     const container = document.createElement('div');
     container.id = 'pdf-render';
     container.setAttribute('aria-hidden', 'true');
-    container.style.cssText = 'position:fixed;top:0;left:0;width:680px;background:white;z-index:99999;pointer-events:none;color-scheme:light;';
+    container.style.cssText = 'position:absolute;top:0;left:0;width:680px;background:white;z-index:99999;pointer-events:none;color-scheme:light;';
     container.innerHTML = html;
     document.body.appendChild(container);
     void container.offsetHeight;
