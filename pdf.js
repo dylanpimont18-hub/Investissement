@@ -1,4 +1,4 @@
-export function buildPDFDOM(uploadedPhotos) {
+function buildPDFParts(uploadedPhotos) {
     const projectName = document.getElementById('project-name').value.trim() || 'Investissement';
     const today = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
 
@@ -369,6 +369,15 @@ ${activePhotos.length ? `
 </div>` : ''}
 `;
 
+    const projectSlug = (document.getElementById('project-name').value.trim() || 'InvestPro').replace(/\s+/g, '-');
+    const filename = `Rapport-${projectSlug}.pdf`;
+
+    return { css, html, filename };
+  }
+
+  export function buildPDFDOM(uploadedPhotos) {
+    const { css, html, filename } = buildPDFParts(uploadedPhotos);
+
     const styleEl = document.createElement('style');
     styleEl.id = 'pdf-temp-style';
     styleEl.textContent = css;
@@ -388,9 +397,6 @@ ${activePhotos.length ? `
     document.body.appendChild(mount);
     void container.offsetHeight;
 
-    const projectSlug = (document.getElementById('project-name').value.trim() || 'InvestPro').replace(/\s+/g, '-');
-    const filename = `Rapport-${projectSlug}.pdf`;
-
     return { mount, container, styleEl, filename };
 }
 
@@ -399,33 +405,89 @@ export function cleanupPDFDOM(mount, styleEl) {
     if (styleEl)   styleEl.remove();
 }
 
-export function getPDFOptions(filename) {
-    return {
-        margin:      10,
-        filename,
-        image:       { type: 'jpeg', quality: 0.97 },
-        html2canvas: {
-            scale: 2,
-            useCORS: true,
-            scrollY: 0,
-            logging: false,
-            windowWidth: 680,
-            backgroundColor: '#ffffff',
-            onclone: (doc) => {
-                doc.documentElement.classList.remove('theme-dark');
-                doc.documentElement.classList.add('theme-light');
-            }
-        },
-        jsPDF:       { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak:   { mode: ['css', 'avoid-all'], before: '.r-page-break' }
-    };
-}
+  export function buildPrintDocument(uploadedPhotos) {
+    const { css, html, filename } = buildPDFParts(uploadedPhotos);
+    const title = filename.replace(/\.pdf$/i, '');
+    const printBootstrap = `
+  (function () {
+    function waitForImages() {
+      return Promise.all(Array.from(document.images).map(function(img) {
+        if (img.complete) return Promise.resolve();
+        return new Promise(function(resolve) {
+          img.addEventListener('load', resolve, { once: true });
+          img.addEventListener('error', resolve, { once: true });
+        });
+      }));
+    }
 
-export function showRenderMask() {
-    const mask = document.createElement('div');
-    mask.id = 'pdf-render-mask';
-  mask.setAttribute('data-html2canvas-ignore', 'true');
-    mask.style.cssText = 'position:fixed;inset:0;background:white;z-index:99998;pointer-events:none;';
-    document.body.appendChild(mask);
-    return mask;
+    async function launchPrint() {
+      if (document.fonts && document.fonts.ready) {
+        try { await document.fonts.ready; } catch (err) {}
+      }
+      await waitForImages();
+      window.focus();
+      window.setTimeout(function() {
+        window.print();
+      }, 60);
+    }
+
+    window.addEventListener('load', function() {
+      launchPrint();
+    }, { once: true });
+
+    window.addEventListener('afterprint', function() {
+      window.close();
+    });
+  })();`;
+
+    const documentHTML = `<!DOCTYPE html>
+  <html lang="fr">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title}</title>
+    <style>
+  ${css}
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #e2e8f0;
+  }
+
+  body {
+    padding: 24px;
+  }
+
+  #pdf-render {
+    margin: 0 auto;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  @media print {
+    html, body {
+      background: white;
+    }
+
+    body {
+      padding: 0;
+    }
+
+    #pdf-render {
+      margin: 0;
+    }
+  }
+    </style>
+  </head>
+  <body>
+    <div id="pdf-render">${html}</div>
+    <script>${printBootstrap}<\/script>
+  </body>
+  </html>`;
+
+    return { documentHTML, filename };
 }

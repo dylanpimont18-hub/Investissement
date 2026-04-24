@@ -20,18 +20,17 @@ python -m http.server
 
 The application logic is modularized. The core files are:
 
-- **`index.html`** — UI structure with three tab views: `view-inputs`, `view-results`, `view-vierzon`. Loads Chart.js and html2pdf from CDN.
+- **`index.html`** — UI structure with three tab views: `view-inputs`, `view-results`, `view-vierzon`. Loads Chart.js from CDN.
 - **`styles.css`** — CSS custom properties for theming, dark mode via `prefers-color-scheme`, responsive mobile design.
 - **`main.js`** — Main controller: lifecycle, events, input reading, saved projects (localStorage), and a large portion of DOM updates (textual results injection, 25-year projection table, Vierzon tab logic).
 - **`calculs.js`** — Pure math and tax engine. No DOM access. Contains `calculateTMI`, `computeCF` (net-net cash-flow), and `computeProjectMetrics`.
 - **`ui.js`** — Complex display components: Chart.js charts, comparison/negotiation tables, score banner, tooltips, toasts, field validation errors, and Simple/Expert mode toggle.
-- **`pdf.js`** — PDF export logic (virtual DOM construction and html2pdf configuration).
+- **`pdf.js`** — Printable report logic (virtual DOM construction, dedicated print styles, and browser print document generation).
 
 *Note: `script.js` is kept only for historical reference and should not be used.*
 
 External CDN dependencies (loaded in `index.html`):
 - **Chart.js** — doughnut chart for cash-flow breakdown and evolution lines.
-- **html2pdf.js** — PDF export of the results view.
 
 ## Core Data Flow & Key Calculations
 

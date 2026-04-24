@@ -6,7 +6,7 @@ import {
     generateOptimizationTips, renderOptimizationSection,
     updateNegoTable, showToast, validateInputs
 } from './ui.js';
-import { buildPDFDOM, cleanupPDFDOM, getPDFOptions, showRenderMask } from './pdf.js';
+import { buildPDFDOM, buildPrintDocument, cleanupPDFDOM } from './pdf.js';
 
 // --- ÉTAT GLOBAL ---
 let uploadedPhotos = [];
@@ -773,9 +773,7 @@ document.querySelectorAll('input:not(#project-name):not(#photo-input), select, t
 let _previewStyleEl = null;
 
 function openPdfPreview() {
-    const mask = showRenderMask();
     const { mount, container, styleEl } = buildPDFDOM(uploadedPhotos);
-    mask.remove();
 
     // Cloner le style pour le garder actif dans la modale
     if (_previewStyleEl) _previewStyleEl.remove();
@@ -804,45 +802,23 @@ function closePdfPreview() {
     document.body.style.overflow = '';
 }
 
-async function generatePdfFromScratch(mode) {
-    const mask = showRenderMask();
-    const savedScrollY = window.scrollY;
-    // html2canvas ne capture pas bien les éléments position:fixed si la page est scrollée.
-    // Le masque blanc cache ce scroll instantané à l'utilisateur.
-    window.scrollTo(0, 0);
+function openPrintFlow() {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+        showToast('Le navigateur a bloqué la fenêtre d\'impression. Autorisez les pop-ups puis réessayez.', 'error');
+        return;
+    }
 
-    const { mount, container, styleEl, filename } = buildPDFDOM(uploadedPhotos);
     try {
-        if (mode === 'save') {
-            await html2pdf().set(getPDFOptions(filename)).from(container).save();
-            showToast('PDF sauvegardé avec succès.', 'success');
-        } else {
-            const blob = await html2pdf().set(getPDFOptions(filename)).from(container).outputPdf('blob');
-            cleanupPDFDOM(mount, styleEl);
-            mask.remove();
-            window.scrollTo(0, savedScrollY);
-            const file = new File([blob], filename, { type: 'application/pdf' });
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                await navigator.share({ files: [file], title: filename });
-            } else {
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url; a.download = filename;
-                document.body.appendChild(a); a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            }
-            return;
-        }
-    } catch(err) {
-        if (err.name !== 'AbortError') {
-            console.error('Erreur PDF :', err);
-            showToast('La génération du PDF a échoué. Réessayez.', 'error');
-        }
-    } finally {
-        cleanupPDFDOM(mount, styleEl);
-        mask.remove();
-        window.scrollTo(0, savedScrollY);
+        const { documentHTML } = buildPrintDocument(uploadedPhotos);
+        printWindow.document.open();
+        printWindow.document.write(documentHTML);
+        printWindow.document.close();
+        showToast('La fenêtre d\'impression a été ouverte.', 'success');
+    } catch (err) {
+        printWindow.close();
+        console.error('Erreur impression :', err);
+        showToast('L\'ouverture de la fenêtre d\'impression a échoué.', 'error');
     }
 }
 
@@ -853,15 +829,7 @@ document.getElementById('btn-preview-dl').addEventListener('click', async functi
     closePdfPreview();
     const btn = this;
     btn.disabled = true;
-    await generatePdfFromScratch('save');
-    btn.disabled = false;
-});
-
-document.getElementById('btn-preview-share').addEventListener('click', async function() {
-    closePdfPreview();
-    const btn = this;
-    btn.disabled = true;
-    await generatePdfFromScratch('share');
+    openPrintFlow();
     btn.disabled = false;
 });
 
@@ -875,24 +843,9 @@ document.addEventListener('keydown', (e) => {
 // --- BOUTONS PDF (barre d'action flottante) ---
 document.getElementById('btn-save-pdf').addEventListener('click', async function() {
     this.disabled = true;
-    await generatePdfFromScratch('save');
+    openPrintFlow();
     this.disabled = false;
 });
-
-document.getElementById('btn-share-pdf').addEventListener('click', async function() {
-    this.disabled = true;
-    await generatePdfFromScratch('share');
-    this.disabled = false;
-});
-
-// Affiche les boutons Partager uniquement si le navigateur le supporte
-(function() {
-    const testFile = new File([''], 'test.pdf', { type: 'application/pdf' });
-    if (navigator.canShare && navigator.canShare({ files: [testFile] })) {
-        document.getElementById('btn-share-pdf').style.display = 'inline-flex';
-        document.getElementById('btn-preview-share').style.display = 'inline-flex';
-    }
-})();
 
 // --- EXPORT CSV ---
 document.getElementById('btn-export-csv').addEventListener('click', function() {
