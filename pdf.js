@@ -377,7 +377,7 @@ ${activePhotos.length ? `
     const mount = document.createElement('div');
     mount.id = 'pdf-render-mount';
     mount.setAttribute('aria-hidden', 'true');
-    mount.style.cssText = 'position:fixed;top:0;left:-200vw;width:0;height:0;overflow:hidden;opacity:0;pointer-events:none;z-index:-1;';
+    mount.style.cssText = 'position:fixed;top:0;left:-10000px;width:680px;background:white;pointer-events:none;';
 
     const container = document.createElement('div');
     container.id = 'pdf-render';
@@ -424,6 +424,7 @@ export function getPDFOptions(filename) {
 export function showRenderMask() {
     const mask = document.createElement('div');
     mask.id = 'pdf-render-mask';
+  mask.setAttribute('data-html2canvas-ignore', 'true');
     mask.style.cssText = 'position:fixed;inset:0;background:white;z-index:99998;pointer-events:none;';
     document.body.appendChild(mask);
     return mask;
