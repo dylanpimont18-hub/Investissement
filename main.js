@@ -774,7 +774,7 @@ let _previewStyleEl = null;
 
 function openPdfPreview() {
     const mask = showRenderMask();
-    const { container, styleEl } = buildPDFDOM(uploadedPhotos);
+    const { mount, container, styleEl } = buildPDFDOM(uploadedPhotos);
     mask.remove();
 
     // Cloner le style pour le garder actif dans la modale
@@ -788,6 +788,7 @@ function openPdfPreview() {
     const scrollEl = document.getElementById('pdf-preview-scroll');
     scrollEl.innerHTML = '';
     scrollEl.appendChild(container);
+    mount.remove();
 
     // Nettoyer uniquement le styleEl original (container est réutilisé dans la modale)
     styleEl.remove();
@@ -810,14 +811,14 @@ async function generatePdfFromScratch(mode) {
     // Le masque blanc cache ce scroll instantané à l'utilisateur.
     window.scrollTo(0, 0);
 
-    const { container, styleEl, filename } = buildPDFDOM(uploadedPhotos);
+    const { mount, container, styleEl, filename } = buildPDFDOM(uploadedPhotos);
     try {
         if (mode === 'save') {
             await html2pdf().set(getPDFOptions(filename)).from(container).save();
             showToast('PDF sauvegardé avec succès.', 'success');
         } else {
             const blob = await html2pdf().set(getPDFOptions(filename)).from(container).outputPdf('blob');
-            cleanupPDFDOM(container, styleEl);
+            cleanupPDFDOM(mount, styleEl);
             mask.remove();
             window.scrollTo(0, savedScrollY);
             const file = new File([blob], filename, { type: 'application/pdf' });
@@ -839,7 +840,7 @@ async function generatePdfFromScratch(mode) {
             showToast('La génération du PDF a échoué. Réessayez.', 'error');
         }
     } finally {
-        cleanupPDFDOM(container, styleEl);
+        cleanupPDFDOM(mount, styleEl);
         mask.remove();
         window.scrollTo(0, savedScrollY);
     }

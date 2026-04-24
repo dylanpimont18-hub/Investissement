@@ -374,22 +374,28 @@ ${activePhotos.length ? `
     styleEl.textContent = css;
     document.head.appendChild(styleEl);
 
+    const mount = document.createElement('div');
+    mount.id = 'pdf-render-mount';
+    mount.setAttribute('aria-hidden', 'true');
+    mount.style.cssText = 'position:fixed;top:0;left:-200vw;width:0;height:0;overflow:hidden;opacity:0;pointer-events:none;z-index:-1;';
+
     const container = document.createElement('div');
     container.id = 'pdf-render';
-    container.setAttribute('aria-hidden', 'true');
-    container.style.cssText = 'position:absolute;top:0;left:0;width:680px;background:white;z-index:99999;pointer-events:none;color-scheme:light;';
+    container.style.cssText = 'width:680px;background:white;color-scheme:light;';
     container.innerHTML = html;
-    document.body.appendChild(container);
+
+    mount.appendChild(container);
+    document.body.appendChild(mount);
     void container.offsetHeight;
 
     const projectSlug = (document.getElementById('project-name').value.trim() || 'InvestPro').replace(/\s+/g, '-');
     const filename = `Rapport-${projectSlug}.pdf`;
 
-    return { container, styleEl, filename };
+    return { mount, container, styleEl, filename };
 }
 
-export function cleanupPDFDOM(container, styleEl) {
-    if (container) container.remove();
+export function cleanupPDFDOM(mount, styleEl) {
+    if (mount)    mount.remove();
     if (styleEl)   styleEl.remove();
 }
 
