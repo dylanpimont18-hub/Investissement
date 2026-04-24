@@ -3,14 +3,14 @@
 Ce fichier liste les responsabilités de chaque fichier du dépôt. Lisez ceci pour savoir quels fichiers ouvrir.
 
 ## Cœur de l'application (Frontend sans build)
-* **`index.html`** : Structure UI principale (3 onglets : Saisie, Analyse, Vierzon), modales et templates. Charge Chart.js.
+* **`index.html`** : Structure UI principale (3 onglets : Saisie, Analyse, Vierzon), modales et templates. Charge Chart.js, jsPDF et jsPDF-AutoTable depuis CDN.
 * **`styles.css`** : Design system, variables CSS, thème clair/sombre (`prefers-color-scheme`), responsive design mobile.
 
 ## Logique Javascript (Modules ES)
 * **`main.js`** : Contrôleur principal. Gère le cycle de vie, les événements, la lecture des inputs, les projets sauvegardés, et effectue la mise à jour d'une grande partie du DOM (injection des résultats textuels, génération du tableau de projection sur 25 ans, et logique de l'onglet Vierzon).
 * **`calculs.js`** : Moteur mathématique et fiscal (pure logic). Contient `calculateTMI`, `computeCF` (CF Net-Net) et `computeProjectMetrics`. Ne manipule pas le DOM.
 * **`ui.js`** : Fonctions d'affichage complexes et composants UI. Met à jour les graphiques (Chart.js), les tableaux de comparaison/négociation, le score banner, les infobulles, les toasts, la validation des champs (erreurs de saisie) et gère le Mode Simplifié/Expert.
-* **`pdf.js`** : Logique de génération du rapport imprimable (construction du DOM virtuel, styles dédiés et document HTML pour le flux d'impression navigateur).
+* **`pdf.js`** : Logique des exports de rapport (construction du DOM virtuel, flux d'impression navigateur, et génération d'un PDF partageable côté client pour mobile).
 * **`script.js`** : Fichier historique vide (conservé pour référence).
 
 ## Configuration et Métadonnées

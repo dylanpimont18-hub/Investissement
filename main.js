@@ -6,7 +6,7 @@ import {
     generateOptimizationTips, renderOptimizationSection,
     updateNegoTable, showToast, validateInputs
 } from './ui.js';
-import { buildPDFDOM, buildPrintDocument, cleanupPDFDOM } from './pdf.js';
+import { buildPDFDOM, buildPrintDocument, buildSharePDFFile, cleanupPDFDOM } from './pdf.js';
 
 // --- ÉTAT GLOBAL ---
 let uploadedPhotos = [];
@@ -822,6 +822,37 @@ function openPrintFlow() {
     }
 }
 
+function supportsNativePdfShare() {
+    if (!(navigator.share && navigator.canShare)) return false;
+    if (!(window.jspdf && window.jspdf.jsPDF)) return false;
+    try {
+        const testFile = new File(['test'], 'investisseur-pro.pdf', { type: 'application/pdf' });
+        return navigator.canShare({ files: [testFile] });
+    } catch (err) {
+        return false;
+    }
+}
+
+async function sharePdfFromMobile() {
+    if (!supportsNativePdfShare()) {
+        showToast('Le partage direct du PDF n\'est pas pris en charge sur cet appareil.', 'error');
+        return;
+    }
+
+    try {
+        const file = await buildSharePDFFile(uploadedPhotos);
+        await navigator.share({
+            files: [file],
+            title: file.name.replace(/\.pdf$/i, ''),
+            text: 'Rapport Investisseur Pro'
+        });
+    } catch (err) {
+        if (err && err.name === 'AbortError') return;
+        console.error('Erreur partage PDF :', err);
+        showToast('Le partage du PDF a échoué.', 'error');
+    }
+}
+
 document.getElementById('btn-preview-pdf').addEventListener('click', openPdfPreview);
 document.getElementById('btn-preview-close').addEventListener('click', closePdfPreview);
 
@@ -830,6 +861,14 @@ document.getElementById('btn-preview-dl').addEventListener('click', async functi
     const btn = this;
     btn.disabled = true;
     openPrintFlow();
+    btn.disabled = false;
+});
+
+document.getElementById('btn-preview-share').addEventListener('click', async function() {
+    closePdfPreview();
+    const btn = this;
+    btn.disabled = true;
+    await sharePdfFromMobile();
     btn.disabled = false;
 });
 
@@ -846,6 +885,18 @@ document.getElementById('btn-save-pdf').addEventListener('click', async function
     openPrintFlow();
     this.disabled = false;
 });
+
+document.getElementById('btn-share-pdf').addEventListener('click', async function() {
+    this.disabled = true;
+    await sharePdfFromMobile();
+    this.disabled = false;
+});
+
+(function initPdfShareButtons() {
+    if (!supportsNativePdfShare()) return;
+    document.getElementById('btn-share-pdf').style.display = 'inline-flex';
+    document.getElementById('btn-preview-share').style.display = 'inline-flex';
+})();
 
 // --- EXPORT CSV ---
 document.getElementById('btn-export-csv').addEventListener('click', function() {

@@ -373,9 +373,10 @@ ${activePhotos.length ? `
     const filename = `Rapport-${projectSlug}.pdf`;
 
     return { css, html, filename };
-  }
 
-  export function buildPDFDOM(uploadedPhotos) {
+}
+
+export function buildPDFDOM(uploadedPhotos) {
     const { css, html, filename } = buildPDFParts(uploadedPhotos);
 
     const styleEl = document.createElement('style');
@@ -405,7 +406,7 @@ export function cleanupPDFDOM(mount, styleEl) {
     if (styleEl)   styleEl.remove();
 }
 
-  export function buildPrintDocument(uploadedPhotos) {
+export function buildPrintDocument(uploadedPhotos) {
     const { css, html, filename } = buildPDFParts(uploadedPhotos);
     const title = filename.replace(/\.pdf$/i, '');
     const printBootstrap = `
@@ -490,4 +491,354 @@ export function cleanupPDFDOM(mount, styleEl) {
   </html>`;
 
     return { documentHTML, filename };
+}
+
+function normalizePDFText(value) {
+  return (value || '')
+    .replace(/\u00a0/g, ' ')
+    .replace(/\s+\n/g, '\n')
+    .replace(/\n\s+/g, '\n')
+    .replace(/[ \t]+/g, ' ')
+    .trim();
+}
+
+function getElementText(id) {
+  const el = document.getElementById(id);
+  return el ? normalizePDFText(el.innerText || el.textContent || '') : '';
+}
+
+function getCanvasImage(id, quality = 0.88) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return null;
+  try {
+    return canvas.toDataURL('image/jpeg', quality);
+  } catch (err) {
+    return null;
+  }
+}
+
+function extractTableDataFromElement(table) {
+  if (!table) return null;
+  const head = Array.from(table.querySelectorAll('thead tr')).map((row) =>
+    Array.from(row.querySelectorAll('th, td')).map((cell) => normalizePDFText(cell.innerText || cell.textContent || ''))
+  ).filter((row) => row.length);
+  const body = Array.from(table.querySelectorAll('tbody tr')).map((row) =>
+    Array.from(row.querySelectorAll('th, td')).map((cell) => normalizePDFText(cell.innerText || cell.textContent || ''))
+  ).filter((row) => row.length);
+
+  if (!head.length && !body.length) return null;
+  return { head, body };
+}
+
+function extractTableData(selector) {
+  return extractTableDataFromElement(document.querySelector(selector));
+}
+
+function extractRegimeComparisonRows() {
+  return Array.from(document.querySelectorAll('#regime-compare-grid .regime-card')).map((card) => [
+    normalizePDFText(card.querySelector('.regime-name')?.innerText || ''),
+    normalizePDFText(card.querySelector('.regime-cf')?.innerText || ''),
+    normalizePDFText(card.querySelector('.regime-badge')?.innerText || '')
+  ]).filter((row) => row[0]);
+}
+
+function extractOptimizationTips() {
+  const optimized = document.querySelector('#optimization-tips-container .tip-optimized');
+  if (optimized) {
+    return [{
+      title: 'Investissement optimise',
+      explanation: normalizePDFText(optimized.innerText || ''),
+      gain: ''
+    }];
+  }
+
+  return Array.from(document.querySelectorAll('#optimization-tips-container .tip-card')).map((card) => ({
+    title: normalizePDFText(card.querySelector('.tip-title')?.innerText || ''),
+    explanation: normalizePDFText(card.querySelector('.tip-explanation')?.innerText || ''),
+    gain: normalizePDFText(card.querySelector('.tip-gain')?.innerText || '')
+  })).filter((tip) => tip.title || tip.explanation);
+}
+
+function collectSharePDFSnapshot() {
+  return {
+    projectName: document.getElementById('project-name').value.trim() || 'Investissement',
+    generatedOn: new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' }),
+    scoreLabel: getElementText('score-label'),
+    scoreStars: getElementText('score-stars'),
+    scoreDetail: getElementText('score-detail'),
+    primaryMetrics: [
+      ['Rentabilite brute', getElementText('renta-brute')],
+      ['Rentabilite nette', getElementText('renta-nette')],
+      ['Renta nette-nette', getElementText('renta-netnet')],
+      ['Cash-flow net-net', getElementText('cf-netnet')]
+    ],
+    secondaryMetrics: [
+      ['Cash-on-Cash', getElementText('metric-coc')],
+      ['GRM', getElementText('metric-grm')],
+      ['DSCR', getElementText('metric-dscr')],
+      ['Break-even', getElementText('metric-breakeven')],
+      ['Equite an 1', getElementText('metric-equity')]
+    ],
+    financingSummary: [
+      ['Prix net vendeur estime', `${getElementText('out-prix-net')} €`],
+      ['Frais fixes', `${getElementText('out-frais-fixes')} €`],
+      ['Cout total de l operation', `${getElementText('out-cout-total')} €`],
+      ['Montant emprunte', `${getElementText('out-financement')} €`],
+      ['Mensualite credit + assurance', `${getElementText('out-mensualite')} €`]
+    ],
+    cashflowChart: getCanvasImage('cashflowChart'),
+    evolutionChart: getCanvasImage('evolutionChart'),
+    regimeComparison: extractRegimeComparisonRows(),
+    fiscalBreakdown: extractTableData('#fiscal-breakdown table'),
+    optimizationTips: extractOptimizationTips(),
+    negotiationTable: extractTableData('#nego-table-container table'),
+    projectionTable: extractTableDataFromElement(document.getElementById('projection-tbody')?.closest('table')),
+    resaleSummary: getElementText('revente-summary'),
+    resaleTable: extractTableDataFromElement(document.getElementById('revente-tbody')?.closest('table')),
+    notes: getElementText('commentaires-display')
+  };
+}
+
+function ensurePdfDependencies() {
+  const jsPDF = window.jspdf && window.jspdf.jsPDF;
+  if (!jsPDF) {
+    throw new Error('jsPDF indisponible');
+  }
+  if (!jsPDF.API || !jsPDF.API.autoTable) {
+    throw new Error('jsPDF AutoTable indisponible');
+  }
+  return jsPDF;
+}
+
+function addTable(doc, config) {
+  doc.autoTable({
+    margin: { left: 14, right: 14 },
+    headStyles: { fillColor: [30, 58, 95], textColor: 255, fontStyle: 'bold', fontSize: 8.5 },
+    bodyStyles: { fontSize: 8, textColor: [30, 41, 59], cellPadding: 2 },
+    alternateRowStyles: { fillColor: [248, 250, 252] },
+    styles: { overflow: 'linebreak', lineColor: [226, 232, 240], lineWidth: 0.1 },
+    ...config
+  });
+  return doc.lastAutoTable.finalY;
+}
+
+function addSectionTitle(doc, text, y) {
+  const pageWidth = doc.internal.pageSize.getWidth();
+  doc.setFillColor(239, 246, 255);
+  doc.roundedRect(14, y, pageWidth - 28, 8, 2, 2, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(30, 58, 95);
+  doc.setFontSize(11);
+  doc.text(text, 18, y + 5.3);
+  return y + 12;
+}
+
+function addWrappedText(doc, text, y, options = {}) {
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const fontSize = options.fontSize || 9;
+  const lineHeight = options.lineHeight || 4.6;
+  const x = options.x || 16;
+  const maxWidth = options.maxWidth || (doc.internal.pageSize.getWidth() - 32);
+  const lines = doc.splitTextToSize(text, maxWidth);
+  if (y + (lines.length * lineHeight) > pageHeight - 16) {
+    doc.addPage();
+    y = 16;
+  }
+  doc.setFont('helvetica', options.fontStyle || 'normal');
+  doc.setFontSize(fontSize);
+  doc.setTextColor(51, 65, 85);
+  doc.text(lines, x, y);
+  return y + (lines.length * lineHeight);
+}
+
+export async function buildSharePDFFile(uploadedPhotos) {
+  const jsPDF = ensurePdfDependencies();
+  const { filename } = buildPDFParts(uploadedPhotos);
+  const snapshot = collectSharePDFSnapshot();
+  const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const contentWidth = pageWidth - 28;
+  let cursorY = 14;
+
+  const ensureSpace = (neededHeight) => {
+    if (cursorY + neededHeight <= pageHeight - 16) return;
+    doc.addPage();
+    cursorY = 16;
+  };
+
+  doc.setFillColor(30, 58, 95);
+  doc.roundedRect(14, cursorY, contentWidth, 20, 3, 3, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.text('Investisseur Pro', 20, cursorY + 7.5);
+  doc.setFontSize(11);
+  doc.text(snapshot.projectName, 20, cursorY + 14);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.text(`Rapport mobile partage le ${snapshot.generatedOn}`, pageWidth - 20, cursorY + 8, { align: 'right' });
+  cursorY += 26;
+
+  doc.setFillColor(248, 250, 252);
+  doc.setDrawColor(226, 232, 240);
+  doc.roundedRect(14, cursorY, contentWidth, 14, 2, 2, 'FD');
+  doc.setTextColor(15, 23, 42);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.text(`${snapshot.scoreLabel} ${snapshot.scoreStars}`.trim(), 18, cursorY + 5.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.8);
+  const scoreLines = doc.splitTextToSize(snapshot.scoreDetail || 'Simulation en cours', contentWidth - 8);
+  doc.text(scoreLines, 18, cursorY + 10.2);
+  cursorY += 20;
+
+  cursorY = addSectionTitle(doc, 'Indicateurs cles', cursorY);
+  cursorY = addTable(doc, {
+    startY: cursorY,
+    head: [['Metrique', 'Valeur', 'Metrique', 'Valeur']],
+    body: [
+      [snapshot.primaryMetrics[0][0], snapshot.primaryMetrics[0][1], snapshot.primaryMetrics[1][0], snapshot.primaryMetrics[1][1]],
+      [snapshot.primaryMetrics[2][0], snapshot.primaryMetrics[2][1], snapshot.primaryMetrics[3][0], snapshot.primaryMetrics[3][1]],
+      [snapshot.secondaryMetrics[0][0], snapshot.secondaryMetrics[0][1], snapshot.secondaryMetrics[1][0], snapshot.secondaryMetrics[1][1]],
+      [snapshot.secondaryMetrics[2][0], snapshot.secondaryMetrics[2][1], snapshot.secondaryMetrics[3][0], snapshot.secondaryMetrics[3][1]],
+      [snapshot.secondaryMetrics[4][0], snapshot.secondaryMetrics[4][1], '', '']
+    ]
+  }) + 6;
+
+  cursorY = addSectionTitle(doc, 'Enveloppe financiere', cursorY);
+  cursorY = addTable(doc, {
+    startY: cursorY,
+    head: [['Poste', 'Valeur']],
+    body: snapshot.financingSummary
+  }) + 6;
+
+  if (snapshot.cashflowChart || snapshot.evolutionChart) {
+    cursorY = addSectionTitle(doc, 'Graphiques', cursorY);
+    if (snapshot.cashflowChart && snapshot.evolutionChart) {
+      ensureSpace(68);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(30, 41, 59);
+      doc.text('Repartition du cash-flow', 16, cursorY);
+      doc.text('Evolution sur 25 ans', 88, cursorY);
+      doc.addImage(snapshot.cashflowChart, 'JPEG', 16, cursorY + 4, 58, 58);
+      doc.addImage(snapshot.evolutionChart, 'JPEG', 88, cursorY + 4, 106, 58);
+      cursorY += 68;
+    } else if (snapshot.evolutionChart) {
+      ensureSpace(66);
+      doc.addImage(snapshot.evolutionChart, 'JPEG', 16, cursorY, contentWidth, 58);
+      cursorY += 64;
+    } else if (snapshot.cashflowChart) {
+      ensureSpace(66);
+      doc.addImage(snapshot.cashflowChart, 'JPEG', 16, cursorY, 70, 70);
+      cursorY += 76;
+    }
+  }
+
+  if (snapshot.regimeComparison.length) {
+    cursorY = addSectionTitle(doc, 'Comparaison des regimes fiscaux', cursorY);
+    cursorY = addTable(doc, {
+      startY: cursorY,
+      head: [['Regime', 'CF / mois', 'Repere']],
+      body: snapshot.regimeComparison
+    }) + 6;
+  }
+
+  if (snapshot.fiscalBreakdown) {
+    cursorY = addSectionTitle(doc, 'Detail fiscal', cursorY);
+    cursorY = addTable(doc, {
+      startY: cursorY,
+      head: snapshot.fiscalBreakdown.head,
+      body: snapshot.fiscalBreakdown.body,
+      bodyStyles: { fontSize: 7.4, textColor: [30, 41, 59], cellPadding: 1.8 },
+      headStyles: { fillColor: [30, 58, 95], textColor: 255, fontStyle: 'bold', fontSize: 7.8 }
+    }) + 6;
+  }
+
+  if (snapshot.optimizationTips.length) {
+    cursorY = addSectionTitle(doc, 'Conseils d optimisation', cursorY);
+    snapshot.optimizationTips.slice(0, 6).forEach((tip) => {
+      const explanationLines = doc.splitTextToSize(tip.explanation, contentWidth - 10);
+      const blockHeight = 10 + (explanationLines.length * 4.2) + (tip.gain ? 4.5 : 0);
+      ensureSpace(blockHeight + 2);
+      doc.setFillColor(255, 255, 255);
+      doc.setDrawColor(226, 232, 240);
+      doc.roundedRect(14, cursorY, contentWidth, blockHeight, 2, 2, 'FD');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(30, 58, 95);
+      doc.text(tip.title || 'Conseil', 18, cursorY + 5.5);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.7);
+      doc.setTextColor(51, 65, 85);
+      doc.text(explanationLines, 18, cursorY + 10.5);
+      if (tip.gain) {
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(22, 163, 74);
+        doc.text(tip.gain, 18, cursorY + blockHeight - 2.5);
+      }
+      cursorY += blockHeight + 4;
+    });
+  }
+
+  if (snapshot.negotiationTable) {
+    cursorY = addSectionTitle(doc, 'Impact de la negociation', cursorY);
+    cursorY = addTable(doc, {
+      startY: cursorY,
+      head: snapshot.negotiationTable.head,
+      body: snapshot.negotiationTable.body,
+      bodyStyles: { fontSize: 7.4, textColor: [30, 41, 59], cellPadding: 1.8 },
+      headStyles: { fillColor: [30, 58, 95], textColor: 255, fontStyle: 'bold', fontSize: 7.8 }
+    }) + 6;
+  }
+
+  if (snapshot.projectionTable) {
+    cursorY = addSectionTitle(doc, 'Projection financiere sur 25 ans', cursorY);
+    cursorY = addTable(doc, {
+      startY: cursorY,
+      head: snapshot.projectionTable.head,
+      body: snapshot.projectionTable.body,
+      bodyStyles: { fontSize: 7, textColor: [30, 41, 59], cellPadding: 1.6 },
+      headStyles: { fillColor: [30, 58, 95], textColor: 255, fontStyle: 'bold', fontSize: 7.3 }
+    }) + 6;
+  }
+
+  if (snapshot.resaleSummary || snapshot.resaleTable) {
+    cursorY = addSectionTitle(doc, 'Quand revendre', cursorY);
+    if (snapshot.resaleSummary) {
+      cursorY = addWrappedText(doc, snapshot.resaleSummary, cursorY, { fontSize: 8.8, lineHeight: 4.3, x: 16, maxWidth: contentWidth });
+      cursorY += 4;
+    }
+    if (snapshot.resaleTable) {
+      cursorY = addTable(doc, {
+        startY: cursorY,
+        head: snapshot.resaleTable.head,
+        body: snapshot.resaleTable.body,
+        bodyStyles: { fontSize: 6.4, textColor: [30, 41, 59], cellPadding: 1.4 },
+        headStyles: { fillColor: [30, 58, 95], textColor: 255, fontStyle: 'bold', fontSize: 6.8 },
+        styles: { overflow: 'linebreak', lineColor: [226, 232, 240], lineWidth: 0.1, cellWidth: 'wrap' }
+      }) + 6;
+    }
+  }
+
+  if (snapshot.notes) {
+    cursorY = addSectionTitle(doc, 'Notes', cursorY);
+    cursorY = addWrappedText(doc, snapshot.notes, cursorY, { fontSize: 9, lineHeight: 4.5, x: 16, maxWidth: contentWidth });
+    cursorY += 4;
+  }
+
+  const pageCount = doc.getNumberOfPages();
+  for (let page = 1; page <= pageCount; page++) {
+    doc.setPage(page);
+    doc.setDrawColor(226, 232, 240);
+    doc.line(14, pageHeight - 11, pageWidth - 14, pageHeight - 11);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`Page ${page} / ${pageCount}`, pageWidth - 14, pageHeight - 7, { align: 'right' });
+  }
+
+  const blob = doc.output('blob');
+  return new File([blob], filename, { type: 'application/pdf' });
 }
