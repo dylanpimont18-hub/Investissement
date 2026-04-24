@@ -250,20 +250,457 @@ function buildPDFParts(uploadedPhotos) {
 
 /* ── NOTES ── */
 #pdf-render .r-notes { white-space: pre-wrap; font-size: 10px; line-height: 1.7; margin-top: 8px; color: #475569; }
+
+/* ── OVERRIDES ESTHÉTIQUES ── */
+#pdf-render {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  line-height: 1.45;
+  color: #0f172a;
+  background: #ffffff;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+#pdf-render .r-header {
+  background: linear-gradient(135deg, #183458 0%, #21486f 55%, #102640 100%);
+  padding: 20px 22px;
+  margin-bottom: 18px;
+  border-radius: 18px;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.16);
+}
+
+#pdf-render .r-header-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  position: relative;
+  z-index: 1;
+}
+
+#pdf-render .r-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.14);
+  color: rgba(255,255,255,0.84);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+  margin-bottom: 9px;
+}
+
+#pdf-render .r-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#pdf-render .r-title {
+  font-family: "Space Grotesk", "Inter", Arial, sans-serif;
+  font-size: 26px;
+  letter-spacing: -0.6px;
+}
+
+#pdf-render .r-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.82);
+  font-size: 7.4px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+#pdf-render .r-sub {
+  font-size: 11px;
+  color: rgba(255,255,255,0.74);
+  margin-top: 5px;
+}
+
+#pdf-render .r-date-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+#pdf-render .r-date-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #c9a84c;
+  color: #183458;
+  font-size: 7.8px;
+  font-weight: 800;
+  letter-spacing: .9px;
+  text-transform: uppercase;
+}
+
+#pdf-render .r-date-lbl {
+  font-size: 7.4px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.62);
+}
+
+#pdf-render .r-date {
+  font-size: 9.5px;
+  color: rgba(255,255,255,0.7);
+  line-height: 1.5;
+}
+
+#pdf-render .r-score {
+  display: grid;
+  grid-template-columns: 210px 1fr;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border-width: 1px;
+  margin-bottom: 16px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+#pdf-render .r-score-l {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+#pdf-render .r-score-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.65);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .95px;
+  text-transform: uppercase;
+}
+
+#pdf-render .r-score-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+#pdf-render .r-score-stars {
+  font-family: "Space Grotesk", "Inter", Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .18em;
+}
+
+#pdf-render .r-score-r {
+  max-width: none;
+  text-align: left;
+  font-size: 10.2px;
+  line-height: 1.6;
+}
+
+#pdf-render .r-kpi-grid {
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+#pdf-render .r-kpi {
+  border-radius: 16px;
+  border: 1px solid #dbe5ef;
+  padding: 13px 12px 12px;
+  text-align: left;
+  background: #ffffff;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.06);
+  min-height: 88px;
+}
+
+#pdf-render .r-kpi.gold {
+  border-top: 4px solid #c9a84c;
+  background: linear-gradient(180deg, #fff8e7 0%, #ffffff 100%);
+}
+
+#pdf-render .r-kpi.blue {
+  border-top: 4px solid #2563eb;
+  background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
+}
+
+#pdf-render .r-kpi-lbl {
+  font-size: 6.9px;
+  letter-spacing: .9px;
+  margin-bottom: 8px;
+}
+
+#pdf-render .r-kpi-val {
+  font-family: "Space Grotesk", "Inter", Arial, sans-serif;
+  font-size: 21px;
+  letter-spacing: -0.4px;
+  margin-bottom: 2px;
+}
+
+#pdf-render .r-kpi-s {
+  font-size: 7px;
+  color: #94a3b8;
+  margin-top: 5px;
+}
+
+#pdf-render .r-summary-row {
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+#pdf-render .r-summary,
+#pdf-render .r-chart {
+  border-radius: 18px;
+  border: 1px solid #dbe5ef;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.06);
+}
+
+#pdf-render .r-summary {
+  padding: 14px 16px;
+  background: #ffffff;
+}
+
+#pdf-render .r-summary h3 {
+  font-size: 11.4px;
+  margin-bottom: 10px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+#pdf-render .r-summary li {
+  padding: 5.5px 0;
+  font-size: 9.4px;
+}
+
+#pdf-render .r-summary li strong {
+  color: #0f172a;
+}
+
+#pdf-render .r-chart {
+  width: 160px;
+  padding: 12px;
+  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+}
+
+#pdf-render .r-chart img {
+  width: 132px;
+  height: 132px;
+}
+
+#pdf-render .r-card {
+  position: relative;
+  border-left: none;
+  border-top: 4px solid #2563eb;
+  border-radius: 18px;
+  padding: 15px 16px 16px;
+  margin-bottom: 16px;
+  background: #ffffff;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.06);
+}
+
+#pdf-render .r-card h3 {
+  font-size: 12px;
+  margin-bottom: 5px;
+}
+
+#pdf-render .r-card-sub {
+  font-size: 8.4px;
+  color: #94a3b8;
+  margin-bottom: 11px;
+}
+
+#pdf-render .regime-compare-grid {
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+#pdf-render .regime-card {
+  border-radius: 15px;
+  padding: 12px 10px;
+  background: #f8fbff;
+  box-shadow: inset 0 0 0 1px #e2e8f0;
+}
+
+#pdf-render .regime-best {
+  background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%);
+  box-shadow: inset 0 0 0 1px #86efac;
+}
+
+#pdf-render .regime-name {
+  font-size: 7px;
+  letter-spacing: .85px;
+  margin-bottom: 6px;
+}
+
+#pdf-render .regime-cf {
+  font-family: "Space Grotesk", "Inter", Arial, sans-serif;
+  font-size: 17px;
+}
+
+#pdf-render .nego-table,
+#pdf-render .r-proj-table,
+#pdf-render .fiscal-breakdown-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+#pdf-render .nego-table thead tr,
+#pdf-render .r-proj-table thead tr,
+#pdf-render .fiscal-breakdown-table thead tr {
+  background: #183458;
+}
+
+#pdf-render .nego-table th,
+#pdf-render .r-proj-table th,
+#pdf-render .fiscal-breakdown-table th {
+  color: rgba(255,255,255,0.92);
+  border-bottom: none;
+  padding: 7px 8px;
+}
+
+#pdf-render .nego-table th:first-child,
+#pdf-render .r-proj-table th:first-child,
+#pdf-render .fiscal-breakdown-table th:first-child {
+  border-top-left-radius: 10px;
+}
+
+#pdf-render .nego-table th:last-child,
+#pdf-render .r-proj-table th:last-child,
+#pdf-render .fiscal-breakdown-table th:last-child {
+  border-top-right-radius: 10px;
+}
+
+#pdf-render .nego-table td,
+#pdf-render .r-proj-table td,
+#pdf-render .fiscal-breakdown-table td {
+  padding: 6px 8px;
+}
+
+#pdf-render .nego-table tbody tr:nth-child(even),
+#pdf-render .r-proj-table tbody tr:nth-child(even),
+#pdf-render .fiscal-breakdown-table tbody tr:nth-child(even) {
+  background: #fafcff;
+}
+
+#pdf-render .nego-table .nego-row-current {
+  background: #edf5ff !important;
+}
+
+#pdf-render .tip-card {
+  padding: 11px 12px;
+  border-radius: 14px;
+  border-left-width: 4px;
+  margin-bottom: 9px;
+  background: #ffffff;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.05);
+}
+
+#pdf-render .tip-title {
+  font-size: 9.8px;
+  margin-bottom: 3px;
+}
+
+#pdf-render .tip-explanation {
+  font-size: 8.5px;
+  line-height: 1.62;
+}
+
+#pdf-render .tip-gain {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: #f0fdf4;
+  margin-left: 6px;
+}
+
+#pdf-render .tip-optimized {
+  border: 1px solid #bbf7d0;
+  border-radius: 14px;
+  background: #f0fdf4;
+}
+
+#pdf-render .fiscal-breakdown-table tr.fiscal-total td {
+  color: #183458;
+  background: #f8fbff;
+}
+
+#pdf-render .r-photo-grid {
+  gap: 12px;
+}
+
+#pdf-render .r-photo-img {
+  border-radius: 12px;
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
+}
+
+#pdf-render .r-notes {
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #f8fbff;
+  border: 1px solid #e2e8f0;
+}
+
+@media (max-width: 720px) {
+  #pdf-render .r-header,
+  #pdf-render .r-score,
+  #pdf-render .r-summary-row {
+    display: block;
+  }
+
+  #pdf-render .r-date-wrap {
+    align-items: flex-start;
+    margin-top: 12px;
+  }
+
+  #pdf-render .r-score-r {
+    margin-top: 10px;
+  }
+
+  #pdf-render .r-chart {
+    width: 100%;
+    margin-top: 12px;
+  }
+}
 `;
 
     const html = `
 <div class="r-header">
-  <div>
-    <div class="r-title">Investisseur Pro</div>
+  <div class="r-header-copy">
+    <div class="r-eyebrow">Rapport complet</div>
+    <div class="r-title-row">
+      <div class="r-title">Investisseur Pro</div>
+      <div class="r-pill">Version imprimable</div>
+    </div>
     <div class="r-sub">${projectName}</div>
   </div>
-  <div class="r-date">Rapport généré le ${today}</div>
+  <div class="r-date-wrap">
+    <div class="r-date-badge">Analyse locative</div>
+    <div class="r-date-lbl">Généré le</div>
+    <div class="r-date">${today}</div>
+  </div>
 </div>
 
 <div class="r-score">
-  <div class="r-score-l">${scoreLabel} &nbsp; ${scoreStars}</div>
-  <div class="r-score-r">${scoreDetail}</div>
+  <div class="r-score-chip">Verdict</div>
+  <div class="r-score-main">
+    <div class="r-score-l">${scoreLabel}<span class="r-score-stars">${scoreStars}</span></div>
+    <div class="r-score-r">${scoreDetail}</div>
+  </div>
 </div>
 
 <div class="r-kpi-grid">
@@ -446,6 +883,9 @@ export function buildPrintDocument(uploadedPhotos) {
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
     <title>${title}</title>
     <style>
   ${css}
@@ -453,7 +893,7 @@ export function buildPrintDocument(uploadedPhotos) {
   html, body {
     margin: 0;
     padding: 0;
-    background: #e2e8f0;
+    background: linear-gradient(180deg, #eef4fb 0%, #dfe9f5 100%);
   }
 
   body {
@@ -462,6 +902,9 @@ export function buildPrintDocument(uploadedPhotos) {
 
   #pdf-render {
     margin: 0 auto;
+    box-sizing: border-box;
+    border-radius: 24px;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.15);
   }
 
   @page {
@@ -472,6 +915,8 @@ export function buildPrintDocument(uploadedPhotos) {
   @media print {
     html, body {
       background: white;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
 
     body {
@@ -480,6 +925,8 @@ export function buildPrintDocument(uploadedPhotos) {
 
     #pdf-render {
       margin: 0;
+      box-shadow: none;
+      border-radius: 0;
     }
   }
     </style>
