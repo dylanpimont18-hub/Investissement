@@ -599,6 +599,219 @@ function collectSharePDFSnapshot() {
   };
 }
 
+const SHARE_PDF_PALETTE = {
+  brand: [24, 52, 88],
+  brandSoft: [238, 245, 255],
+  blue: [59, 130, 246],
+  blueSoft: [239, 246, 255],
+  gold: [201, 168, 76],
+  goldSoft: [255, 249, 235],
+  success: [22, 163, 74],
+  successSoft: [240, 253, 244],
+  danger: [220, 38, 38],
+  dangerSoft: [254, 242, 242],
+  ink: [15, 23, 42],
+  text: [51, 65, 85],
+  muted: [100, 116, 139],
+  line: [226, 232, 240],
+  paper: [248, 250, 252],
+  white: [255, 255, 255]
+};
+
+function getScoreTheme(scoreLabel) {
+  const label = (scoreLabel || '').toLowerCase();
+  if (label.includes('excellent')) {
+    return { accent: SHARE_PDF_PALETTE.success, soft: SHARE_PDF_PALETTE.successSoft, text: [21, 128, 61] };
+  }
+  if (label.includes('bon')) {
+    return { accent: SHARE_PDF_PALETTE.blue, soft: SHARE_PDF_PALETTE.blueSoft, text: [30, 64, 175] };
+  }
+  if (label.includes('ris')) {
+    return { accent: SHARE_PDF_PALETTE.danger, soft: SHARE_PDF_PALETTE.dangerSoft, text: [153, 27, 27] };
+  }
+  return { accent: SHARE_PDF_PALETTE.gold, soft: SHARE_PDF_PALETTE.goldSoft, text: [146, 64, 14] };
+}
+
+function extractNumericValue(value) {
+  if (!value) return null;
+  const normalized = value.replace(/\s+/g, '').replace(',', '.');
+  const match = normalized.match(/-?\d+(?:\.\d+)?/);
+  return match ? Number(match[0]) : null;
+}
+
+function resolveMetricTone(label, value) {
+  const labelLower = (label || '').toLowerCase();
+  const numericValue = extractNumericValue(value);
+  if (labelLower.includes('cash-flow')) {
+    if (numericValue !== null && numericValue < 0) {
+      return { accent: SHARE_PDF_PALETTE.danger, soft: SHARE_PDF_PALETTE.dangerSoft, value: [153, 27, 27] };
+    }
+    return { accent: SHARE_PDF_PALETTE.success, soft: SHARE_PDF_PALETTE.successSoft, value: [21, 128, 61] };
+  }
+  if (labelLower.includes('nette-nette') || labelLower.includes('break-even')) {
+    return { accent: SHARE_PDF_PALETTE.gold, soft: SHARE_PDF_PALETTE.goldSoft, value: [146, 64, 14] };
+  }
+  if (labelLower.includes('dscr') || labelLower.includes('grm')) {
+    return { accent: SHARE_PDF_PALETTE.blue, soft: SHARE_PDF_PALETTE.blueSoft, value: [30, 64, 175] };
+  }
+  return { accent: SHARE_PDF_PALETTE.brand, soft: SHARE_PDF_PALETTE.paper, value: SHARE_PDF_PALETTE.ink };
+}
+
+function drawCardBase(doc, x, y, width, height, tone) {
+  doc.setFillColor(...tone.soft);
+  doc.setDrawColor(...SHARE_PDF_PALETTE.line);
+  doc.roundedRect(x, y, width, height, 3, 3, 'FD');
+  doc.setFillColor(...tone.accent);
+  doc.roundedRect(x, y, width, 2.4, 3, 3, 'F');
+}
+
+function drawMetricCard(doc, card, x, y, width, height, options = {}) {
+  const tone = options.tone || resolveMetricTone(card.label, card.value);
+  const labelFontSize = options.labelFontSize || 6.1;
+  let valueFontSize = options.valueFontSize || 14;
+  if ((card.value || '').length > 14) valueFontSize = Math.min(valueFontSize, 12.2);
+  if ((card.value || '').length > 18) valueFontSize = Math.min(valueFontSize, 10.6);
+
+  drawCardBase(doc, x, y, width, height, tone);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(labelFontSize);
+  doc.setTextColor(...SHARE_PDF_PALETTE.muted);
+  const labelLines = doc.splitTextToSize((card.label || '').toUpperCase(), width - 8).slice(0, 2);
+  doc.text(labelLines, x + 4, y + 6.5);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(valueFontSize);
+  doc.setTextColor(...tone.value);
+  const valueLines = doc.splitTextToSize(card.value || '--', width - 8).slice(0, 2);
+  doc.text(valueLines, x + 4, y + 14.5);
+
+  if (card.note) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6.3);
+    doc.setTextColor(...SHARE_PDF_PALETTE.muted);
+    const noteLines = doc.splitTextToSize(card.note, width - 8).slice(0, 2);
+    doc.text(noteLines, x + 4, y + height - 3.8);
+  }
+}
+
+function drawMetricGrid(doc, cards, y, options = {}) {
+  const columns = options.columns || 2;
+  const gap = options.gap || 4;
+  const x = options.x || 14;
+  const width = options.width || (doc.internal.pageSize.getWidth() - 28);
+  const cardHeight = options.cardHeight || 24;
+  const rows = Math.ceil(cards.length / columns);
+  const cardWidth = (width - ((columns - 1) * gap)) / columns;
+
+  cards.forEach((card, index) => {
+    const row = Math.floor(index / columns);
+    const column = index % columns;
+    const cardX = x + (column * (cardWidth + gap));
+    const cardY = y + (row * (cardHeight + gap));
+    drawMetricCard(doc, card, cardX, cardY, cardWidth, cardHeight, options);
+  });
+
+  return y + (rows * cardHeight) + ((rows - 1) * gap);
+}
+
+function drawDetailRowsCard(doc, rows, y, options = {}) {
+  const x = options.x || 14;
+  const width = options.width || (doc.internal.pageSize.getWidth() - 28);
+  const rowHeight = options.rowHeight || 8.2;
+  const topPadding = 4.8;
+  const height = topPadding + (rows.length * rowHeight) + 2.2;
+
+  doc.setFillColor(...SHARE_PDF_PALETTE.white);
+  doc.setDrawColor(...SHARE_PDF_PALETTE.line);
+  doc.roundedRect(x, y, width, height, 3, 3, 'FD');
+
+  rows.forEach((row, index) => {
+    const rowTop = y + topPadding + (index * rowHeight);
+    if (index > 0) {
+      doc.setDrawColor(...SHARE_PDF_PALETTE.line);
+      doc.line(x + 4, rowTop - 2.3, x + width - 4, rowTop - 2.3);
+    }
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.6);
+    doc.setTextColor(...SHARE_PDF_PALETTE.text);
+    doc.text(row[0], x + 4, rowTop + 2.1);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...SHARE_PDF_PALETTE.ink);
+    doc.text(row[1], x + width - 4, rowTop + 2.1, { align: 'right' });
+  });
+
+  return y + height;
+}
+
+function drawImagePanel(doc, panel) {
+  doc.setFillColor(...SHARE_PDF_PALETTE.white);
+  doc.setDrawColor(...SHARE_PDF_PALETTE.line);
+  doc.roundedRect(panel.x, panel.y, panel.width, panel.height, 3, 3, 'FD');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.9);
+  doc.setTextColor(...SHARE_PDF_PALETTE.ink);
+  doc.text(panel.title, panel.x + 4, panel.y + 6);
+
+  if (panel.subtitle) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6.8);
+    doc.setTextColor(...SHARE_PDF_PALETTE.muted);
+    doc.text(panel.subtitle, panel.x + 4, panel.y + 10.1);
+  }
+
+  if (panel.imageData) {
+    const topOffset = panel.subtitle ? 13.5 : 10.5;
+    const imageMaxWidth = panel.width - 8;
+    const imageMaxHeight = panel.height - topOffset - 4;
+    const imageWidth = Math.min(panel.imageWidth || imageMaxWidth, imageMaxWidth);
+    const imageHeight = Math.min(panel.imageHeight || imageMaxHeight, imageMaxHeight);
+    const imageX = panel.x + ((panel.width - imageWidth) / 2);
+    const imageY = panel.y + topOffset + ((imageMaxHeight - imageHeight) / 2);
+    doc.addImage(panel.imageData, 'JPEG', imageX, imageY, imageWidth, imageHeight, undefined, 'FAST');
+  }
+}
+
+function drawTipPanel(doc, tip, y, width) {
+  const hasGain = Boolean(tip.gain);
+  const explanationLines = doc.splitTextToSize(tip.explanation, width - 18);
+  const blockHeight = 12 + (explanationLines.length * 4.2) + (hasGain ? 6 : 0);
+  const tone = hasGain
+    ? { accent: SHARE_PDF_PALETTE.success, soft: SHARE_PDF_PALETTE.successSoft }
+    : { accent: SHARE_PDF_PALETTE.blue, soft: SHARE_PDF_PALETTE.blueSoft };
+
+  doc.setFillColor(...SHARE_PDF_PALETTE.white);
+  doc.setDrawColor(...SHARE_PDF_PALETTE.line);
+  doc.roundedRect(14, y, width, blockHeight, 3, 3, 'FD');
+  doc.setFillColor(...tone.accent);
+  doc.roundedRect(14, y, 3, blockHeight, 3, 3, 'F');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.7);
+  doc.setTextColor(...SHARE_PDF_PALETTE.brand);
+  doc.text(tip.title || 'Conseil', 20, y + 6);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(...SHARE_PDF_PALETTE.text);
+  doc.text(explanationLines, 20, y + 10.8);
+
+  if (hasGain) {
+    const gainWidth = Math.min(width - 24, doc.getTextWidth(tip.gain) + 8);
+    doc.setFillColor(...SHARE_PDF_PALETTE.successSoft);
+    doc.roundedRect(20, y + blockHeight - 7, gainWidth, 5, 2.5, 2.5, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.6);
+    doc.setTextColor(...SHARE_PDF_PALETTE.success);
+    doc.text(tip.gain, 24, y + blockHeight - 3.4);
+  }
+
+  return y + blockHeight;
+}
+
 function ensurePdfDependencies() {
   const jsPDF = window.jspdf && window.jspdf.jsPDF;
   if (!jsPDF) {
@@ -613,10 +826,22 @@ function ensurePdfDependencies() {
 function addTable(doc, config) {
   doc.autoTable({
     margin: { left: 14, right: 14 },
-    headStyles: { fillColor: [30, 58, 95], textColor: 255, fontStyle: 'bold', fontSize: 8.5 },
-    bodyStyles: { fontSize: 8, textColor: [30, 41, 59], cellPadding: 2 },
-    alternateRowStyles: { fillColor: [248, 250, 252] },
-    styles: { overflow: 'linebreak', lineColor: [226, 232, 240], lineWidth: 0.1 },
+    tableLineColor: SHARE_PDF_PALETTE.line,
+    tableLineWidth: 0.12,
+    headStyles: {
+      fillColor: SHARE_PDF_PALETTE.brand,
+      textColor: 255,
+      fontStyle: 'bold',
+      fontSize: 8.1,
+      cellPadding: { top: 2.6, right: 2.4, bottom: 2.5, left: 2.4 }
+    },
+    bodyStyles: {
+      fontSize: 7.8,
+      textColor: SHARE_PDF_PALETTE.text,
+      cellPadding: { top: 2.2, right: 2.2, bottom: 2.1, left: 2.2 }
+    },
+    alternateRowStyles: { fillColor: [250, 251, 253] },
+    styles: { overflow: 'linebreak', lineColor: SHARE_PDF_PALETTE.line, lineWidth: 0.12, valign: 'middle' },
     ...config
   });
   return doc.lastAutoTable.finalY;
@@ -624,12 +849,19 @@ function addTable(doc, config) {
 
 function addSectionTitle(doc, text, y) {
   const pageWidth = doc.internal.pageSize.getWidth();
-  doc.setFillColor(239, 246, 255);
-  doc.roundedRect(14, y, pageWidth - 28, 8, 2, 2, 'F');
+  doc.setDrawColor(...SHARE_PDF_PALETTE.line);
+  doc.setLineWidth(0.25);
+  doc.line(14, y + 4.2, pageWidth - 14, y + 4.2);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(30, 58, 95);
-  doc.setFontSize(11);
-  doc.text(text, 18, y + 5.3);
+  doc.setFontSize(10.8);
+  const titleWidth = Math.min(pageWidth - 28, doc.getTextWidth(text) + 14);
+  doc.setFillColor(...SHARE_PDF_PALETTE.brandSoft);
+  doc.roundedRect(14, y, titleWidth, 8.4, 4.2, 4.2, 'F');
+  doc.setFillColor(...SHARE_PDF_PALETTE.gold);
+  doc.roundedRect(14, y + 2.1, 3.2, 4.2, 2.1, 2.1, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...SHARE_PDF_PALETTE.brand);
+  doc.text(text, 20.5, y + 5.6);
   return y + 12;
 }
 
@@ -667,72 +899,121 @@ export async function buildSharePDFFile(uploadedPhotos) {
     cursorY = 16;
   };
 
-  doc.setFillColor(30, 58, 95);
-  doc.roundedRect(14, cursorY, contentWidth, 20, 3, 3, 'F');
+  const scoreTheme = getScoreTheme(snapshot.scoreLabel);
+  const primaryCards = [
+    { label: snapshot.primaryMetrics[0][0], value: snapshot.primaryMetrics[0][1], note: 'Vision instantanee' },
+    { label: snapshot.primaryMetrics[1][0], value: snapshot.primaryMetrics[1][1], note: 'Hors impact fiscal final' },
+    { label: snapshot.primaryMetrics[2][0], value: snapshot.primaryMetrics[2][1], note: 'Apres impots' },
+    { label: snapshot.primaryMetrics[3][0], value: snapshot.primaryMetrics[3][1], note: 'Ce qu il reste chaque mois' }
+  ];
+  const secondaryCards = snapshot.secondaryMetrics.map(([label, value]) => ({ label, value }));
+
+  doc.setFillColor(...SHARE_PDF_PALETTE.brand);
+  doc.roundedRect(14, cursorY, contentWidth, 24, 4, 4, 'F');
+  doc.setFillColor(...SHARE_PDF_PALETTE.gold);
+  doc.roundedRect(pageWidth - 62, cursorY + 4, 42, 6.3, 3.1, 3.1, 'F');
+  doc.setTextColor(...SHARE_PDF_PALETTE.brand);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.text('RAPPORT PARTAGE', pageWidth - 41, cursorY + 8.1, { align: 'center' });
+
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(18);
-  doc.text('Investisseur Pro', 20, cursorY + 7.5);
-  doc.setFontSize(11);
-  doc.text(snapshot.projectName, 20, cursorY + 14);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.text(`Rapport mobile partage le ${snapshot.generatedOn}`, pageWidth - 20, cursorY + 8, { align: 'right' });
-  cursorY += 26;
-
-  doc.setFillColor(248, 250, 252);
-  doc.setDrawColor(226, 232, 240);
-  doc.roundedRect(14, cursorY, contentWidth, 14, 2, 2, 'FD');
-  doc.setTextColor(15, 23, 42);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(12);
-  doc.text(`${snapshot.scoreLabel} ${snapshot.scoreStars}`.trim(), 18, cursorY + 5.5);
+  doc.setFontSize(19);
+  doc.text('Investisseur Pro', 20, cursorY + 8.5);
+  doc.setFontSize(11.3);
+  doc.text(snapshot.projectName, 20, cursorY + 16.3);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.8);
-  const scoreLines = doc.splitTextToSize(snapshot.scoreDetail || 'Simulation en cours', contentWidth - 8);
-  doc.text(scoreLines, 18, cursorY + 10.2);
-  cursorY += 20;
+  doc.text(`Genere le ${snapshot.generatedOn}`, 20, cursorY + 20.6);
+  cursorY += 30;
 
-  cursorY = addSectionTitle(doc, 'Indicateurs cles', cursorY);
-  cursorY = addTable(doc, {
-    startY: cursorY,
-    head: [['Metrique', 'Valeur', 'Metrique', 'Valeur']],
-    body: [
-      [snapshot.primaryMetrics[0][0], snapshot.primaryMetrics[0][1], snapshot.primaryMetrics[1][0], snapshot.primaryMetrics[1][1]],
-      [snapshot.primaryMetrics[2][0], snapshot.primaryMetrics[2][1], snapshot.primaryMetrics[3][0], snapshot.primaryMetrics[3][1]],
-      [snapshot.secondaryMetrics[0][0], snapshot.secondaryMetrics[0][1], snapshot.secondaryMetrics[1][0], snapshot.secondaryMetrics[1][1]],
-      [snapshot.secondaryMetrics[2][0], snapshot.secondaryMetrics[2][1], snapshot.secondaryMetrics[3][0], snapshot.secondaryMetrics[3][1]],
-      [snapshot.secondaryMetrics[4][0], snapshot.secondaryMetrics[4][1], '', '']
-    ]
-  }) + 6;
+  doc.setFillColor(...scoreTheme.soft);
+  doc.setDrawColor(...SHARE_PDF_PALETTE.line);
+  doc.roundedRect(14, cursorY, contentWidth, 18, 3, 3, 'FD');
+  doc.setFillColor(...scoreTheme.accent);
+  doc.roundedRect(14, cursorY, 4, 18, 3, 3, 'F');
+  doc.setFillColor(...scoreTheme.accent);
+  doc.roundedRect(20, cursorY + 3.3, 32, 5.4, 2.7, 2.7, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(255, 255, 255);
+  doc.text((snapshot.scoreLabel || 'Simulation').toUpperCase(), 36, cursorY + 7, { align: 'center' });
+  doc.setTextColor(...scoreTheme.text);
+  doc.setFontSize(13);
+  doc.text(`${snapshot.scoreLabel} ${snapshot.scoreStars}`.trim(), 56, cursorY + 7.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.8);
+  const scoreLines = doc.splitTextToSize(snapshot.scoreDetail || 'Simulation en cours', contentWidth - 48);
+  doc.setTextColor(...SHARE_PDF_PALETTE.text);
+  doc.text(scoreLines, 56, cursorY + 12.8);
+  cursorY += 24;
+
+  cursorY = addSectionTitle(doc, 'Vue d ensemble', cursorY);
+  ensureSpace(56);
+  cursorY = drawMetricGrid(doc, primaryCards, cursorY, { columns: 2, cardHeight: 24, gap: 4 }) + 6;
+  ensureSpace(40);
+  cursorY = drawMetricGrid(doc, secondaryCards, cursorY, { columns: 3, cardHeight: 18, gap: 4, valueFontSize: 11.2, labelFontSize: 5.6 }) + 6;
 
   cursorY = addSectionTitle(doc, 'Enveloppe financiere', cursorY);
-  cursorY = addTable(doc, {
-    startY: cursorY,
-    head: [['Poste', 'Valeur']],
-    body: snapshot.financingSummary
-  }) + 6;
+  ensureSpace(56);
+  cursorY = drawDetailRowsCard(doc, snapshot.financingSummary, cursorY) + 6;
 
   if (snapshot.cashflowChart || snapshot.evolutionChart) {
     cursorY = addSectionTitle(doc, 'Graphiques', cursorY);
     if (snapshot.cashflowChart && snapshot.evolutionChart) {
-      ensureSpace(68);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(9);
-      doc.setTextColor(30, 41, 59);
-      doc.text('Repartition du cash-flow', 16, cursorY);
-      doc.text('Evolution sur 25 ans', 88, cursorY);
-      doc.addImage(snapshot.cashflowChart, 'JPEG', 16, cursorY + 4, 58, 58);
-      doc.addImage(snapshot.evolutionChart, 'JPEG', 88, cursorY + 4, 106, 58);
-      cursorY += 68;
+      ensureSpace(76);
+      drawImagePanel(doc, {
+        x: 14,
+        y: cursorY,
+        width: 64,
+        height: 68,
+        title: 'Repartition du cash-flow',
+        subtitle: 'Vue mensuelle',
+        imageData: snapshot.cashflowChart,
+        imageWidth: 50,
+        imageHeight: 50
+      });
+      drawImagePanel(doc, {
+        x: 82,
+        y: cursorY,
+        width: 114,
+        height: 68,
+        title: 'Evolution sur 25 ans',
+        subtitle: 'Capital, cash-flow cumule et enrichissement',
+        imageData: snapshot.evolutionChart,
+        imageWidth: 102,
+        imageHeight: 46
+      });
+      cursorY += 74;
     } else if (snapshot.evolutionChart) {
-      ensureSpace(66);
-      doc.addImage(snapshot.evolutionChart, 'JPEG', 16, cursorY, contentWidth, 58);
-      cursorY += 64;
+      ensureSpace(72);
+      drawImagePanel(doc, {
+        x: 14,
+        y: cursorY,
+        width: contentWidth,
+        height: 66,
+        title: 'Evolution sur 25 ans',
+        subtitle: 'Capital, cash-flow cumule et enrichissement',
+        imageData: snapshot.evolutionChart,
+        imageWidth: contentWidth - 12,
+        imageHeight: 46
+      });
+      cursorY += 72;
     } else if (snapshot.cashflowChart) {
-      ensureSpace(66);
-      doc.addImage(snapshot.cashflowChart, 'JPEG', 16, cursorY, 70, 70);
-      cursorY += 76;
+      ensureSpace(72);
+      drawImagePanel(doc, {
+        x: 14,
+        y: cursorY,
+        width: contentWidth,
+        height: 66,
+        title: 'Repartition du cash-flow',
+        subtitle: 'Vue mensuelle',
+        imageData: snapshot.cashflowChart,
+        imageWidth: 52,
+        imageHeight: 52
+      });
+      cursorY += 72;
     }
   }
 
@@ -741,7 +1022,11 @@ export async function buildSharePDFFile(uploadedPhotos) {
     cursorY = addTable(doc, {
       startY: cursorY,
       head: [['Regime', 'CF / mois', 'Repere']],
-      body: snapshot.regimeComparison
+      body: snapshot.regimeComparison,
+      columnStyles: {
+        1: { halign: 'right' },
+        2: { halign: 'center' }
+      }
     }) + 6;
   }
 
@@ -751,34 +1036,17 @@ export async function buildSharePDFFile(uploadedPhotos) {
       startY: cursorY,
       head: snapshot.fiscalBreakdown.head,
       body: snapshot.fiscalBreakdown.body,
-      bodyStyles: { fontSize: 7.4, textColor: [30, 41, 59], cellPadding: 1.8 },
-      headStyles: { fillColor: [30, 58, 95], textColor: 255, fontStyle: 'bold', fontSize: 7.8 }
+      bodyStyles: { fontSize: 7.3, textColor: SHARE_PDF_PALETTE.text, cellPadding: 1.8 },
+      headStyles: { fillColor: SHARE_PDF_PALETTE.brand, textColor: 255, fontStyle: 'bold', fontSize: 7.8 }
     }) + 6;
   }
 
   if (snapshot.optimizationTips.length) {
     cursorY = addSectionTitle(doc, 'Conseils d optimisation', cursorY);
     snapshot.optimizationTips.slice(0, 6).forEach((tip) => {
-      const explanationLines = doc.splitTextToSize(tip.explanation, contentWidth - 10);
-      const blockHeight = 10 + (explanationLines.length * 4.2) + (tip.gain ? 4.5 : 0);
+      const blockHeight = 12 + (doc.splitTextToSize(tip.explanation, contentWidth - 18).length * 4.2) + (tip.gain ? 6 : 0);
       ensureSpace(blockHeight + 2);
-      doc.setFillColor(255, 255, 255);
-      doc.setDrawColor(226, 232, 240);
-      doc.roundedRect(14, cursorY, contentWidth, blockHeight, 2, 2, 'FD');
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(10);
-      doc.setTextColor(30, 58, 95);
-      doc.text(tip.title || 'Conseil', 18, cursorY + 5.5);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8.7);
-      doc.setTextColor(51, 65, 85);
-      doc.text(explanationLines, 18, cursorY + 10.5);
-      if (tip.gain) {
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(22, 163, 74);
-        doc.text(tip.gain, 18, cursorY + blockHeight - 2.5);
-      }
-      cursorY += blockHeight + 4;
+      cursorY = drawTipPanel(doc, tip, cursorY, contentWidth) + 4;
     });
   }
 
@@ -788,8 +1056,8 @@ export async function buildSharePDFFile(uploadedPhotos) {
       startY: cursorY,
       head: snapshot.negotiationTable.head,
       body: snapshot.negotiationTable.body,
-      bodyStyles: { fontSize: 7.4, textColor: [30, 41, 59], cellPadding: 1.8 },
-      headStyles: { fillColor: [30, 58, 95], textColor: 255, fontStyle: 'bold', fontSize: 7.8 }
+      bodyStyles: { fontSize: 7.4, textColor: SHARE_PDF_PALETTE.text, cellPadding: 1.8 },
+      headStyles: { fillColor: SHARE_PDF_PALETTE.brand, textColor: 255, fontStyle: 'bold', fontSize: 7.8 }
     }) + 6;
   }
 
@@ -799,8 +1067,8 @@ export async function buildSharePDFFile(uploadedPhotos) {
       startY: cursorY,
       head: snapshot.projectionTable.head,
       body: snapshot.projectionTable.body,
-      bodyStyles: { fontSize: 7, textColor: [30, 41, 59], cellPadding: 1.6 },
-      headStyles: { fillColor: [30, 58, 95], textColor: 255, fontStyle: 'bold', fontSize: 7.3 }
+      bodyStyles: { fontSize: 7, textColor: SHARE_PDF_PALETTE.text, cellPadding: 1.6 },
+      headStyles: { fillColor: SHARE_PDF_PALETTE.brand, textColor: 255, fontStyle: 'bold', fontSize: 7.3 }
     }) + 6;
   }
 
@@ -815,27 +1083,39 @@ export async function buildSharePDFFile(uploadedPhotos) {
         startY: cursorY,
         head: snapshot.resaleTable.head,
         body: snapshot.resaleTable.body,
-        bodyStyles: { fontSize: 6.4, textColor: [30, 41, 59], cellPadding: 1.4 },
-        headStyles: { fillColor: [30, 58, 95], textColor: 255, fontStyle: 'bold', fontSize: 6.8 },
-        styles: { overflow: 'linebreak', lineColor: [226, 232, 240], lineWidth: 0.1, cellWidth: 'wrap' }
+        bodyStyles: { fontSize: 6.4, textColor: SHARE_PDF_PALETTE.text, cellPadding: 1.4 },
+        headStyles: { fillColor: SHARE_PDF_PALETTE.brand, textColor: 255, fontStyle: 'bold', fontSize: 6.8 },
+        styles: { overflow: 'linebreak', lineColor: SHARE_PDF_PALETTE.line, lineWidth: 0.1, cellWidth: 'wrap' }
       }) + 6;
     }
   }
 
   if (snapshot.notes) {
     cursorY = addSectionTitle(doc, 'Notes', cursorY);
-    cursorY = addWrappedText(doc, snapshot.notes, cursorY, { fontSize: 9, lineHeight: 4.5, x: 16, maxWidth: contentWidth });
-    cursorY += 4;
+    const noteLines = doc.splitTextToSize(snapshot.notes, contentWidth - 12);
+    const noteHeight = 10 + (noteLines.length * 4.5);
+    ensureSpace(noteHeight + 2);
+    doc.setFillColor(...SHARE_PDF_PALETTE.white);
+    doc.setDrawColor(...SHARE_PDF_PALETTE.line);
+    doc.roundedRect(14, cursorY, contentWidth, noteHeight, 3, 3, 'FD');
+    doc.setFillColor(...SHARE_PDF_PALETTE.goldSoft);
+    doc.roundedRect(18, cursorY + 4, 3, noteHeight - 8, 1.5, 1.5, 'F');
+    cursorY = addWrappedText(doc, snapshot.notes, cursorY + 6, { fontSize: 9, lineHeight: 4.5, x: 24, maxWidth: contentWidth - 16 });
+    cursorY += 6;
   }
 
   const pageCount = doc.getNumberOfPages();
   for (let page = 1; page <= pageCount; page++) {
     doc.setPage(page);
-    doc.setDrawColor(226, 232, 240);
+    doc.setDrawColor(...SHARE_PDF_PALETTE.line);
+    doc.line(14, 10, pageWidth - 14, 10);
+    doc.setFillColor(...SHARE_PDF_PALETTE.gold);
+    doc.roundedRect(14, 9.1, 24, 1.8, 0.9, 0.9, 'F');
     doc.line(14, pageHeight - 11, pageWidth - 14, pageHeight - 11);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    doc.setTextColor(100, 116, 139);
+    doc.setTextColor(...SHARE_PDF_PALETTE.muted);
+    doc.text(snapshot.projectName, 14, pageHeight - 7);
     doc.text(`Page ${page} / ${pageCount}`, pageWidth - 14, pageHeight - 7, { align: 'right' });
   }
 
