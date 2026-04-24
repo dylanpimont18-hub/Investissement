@@ -805,6 +805,11 @@ function closePdfPreview() {
 
 async function generatePdfFromScratch(mode) {
     const mask = showRenderMask();
+    const savedScrollY = window.scrollY;
+    // html2canvas ne capture pas bien les éléments position:fixed si la page est scrollée.
+    // Le masque blanc cache ce scroll instantané à l'utilisateur.
+    window.scrollTo(0, 0);
+
     const { container, styleEl, filename } = buildPDFDOM(uploadedPhotos);
     try {
         if (mode === 'save') {
@@ -814,6 +819,7 @@ async function generatePdfFromScratch(mode) {
             const blob = await html2pdf().set(getPDFOptions(filename)).from(container).outputPdf('blob');
             cleanupPDFDOM(container, styleEl);
             mask.remove();
+            window.scrollTo(0, savedScrollY);
             const file = new File([blob], filename, { type: 'application/pdf' });
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 await navigator.share({ files: [file], title: filename });
@@ -835,6 +841,7 @@ async function generatePdfFromScratch(mode) {
     } finally {
         cleanupPDFDOM(container, styleEl);
         mask.remove();
+        window.scrollTo(0, savedScrollY);
     }
 }
 
