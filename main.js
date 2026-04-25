@@ -21,7 +21,38 @@ let wizardMode = 'rapide';
 // --- COMPTE & PREMIUM (Lots 7+8) ---
 // Stub local — brancher ici Firebase Auth / Supabase pour la version cloud réelle
 const FREE_PROJECT_LIMIT = 3;
+const PDF_GEN_LIMIT = 3;
 let userAccount = (() => { try { return JSON.parse(localStorage.getItem('userAccount')) || { isPremium: false }; } catch(e) { return { isPremium: false }; } })();
+let pdfGenCount = (() => { try { return parseInt(localStorage.getItem('pdfGenCount') || '0', 10); } catch(e) { return 0; } })();
+
+function incrementPdfGenCount() {
+    if (userAccount.isPremium) return;
+    pdfGenCount++;
+    localStorage.setItem('pdfGenCount', pdfGenCount);
+}
+
+function shouldShowPdfGate() {
+    return !userAccount.isPremium && pdfGenCount > PDF_GEN_LIMIT;
+}
+
+let _pendingPdfAction = null;
+
+window.closePdfGateModal = function() {
+    document.getElementById('modal-pdf-gate').style.display = 'none';
+    document.body.style.overflow = '';
+    _pendingPdfAction = null;
+};
+
+function showPdfGateOrProceed(action) {
+    incrementPdfGenCount();
+    if (shouldShowPdfGate()) {
+        _pendingPdfAction = action;
+        document.getElementById('modal-pdf-gate').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    } else {
+        action();
+    }
+}
 
 function migrateProjects() {
     let changed = false;
@@ -642,6 +673,28 @@ window.closeComparatorModal = function(overlay, event) {
 
 // --- COMPTE & PRO+ ---
 window.openAccountModal = function() {
+    const zone = document.getElementById('account-status-zone');
+    if (zone) {
+        if (userAccount.isPremium) {
+            zone.innerHTML = `
+                <div class="account-status-row"><span class="account-status-icon">&#128196;</span><span>Projets : <strong>illimités</strong></span></div>
+                <div class="account-status-row"><span class="account-status-icon">&#9729;</span><span>Sync cloud : <strong>active</strong></span></div>`;
+            zone.className = 'account-status-zone account-status-zone-premium';
+            const badge = document.getElementById('account-plan-premium-badge');
+            if (badge) { badge.textContent = 'Actif'; badge.classList.add('account-plan-badge-active'); }
+            const waitlistBtn = document.getElementById('account-waitlist-btn');
+            if (waitlistBtn) waitlistBtn.style.display = 'none';
+        } else {
+            const count = savedProjects.length;
+            const pct = Math.min(count / FREE_PROJECT_LIMIT * 100, 100);
+            const atLimit = count >= FREE_PROJECT_LIMIT;
+            zone.innerHTML = `
+                <div class="account-status-row"><span class="account-status-icon">&#128194;</span><span>Projets : <strong>${count} / ${FREE_PROJECT_LIMIT} sauvegardés</strong></span></div>
+                <div class="account-status-bar-wrap"><div class="account-status-bar ${atLimit ? 'account-status-bar-full' : ''}" style="width:${pct}%"></div></div>
+                <div class="account-status-row"><span class="account-status-icon">&#128190;</span><span>Stockage : <strong>local uniquement</strong></span></div>`;
+            zone.className = 'account-status-zone';
+        }
+    }
     document.getElementById('modal-compte').style.display = 'flex';
     document.body.style.overflow = 'hidden';
 };
@@ -981,7 +1034,7 @@ async function sharePdfFromMobile() {
     }
 }
 
-document.getElementById('btn-preview-pdf').addEventListener('click', openPdfPreview);
+document.getElementById('btn-preview-pdf').addEventListener('click', () => showPdfGateOrProceed(openPdfPreview));
 document.getElementById('btn-preview-close').addEventListener('click', closePdfPreview);
 
 document.getElementById('btn-preview-dl').addEventListener('click', async function() {
@@ -1008,10 +1061,8 @@ document.addEventListener('keydown', (e) => {
 });
 
 // --- BOUTONS PDF (barre d'action flottante) ---
-document.getElementById('btn-save-pdf').addEventListener('click', async function() {
-    this.disabled = true;
-    openPrintFlow();
-    this.disabled = false;
+document.getElementById('btn-save-pdf').addEventListener('click', function() {
+    showPdfGateOrProceed(openPrintFlow);
 });
 
 document.getElementById('btn-share-pdf').addEventListener('click', async function() {
@@ -1025,6 +1076,20 @@ document.getElementById('btn-share-pdf').addEventListener('click', async functio
     document.getElementById('btn-share-pdf').style.display = 'inline-flex';
     document.getElementById('btn-preview-share').style.display = 'inline-flex';
 })();
+
+// Bouton "Continuer quand même" de la gate PDF
+document.getElementById('btn-pdf-gate-continue').addEventListener('click', function() {
+    const action = _pendingPdfAction;
+    window.closePdfGateModal();
+    if (action) action();
+});
+
+// Fermeture gate PDF via Échap
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.getElementById('modal-pdf-gate').style.display !== 'none') {
+        window.closePdfGateModal();
+    }
+});
 
 // --- EXPORT CSV ---
 document.getElementById('btn-export-csv').addEventListener('click', function() {
