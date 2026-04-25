@@ -917,3 +917,73 @@ details.accordion[open] summary::after { transform: rotate(90deg); }
     transition: background 0.2s;
 }
 .btn-accueil:hover { background: var(--border-color); }
+
+/* === WIZARD === */
+.wizard-step-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding: 20px 10px 24px;
+}
+.wizard-step-dot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+.wsd-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--border-color);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s, color 0.2s;
+}
+.wizard-step-dot.active .wsd-num,
+.wizard-step-dot.current .wsd-num {
+    background: var(--primary-color);
+    color: #fff;
+}
+.wsd-label {
+    font-size: 0.68rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+.wizard-step-dot.current .wsd-label { color: var(--primary-color); font-weight: 600; }
+.wizard-step-connector {
+    flex: 1;
+    height: 2px;
+    background: var(--border-color);
+    margin: 0 6px;
+    margin-bottom: 16px;
+    max-width: 60px;
+    transition: background 0.2s;
+}
+
+.wizard-step-card {
+    background: var(--card-bg);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-light);
+    padding: 20px 18px;
+}
+.wizard-step-title {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--primary-color);
+}
+.wizard-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+    gap: 12px;
+}
+.wizard-nav > div { flex: 1; }
+.wizard-btn-next, .wizard-btn-prev { min-width: 120px; }
