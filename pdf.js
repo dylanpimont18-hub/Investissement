@@ -26,6 +26,9 @@ function buildPDFParts(uploadedPhotos) {
     const dscrVal = document.getElementById('metric-dscr').innerText;
     const beVal   = document.getElementById('metric-breakeven').innerText;
 
+    const bestRegimeEl    = document.querySelector('#regime-compare-grid .regime-best .regime-name');
+    const bestRegimeLabel = bestRegimeEl ? bestRegimeEl.innerText.trim() : '—';
+
     const chartCanvas    = document.getElementById('cashflowChart');
     const chartImg       = chartCanvas ? chartCanvas.toDataURL('image/png') : null;
     const evolutionCanvas = document.getElementById('evolutionChart');
@@ -43,6 +46,10 @@ function buildPDFParts(uploadedPhotos) {
 
     const notesEl   = document.getElementById('commentaires-display');
     const notesText = notesEl ? notesEl.innerText.trim() : '';
+
+    const verdictWhyEl  = document.getElementById('verdict-why');
+    const verdictWhyRaw = verdictWhyEl ? verdictWhyEl.innerText.trim() : '';
+    const verdictWhy    = verdictWhyRaw.length > 120 ? verdictWhyRaw.slice(0, 117) + '…' : verdictWhyRaw;
 
     const activePhotos = uploadedPhotos.filter(p => p);
     const photosHTML   = activePhotos.map(p => `<img src="${p}" class="r-photo-img">`).join('');
@@ -676,6 +683,63 @@ function buildPDFParts(uploadedPhotos) {
     margin-top: 12px;
   }
 }
+
+/* ── RÉSUMÉ EXÉCUTIF ── */
+#pdf-render .r-exec-summary {
+  margin-bottom: 14px;
+  padding: 12px 16px 10px;
+  background: #f1f7ff;
+  border: 1px solid #dbe5ef;
+  border-radius: 14px;
+}
+#pdf-render .r-exec-title {
+  font-size: 6.8px;
+  text-transform: uppercase;
+  letter-spacing: 1.1px;
+  color: #64748b;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+#pdf-render .r-exec-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-bottom: 8px;
+}
+#pdf-render .r-exec-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: center;
+  padding: 4px 0;
+}
+#pdf-render .r-exec-item:not(:last-child) {
+  border-right: 1px solid #dbe5ef;
+}
+#pdf-render .r-exec-lbl {
+  font-size: 6.2px;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  color: #94a3b8;
+  font-weight: 700;
+}
+#pdf-render .r-exec-val {
+  font-family: "Space Grotesk", "Inter", Arial, sans-serif;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
+}
+#pdf-render .r-exec-val.pos { color: #16a34a; }
+#pdf-render .r-exec-val.neg { color: #ef4444; }
+#pdf-render .r-exec-why {
+  font-size: 8.5px;
+  color: #475569;
+  line-height: 1.5;
+  border-top: 1px solid #dbe5ef;
+  padding-top: 7px;
+  font-style: italic;
+}
 `;
 
     const html = `
@@ -693,6 +757,29 @@ function buildPDFParts(uploadedPhotos) {
     <div class="r-date-lbl">Généré le</div>
     <div class="r-date">${today}</div>
   </div>
+</div>
+
+<div class="r-exec-summary">
+  <div class="r-exec-title">Ce bien en 30 secondes</div>
+  <div class="r-exec-grid">
+    <div class="r-exec-item">
+      <div class="r-exec-lbl">Verdict</div>
+      <div class="r-exec-val" style="color:${scoreColor}">${scoreLabel}</div>
+    </div>
+    <div class="r-exec-item">
+      <div class="r-exec-lbl">Cash-Flow / mois</div>
+      <div class="r-exec-val ${cfIsNeg ? 'neg' : 'pos'}">${cfNetnet}</div>
+    </div>
+    <div class="r-exec-item">
+      <div class="r-exec-lbl">Renta nette-nette</div>
+      <div class="r-exec-val">${rentaNetnet}</div>
+    </div>
+    <div class="r-exec-item">
+      <div class="r-exec-lbl">Régime optimal</div>
+      <div class="r-exec-val">${bestRegimeLabel}</div>
+    </div>
+  </div>
+  ${verdictWhy ? `<div class="r-exec-why">${verdictWhy}</div>` : ''}
 </div>
 
 <div class="r-score">
@@ -804,6 +891,31 @@ ${activePhotos.length ? `
   <h3>📷 Galerie Photos</h3>
   <div class="r-photo-grid">${photosHTML}</div>
 </div>` : ''}
+
+<div class="r-page-break"></div>
+<div class="r-card" style="page-break-inside:auto;">
+  <h3>Méthodologie — Définitions des indicateurs</h3>
+  <div class="r-card-sub">Formules utilisées par ce simulateur. Résultats à titre indicatif, ne remplacent pas un conseil professionnel.</div>
+  <table class="r-proj-table" style="font-size:8.5px;">
+    <thead><tr><th style="width:22%">Indicateur</th><th style="width:42%">Formule simplifiée</th><th>Repères / Interprétation</th></tr></thead>
+    <tbody>
+      <tr><td>Renta Brute</td><td>Loyers annuels théoriques ÷ Coût total × 100</td><td>&gt; 7 % bon, &gt; 10 % très bon</td></tr>
+      <tr><td>Renta Nette</td><td>(Loyers encaissés − Charges exploitation) ÷ Coût total × 100</td><td>&gt; 5 % correct, &gt; 7 % bon</td></tr>
+      <tr><td>Renta Nette-Nette</td><td>(Loyers − Charges − Impôts Année 1) ÷ Coût total × 100</td><td>&gt; 4 % correct, &gt; 6 % bon</td></tr>
+      <tr><td>Cash-Flow Net-Net</td><td>Loyers/12 − Mensualité totale − Charges/12 − Impôts/12</td><td>&gt; 0 = s'autofinance partiellement</td></tr>
+      <tr><td>Cash-on-Cash</td><td>CF Net-Net annuel ÷ Apport × 100</td><td>Mesure l'effet de levier sur l'apport</td></tr>
+      <tr><td>GRM</td><td>Coût total ÷ Loyers annuels théoriques</td><td>&lt; 14 bon, &lt; 20 correct, &gt; 20 cher</td></tr>
+      <tr><td>DSCR</td><td>(Loyers encaissés − Charges) ÷ Mensualités annuelles</td><td>&gt; 1,0 couvert, &gt; 1,25 confortable banque</td></tr>
+      <tr><td>Seuil rentabilité</td><td>Première année où CF cumulé &gt; 0</td><td>Plus tôt = plus sécurisé</td></tr>
+      <tr><td>Équité An 1</td><td>Apport + Capital remboursé en Année 1</td><td>Patrimoine net réel dès la 1ère année</td></tr>
+    </tbody>
+  </table>
+  <div style="margin-top:12px;font-size:8px;color:#64748b;line-height:1.5;">
+    <strong>Régimes fiscaux :</strong> Micro-Foncier = Loyers × 70 % × (TMI + 17,2 %) · Foncier Réel = (Loyers − Charges − Intérêts) × (TMI + 17,2 %), déficit déductible jusqu'à 10 700 €/an · SCI-IS = Bénéfice comptable (après amortissement bâti 80 %/30 ans) taxé à 15 % jusqu'à 42 500 €, puis 25 %.
+    <br><strong>Plus-value :</strong> Exonération IR à 22 ans de détention, PS à 30 ans (Micro/Réel). SCI-IS : IS sur plus-value comptable (reprise d'amortissements).
+  </div>
+  <p style="font-size:7.5px;color:#94a3b8;margin-top:10px;border-top:1px solid #e2e8f0;padding-top:8px;">Simulation indicative — outil d'aide à la décision uniquement. Ne remplace pas un conseil fiscal, juridique ou financier personnalisé.</p>
+</div>
 `;
 
     const projectSlug = (document.getElementById('project-name').value.trim() || 'InvestPro').replace(/\s+/g, '-');
