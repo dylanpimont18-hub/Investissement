@@ -19,73 +19,130 @@
 <body>
 
 <div class="header">
-    <h1>📊 Investisseur Pro</h1>
-    <button class="btn-theme-toggle" id="btn-theme-toggle" title="Basculer thème clair/sombre">☀️</button>
+    <div class="header-brand">
+        <h1>Investisseur Pro</h1>
+        <span class="header-tagline">Outil d'analyse immobilière</span>
+    </div>
+    <div class="header-actions">
+        <button class="btn-accueil" id="btn-accueil" title="Accueil" style="display:none;">⌂</button>
+        <button class="btn-theme-toggle" id="btn-theme-toggle" title="Basculer thème clair/sombre">☀️</button>
+        <button class="account-btn" id="btn-account" onclick="window.openAccountModal()" title="Mon espace Pro+">
+            <span class="account-btn-label" id="account-btn-label">Pro+</span>
+        </button>
+    </div>
 </div>
 
 <nav class="tabs-nav">
-    <button class="tab-btn active" data-target="view-inputs">📝 1. Saisie</button>
-    <button class="tab-btn" data-target="view-results">🚀 2. Analyse</button>
-    <button class="tab-btn" data-target="view-vierzon">📍 3. Vierzon</button>
+    <button class="tab-btn active" data-target="view-inputs">Saisie</button>
+    <button class="tab-btn" data-target="view-results">Analyse</button>
+    <button class="tab-btn" data-target="view-vierzon">Faisabilité</button>
 </nav>
 
 <div class="container">
-    
+
+<div id="view-accueil" class="view-accueil">
+    <div class="accueil-hero">
+        <div class="accueil-logo-mark">IP</div>
+        <h2 class="accueil-title">Analysez un bien immobilier en 2 minutes.</h2>
+        <p class="accueil-subtitle">Décidez en confiance.</p>
+    </div>
+    <div class="accueil-ctas">
+        <button type="button" id="btn-start-rapide" class="accueil-cta accueil-cta-primary">
+            <span class="accueil-cta-title">Estimation rapide</span>
+            <span class="accueil-cta-desc">Les essentiels · résultat en 1 minute</span>
+        </button>
+        <button type="button" id="btn-start-complet" class="accueil-cta accueil-cta-secondary">
+            <span class="accueil-cta-title">Analyse complète</span>
+            <span class="accueil-cta-desc">Tous les paramètres · analyse experte</span>
+        </button>
+        <button type="button" id="btn-reprendre" class="accueil-cta accueil-cta-ghost" style="display:none;">
+            <span class="accueil-cta-title">Reprendre ma saisie</span>
+            <span class="accueil-cta-desc">Continuer là où vous vous êtes arrêté</span>
+        </button>
+    </div>
+    <p class="accueil-disclaimer">Simulation indicative · outil d'aide à la décision</p>
+</div>
+
     <div id="view-inputs" class="view-section active">
         <form id="calc-form">
-            <div class="mode-toggle-container">
-    <span class="toggle-label active" id="label-simple">Simplifié</span>
-    <label class="toggle-switch" aria-label="Basculer mode saisie">
-        <input type="checkbox" id="mode-toggle">
-        <span class="toggle-track"></span>
-    </label>
-    <span class="toggle-label" id="label-expert">Expert</span>
-</div>
+            <!-- Sélecteur de mode d'entrée -->
+            <div class="entry-mode-selector">
+                <button type="button" id="btn-mode-rapide" class="mode-pill mode-pill-active">
+                    <span class="mode-pill-title">Estimation rapide</span>
+                    <span class="mode-pill-desc">4 champs · résultat immédiat</span>
+                </button>
+                <button type="button" id="btn-mode-expert" class="mode-pill">
+                    <span class="mode-pill-title">Analyse complète</span>
+                    <span class="mode-pill-desc">Tous les paramètres</span>
+                </button>
+            </div>
+            <!-- Champs cachés pour la compatibilité JS existante -->
+            <input type="checkbox" id="mode-toggle" style="display:none">
+            <span id="label-simple" style="display:none"></span>
+            <span id="label-expert" style="display:none"></span>
+
 <div id="simplified-inputs">
-    <div class="card" style="margin-bottom:15px;">
+    <div class="card quick-estimate-card">
+        <div class="quick-estimate-header">
+            <span class="quick-estimate-badge">Estimation rapide</span>
+            <span class="quick-estimate-hint">Modifiable à tout moment</span>
+        </div>
         <div class="simple-fields-grid">
             <div class="simple-field">
-                <div class="simple-label">🏠 Prix du bien</div>
+                <div class="simple-label">Prix du bien</div>
                 <div class="simple-input-wrap">
                     <input type="number" id="simple-prix" inputmode="numeric" class="simple-input" data-real-id="prix" value="107000">
                     <span class="simple-unit">€</span>
                 </div>
             </div>
             <div class="simple-field">
-                <div class="simple-label">💰 Loyer mensuel</div>
+                <div class="simple-label">Loyer mensuel</div>
                 <div class="simple-input-wrap">
                     <input type="number" id="simple-loyer" inputmode="numeric" class="simple-input" data-real-id="loyer" value="700">
                     <span class="simple-unit">€/mois</span>
                 </div>
             </div>
             <div class="simple-field">
-                <div class="simple-label">💵 Apport</div>
+                <div class="simple-label">Apport</div>
                 <div class="simple-input-wrap">
                     <input type="number" id="simple-apport" inputmode="numeric" class="simple-input" data-real-id="apport" value="0">
                     <span class="simple-unit">€</span>
                 </div>
             </div>
             <div class="simple-field">
-                <div class="simple-label">📅 Durée</div>
+                <div class="simple-label">Durée</div>
                 <div class="simple-input-wrap">
                     <input type="number" id="simple-duree" inputmode="numeric" class="simple-input" data-real-id="duree" value="20">
                     <span class="simple-unit">ans</span>
                 </div>
             </div>
         </div>
+        <button type="button" id="btn-simulate-quick" class="btn-simulate-quick">Analyser ce bien →</button>
     </div>
 </div>
             <div id="form-warnings"></div>
-            <div class="card" style="margin-bottom: 20px; border: 2px solid var(--primary-color);">
-                <h3>📁 Gestion des Projets</h3>
-                <p class="photo-help" style="margin-bottom: 10px; text-align: left;">Sauvegardez vos visites pour les comparer plus tard.</p>
-                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                    <input type="text" id="project-name" placeholder="Nom du projet (ex: T2 Centre)" style="flex: 1; text-align: left;">
-                    <button type="button" id="btn-save-project" class="btn-primary" style="padding: 10px; white-space: nowrap;">💾 Sauvegarder</button>
+
+            <details class="projects-details" id="projects-section">
+                <summary class="projects-summary">📁 Mes projets sauvegardés <span class="projects-count-badge" id="projects-count-badge"></span></summary>
+                <div class="projects-body">
+                    <p class="photo-help" style="margin-bottom: 10px; text-align: left;">Sauvegardez vos visites pour les comparer plus tard.</p>
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <input type="text" id="project-name" placeholder="Nom du projet (ex: T2 Centre)" style="flex: 1; text-align: left;">
+                        <button type="button" id="btn-save-project" class="btn-primary" style="padding: 10px; white-space: nowrap;">Sauvegarder</button>
+                    </div>
+                    <ul id="projects-list" class="projects-list"></ul>
+                    <div class="projects-limit-bar" id="projects-limit-bar" style="display:none;">
+                        <span>Sauvegardés : <span class="limit-count" id="projects-limit-count">0 / 3</span></span>
+                        <button type="button" class="limit-upgrade" onclick="window.openAccountModal()">Illimité avec Pro+ →</button>
+                    </div>
+                    <button type="button" id="btn-compare-projects" class="btn-secondary" style="width: 100%; margin-top: 10px; display: none;">Comparer les projets</button>
+                    <div class="cloud-sync-strip">
+                        <span class="cloud-sync-icon">☁</span>
+                        <span class="cloud-sync-text">Sync multi-appareils — <em>Prochainement dans Pro+</em></span>
+                        <button type="button" class="cloud-sync-cta" onclick="window.openAccountModal()">En savoir plus</button>
+                    </div>
                 </div>
-                <ul id="projects-list" class="projects-list"></ul>
-                <button type="button" id="btn-compare-projects" class="btn-secondary" style="width: 100%; margin-top: 10px; display: none;">📊 Comparer 2 projets</button>
-            </div>
+            </details>
 
             <div class="form-progress">
                 <div class="form-progress-bar-track"><div class="form-progress-bar-fill" id="form-progress-fill"></div></div>
@@ -93,7 +150,7 @@
             </div>
 
             <div class="grid-2-cols">
-                <details class="accordion" open>
+                <details class="accordion">
                     <summary>🛒 Acquisition</summary>
                     <div class="accordion-content">
                         <label><span>Prix affiché (€) <span class="help-tip" data-tip="Le prix de vente annoncé par le vendeur ou l'agence, avant toute négociation de votre part.">?</span></span> <input type="number" inputmode="numeric" id="prix" value="107000"></label>
@@ -189,14 +246,14 @@
                     </div>
                 </details>
             </div>
-            <button type="button" id="btn-simulate" class="btn-simulate">🚀 Lancer la Simulation</button>
+            <button type="button" id="btn-simulate" class="btn-simulate">Analyser ce bien</button>
         </form>
     </div>
 
     <div id="view-results" class="view-section">
         <div id="export-area">
 
-            <!-- Score visuel -->
+            <!-- BLOC 1 : Verdict global -->
             <div id="score-banner" class="score-banner">
                 <div class="score-left">
                     <span id="score-emoji"></span>
@@ -206,6 +263,26 @@
                 <div id="score-detail" class="score-detail">Lancez un calcul pour voir le score</div>
             </div>
 
+            <!-- Synthèse verdict -->
+            <div id="verdict-why" class="verdict-why"></div>
+
+            <!-- Actions principales -->
+            <div class="verdict-actions">
+                <button type="button" class="verdict-action-btn verdict-action-pdf" onclick="document.getElementById('btn-preview-pdf').click()">
+                    <span class="vab-label">Voir le rapport</span>
+                    <span class="vab-sub">Aperçu complet avant export</span>
+                </button>
+                <button type="button" class="verdict-action-btn verdict-action-print" onclick="document.getElementById('btn-save-pdf').click()">
+                    <span class="vab-label">Exporter PDF</span>
+                    <span class="vab-sub">Imprimer ou enregistrer</span>
+                </button>
+                <button type="button" class="verdict-action-btn verdict-action-compare" onclick="window.openComparatorModal()">
+                    <span class="vab-label">Comparer</span>
+                    <span class="vab-sub">Choisir le meilleur bien</span>
+                </button>
+            </div>
+
+            <!-- BLOC 2 : KPI essentiels -->
             <div class="metrics-grid">
                 <div class="card">
                     <h3>Rentabilité Brute <span class="help-tip" data-tip="Loyers annuels ÷ Coût total × 100. Un premier aperçu rapide, mais qui ne tient pas compte des charges ni des impôts.">?</span></h3>
@@ -227,173 +304,361 @@
                 </div>
             </div>
 
-            <div class="metrics-grid metrics-grid-secondary" style="margin-top: 15px;">
-                <div class="card">
-                    <h3>Cash-on-Cash <span class="help-tip" data-tip="Rendement annuel sur votre apport personnel. Ex : 1 200 € de gain/an avec 10 000 € d'apport = 12%. Mesure l'effet de levier de votre investissement.">?</span></h3>
-                    <div class="value" id="metric-coc">-- %</div>
-                    <p class="subtitle">Rendement sur apport</p>
-                </div>
-                <div class="card">
-                    <h3>Multiplicateur (GRM) <span class="help-tip" data-tip="Nombre d'années de loyers bruts pour « rembourser » le coût total du bien. Plus c'est bas, mieux c'est. Bon < 14, Correct < 20, Cher > 20.">?</span></h3>
-                    <div class="value" id="metric-grm">--</div>
-                    <p class="subtitle">Coût Total / Loyers</p>
-                </div>
-                <div class="card">
-                    <h3>DSCR <span class="help-tip" data-tip="Ratio de couverture de dette : Loyers annuels ÷ Remboursements annuels du crédit. > 1 = les loyers couvrent le crédit. > 1.3 = confortable pour la banque.">?</span></h3>
-                    <div class="value" id="metric-dscr">--</div>
-                    <p class="subtitle">Couverture de dette</p>
-                </div>
-                <div class="card">
-                    <h3>Seuil de Rentabilité <span class="help-tip" data-tip="L'année à partir de laquelle le total de vos cash-flows cumulés devient positif. Avant ce seuil, l'investissement vous a coûté plus qu'il n'a rapporté.">?</span></h3>
-                    <div class="value" id="metric-breakeven">--</div>
-                    <p class="subtitle">CF cumulé positif</p>
-                </div>
-                <div class="card">
-                    <h3>Équité An 1 <span class="help-tip" data-tip="Votre patrimoine net après la 1ère année : apport + capital remboursé. C'est la partie du bien que vous possédez réellement, sans dette.">?</span></h3>
-                    <div class="value" id="metric-equity">-- €</div>
-                    <p class="subtitle">Patrimoine net</p>
-                </div>
+            <!-- Lien discret vers la méthodologie -->
+            <div class="methodo-access-link">
+                <a href="#section-methodologie" onclick="var s=document.getElementById('section-methodologie');s.open=true;s.scrollIntoView({behavior:'smooth',block:'start'});return false;">Comprendre les calculs →</a>
             </div>
 
-            <div class="details-section">
-                <div class="summary">
-                    <h3>Résumé de l'Enveloppe</h3>
-                    <ul>
-                        <li><span>Prix net vendeur estimé <span class="help-tip" data-tip="Le prix réellement versé au vendeur : prix affiché − négociation obtenue.">?</span></span> <strong><span id="out-prix-net">--</span> €</strong></li>
-                        <li><span>Frais fixes (Notaire, Travaux...) <span class="help-tip" data-tip="La somme de tous les frais annexes à l'achat : notaire + travaux + mobilier + frais bancaires + agence.">?</span></span> <strong><span id="out-frais-fixes">--</span> €</strong></li>
-                        <li><span>Coût total de l'opération <span class="help-tip" data-tip="Le coût complet de l'opération : prix net vendeur + tous les frais. C'est cette somme qu'il faut financer.">?</span></span> <strong style="color: var(--primary-color);"><span id="out-cout-total">--</span> €</strong></li>
-                        <li><span>Montant de l'emprunt <span class="help-tip" data-tip="La somme empruntée à la banque = Coût total − Apport personnel.">?</span></span> <strong><span id="out-financement">--</span> €</strong></li>
-                        <li><span>Mensualité de crédit <span class="help-tip" data-tip="Ce que vous remboursez chaque mois à la banque : une part de capital + intérêts + assurance emprunteur.">?</span></span> <strong><span id="out-mensualite">--</span> €</strong></li>
-                    </ul>
-                </div>
-                <div class="chart-container">
-                    <canvas id="cashflowChart"></canvas>
-                </div>
+            <!-- Disclaimer indicatif -->
+            <p class="results-disclaimer">Simulation indicative — outil d'aide à la décision. Les résultats ne remplacent pas un conseil fiscal, juridique ou financier personnalisé.</p>
+
+            <!-- BLOC 4 : Leviers d'optimisation -->
+            <div class="card" id="optimization-card" style="margin-top: 20px; text-align: left;">
+                <h3 style="margin-bottom: 8px;">Leviers d'Optimisation</h3>
+                <p class="subtitle" style="margin-bottom: 14px;">Recommandations personnalisées pour améliorer votre investissement.</p>
+                <div id="optimization-tips-container"></div>
             </div>
 
-            <!-- Comparaison des régimes fiscaux -->
+            <!-- BLOC 5 : Fiscalité comparée -->
             <div class="card" style="margin-top: 20px; text-align: left;">
                 <div style="display:flex; align-items:center; gap:8px; margin-bottom:15px;">
-                    <h3>⚖️ Comparaison des Régimes Fiscaux</h3>
+                    <h3>Comparaison des Régimes Fiscaux</h3>
                     <button type="button" class="btn-info-regime" onclick="openRegimeModal()" title="Détails des régimes fiscaux">i</button>
                 </div>
                 <p class="subtitle" style="margin-bottom: 15px;">CF net-net mensuel estimé pour chaque régime avec vos paramètres actuels.</p>
                 <div id="regime-compare-grid" class="regime-compare-grid"></div>
                 <div id="fiscal-breakdown"></div>
                 <div id="micro-foncier-alert" class="regime-alert-warning" style="display:none; margin-top:12px;">
-                    ⚠️ <strong>Attention :</strong> vos loyers encaissés dépassent 15 000 €/an — le régime <strong>Micro-Foncier</strong> n'est plus accessible légalement. Passez au Foncier Réel.
+                    <strong>Attention :</strong> vos loyers encaissés dépassent 15 000 €/an — le régime <strong>Micro-Foncier</strong> n'est plus accessible légalement. Passez au Foncier Réel.
                 </div>
             </div>
 
-            <!-- Conseils d'Optimisation -->
-            <div class="card" id="optimization-card" style="margin-top: 20px; text-align: left;">
-                <h3 style="margin-bottom: 8px;">💡 Conseils d'Optimisation</h3>
-                <p class="subtitle" style="margin-bottom: 14px;">Recommandations personnalisées pour améliorer votre investissement.</p>
-                <div id="optimization-tips-container"></div>
-            </div>
-
-            <!-- Simulation de négociation -->
-            <div class="card" style="margin-top: 20px; text-align: left;">
-                <h3 style="margin-bottom: 8px;">📉 Impact de la Négociation sur le CF</h3>
-                <p class="subtitle" style="margin-bottom: 14px;">CF net-net mensuel selon le niveau de négociation sur le prix affiché.</p>
-                <div class="table-toggle">
-                    <button type="button" class="table-toggle-btn active" id="toggle-pct">Par % (0 → 25 %)</button>
-                    <button type="button" class="table-toggle-btn" id="toggle-amount">Par Régime Fiscal</button>
+            <!-- BLOC 6 : Détails de l'opération (repliable) -->
+            <details class="section-collapsible" id="section-details-op">
+                <summary class="section-collapsible-summary">Détails de l'opération &amp; métriques avancées</summary>
+                <div class="section-collapsible-body">
+                    <div class="metrics-grid metrics-grid-secondary" style="margin-top: 15px;">
+                        <div class="card">
+                            <h3>Cash-on-Cash <span class="help-tip" data-tip="Rendement annuel sur votre apport personnel. Ex : 1 200 € de gain/an avec 10 000 € d'apport = 12%. Mesure l'effet de levier de votre investissement.">?</span></h3>
+                            <div class="value" id="metric-coc">-- %</div>
+                            <p class="subtitle">Rendement sur apport</p>
+                        </div>
+                        <div class="card">
+                            <h3>Multiplicateur (GRM) <span class="help-tip" data-tip="Nombre d'années de loyers bruts pour « rembourser » le coût total du bien. Plus c'est bas, mieux c'est. Bon < 14, Correct < 20, Cher > 20.">?</span></h3>
+                            <div class="value" id="metric-grm">--</div>
+                            <p class="subtitle">Coût Total / Loyers</p>
+                        </div>
+                        <div class="card">
+                            <h3>DSCR <span class="help-tip" data-tip="Ratio de couverture de dette : Loyers annuels ÷ Remboursements annuels du crédit. > 1 = les loyers couvrent le crédit. > 1.3 = confortable pour la banque.">?</span></h3>
+                            <div class="value" id="metric-dscr">--</div>
+                            <p class="subtitle">Couverture de dette</p>
+                        </div>
+                        <div class="card">
+                            <h3>Seuil de Rentabilité <span class="help-tip" data-tip="L'année à partir de laquelle le total de vos cash-flows cumulés devient positif. Avant ce seuil, l'investissement vous a coûté plus qu'il n'a rapporté.">?</span></h3>
+                            <div class="value" id="metric-breakeven">--</div>
+                            <p class="subtitle">CF cumulé positif</p>
+                        </div>
+                        <div class="card">
+                            <h3>Équité An 1 <span class="help-tip" data-tip="Votre patrimoine net après la 1ère année : apport + capital remboursé. C'est la partie du bien que vous possédez réellement, sans dette.">?</span></h3>
+                            <div class="value" id="metric-equity">-- €</div>
+                            <p class="subtitle">Patrimoine net</p>
+                        </div>
+                    </div>
+                    <div class="details-section">
+                        <div class="summary">
+                            <h3>Résumé de l'Enveloppe</h3>
+                            <ul>
+                                <li><span>Prix net vendeur estimé <span class="help-tip" data-tip="Le prix réellement versé au vendeur : prix affiché − négociation obtenue.">?</span></span> <strong><span id="out-prix-net">--</span> €</strong></li>
+                                <li><span>Frais fixes (Notaire, Travaux...) <span class="help-tip" data-tip="La somme de tous les frais annexes à l'achat : notaire + travaux + mobilier + frais bancaires + agence.">?</span></span> <strong><span id="out-frais-fixes">--</span> €</strong></li>
+                                <li><span>Coût total de l'opération <span class="help-tip" data-tip="Le coût complet de l'opération : prix net vendeur + tous les frais. C'est cette somme qu'il faut financer.">?</span></span> <strong style="color: var(--primary-color);"><span id="out-cout-total">--</span> €</strong></li>
+                                <li><span>Montant de l'emprunt <span class="help-tip" data-tip="La somme empruntée à la banque = Coût total − Apport personnel.">?</span></span> <strong><span id="out-financement">--</span> €</strong></li>
+                                <li><span>Mensualité de crédit <span class="help-tip" data-tip="Ce que vous remboursez chaque mois à la banque : une part de capital + intérêts + assurance emprunteur.">?</span></span> <strong><span id="out-mensualite">--</span> €</strong></li>
+                            </ul>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="cashflowChart"></canvas>
+                        </div>
+                    </div>
                 </div>
-                <div id="nego-table-container" style="overflow-x: auto; max-height: 440px; overflow-y: auto;"></div>
-            </div>
+            </details>
 
-            <!-- Analyse de sensibilité -->
-            <div class="card" style="margin-top: 20px; text-align: left;">
-                <h3 style="margin-bottom: 8px;">🎯 Analyse de Sensibilité</h3>
-                <p class="subtitle" style="margin-bottom: 14px;">Impact de différents scénarios sur votre cash-flow net-net mensuel.</p>
-                <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
-                    <table class="projection-table" id="sensitivity-table">
-                        <thead>
-                            <tr><th>Scénario</th><th>CF Net-Net / mois</th><th>Variation</th></tr>
-                        </thead>
-                        <tbody id="sensitivity-tbody"></tbody>
-                    </table>
+            <!-- BLOC 7 : Scénarios & Sensibilité (repliable) -->
+            <details class="section-collapsible" id="section-details-analyse">
+                <summary class="section-collapsible-summary">Scénarios &amp; Sensibilité</summary>
+                <div class="section-collapsible-body">
+                    <div style="margin-top: 16px; text-align: left;">
+                        <h3 style="margin-bottom: 8px; font-size: 0.95rem;">Impact de la Négociation sur le CF</h3>
+                        <p class="subtitle" style="margin-bottom: 14px;">CF net-net mensuel selon le niveau de négociation sur le prix affiché.</p>
+                        <div class="table-toggle">
+                            <button type="button" class="table-toggle-btn active" id="toggle-pct">Par % (0 → 25 %)</button>
+                            <button type="button" class="table-toggle-btn" id="toggle-amount">Par Régime Fiscal</button>
+                        </div>
+                        <div id="nego-table-container" style="overflow-x: auto; max-height: 340px; overflow-y: auto;"></div>
+                    </div>
+                    <div style="margin-top: 20px; text-align: left;">
+                        <h3 style="margin-bottom: 8px; font-size: 0.95rem;">Analyse de Sensibilité</h3>
+                        <p class="subtitle" style="margin-bottom: 14px;">Impact de différents scénarios sur votre cash-flow net-net mensuel.</p>
+                        <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                            <table class="projection-table" id="sensitivity-table">
+                                <thead>
+                                    <tr><th>Scénario</th><th>CF Net-Net / mois</th><th>Variation</th></tr>
+                                </thead>
+                                <tbody id="sensitivity-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            </details>
 
-            <div class="card" style="margin-top: 20px; text-align: left;">
-                <h3 style="margin-bottom: 15px;">📈 Évolution sur 25 ans</h3>
-                <div class="evolution-chart-container">
-                    <canvas id="evolutionChart"></canvas>
+            <!-- BLOC 7 : Projections sur 25 ans (repliable) -->
+            <details class="section-collapsible" id="section-details-projections">
+                <summary class="section-collapsible-summary">Projections sur 25 ans &amp; Scénario de Sortie</summary>
+                <div class="section-collapsible-body">
+                    <div style="margin-top: 16px; text-align: left;">
+                        <h3 style="margin-bottom: 15px; font-size: 0.95rem;">Évolution sur 25 ans</h3>
+                        <div class="evolution-chart-container">
+                            <canvas id="evolutionChart"></canvas>
+                        </div>
+                    </div>
+                    <div style="margin-top: 20px; text-align: left;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+                            <h3 style="margin:0; font-size: 0.95rem;">Projection Financière (25 ans)</h3>
+                            <button type="button" id="btn-export-csv" class="btn-small btn-load" title="Exporter en CSV">CSV</button>
+                        </div>
+                        <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                        <table class="projection-table">
+                            <thead>
+                                <tr>
+                                    <th>Année</th>
+                                    <th>Capital Amorti <span class="help-tip" data-tip="La part du prêt remboursée cette année. Cet argent devient votre patrimoine : vous possédez cette part du bien.">?</span></th>
+                                    <th>Capital Restant <span class="help-tip" data-tip="Ce que vous devez encore à la banque à la fin de l'année.">?</span></th>
+                                    <th>Intérêts <span class="help-tip" data-tip="La part d'intérêts payée à la banque cette année. Diminue chaque année car le capital restant baisse.">?</span></th>
+                                    <th>Impôts <span class="help-tip" data-tip="Impôt dû sur vos revenus locatifs (IR + CSG/CRDS). Si négatif = économie d'impôt grâce au déficit foncier.">?</span></th>
+                                    <th>Cash-Flow Net <span class="help-tip" data-tip="Bilan annuel : loyers encaissés − mensualités − charges − impôts. Le gain (ou la perte) réel de l'année.">?</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="projection-tbody"></tbody>
+                        </table>
+                        </div>
+                    </div>
+                    <div class="card" id="post-credit-section" style="display:none; margin-top: 20px; text-align: left;">
+                        <h3 style="margin-bottom: 8px; font-size: 0.95rem;">Après le Crédit</h3>
+                        <p class="subtitle" style="margin-bottom: 14px;">Estimation de votre situation une fois le crédit entièrement remboursé.</p>
+                        <div id="post-credit-content"></div>
+                    </div>
+                    <div class="card" id="revente-results-section" style="display: none; margin-top: 20px; text-align: left;">
+                        <h3 style="margin-bottom: 15px; font-size: 0.95rem;">Quand Revendre ?</h3>
+                        <p class="subtitle" style="margin-bottom: 12px;">Simulation de sortie annuelle selon votre prix estimé, les frais de revente et la fiscalité de plus-value (abattements automatiques en Micro/Reel).</p>
+                        <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                            <table class="resale-table">
+                                <thead>
+                                    <tr>
+                                        <th>Année</th>
+                                        <th>Prix de vente</th>
+                                        <th>Frais de revente</th>
+                                        <th>Impôt PV</th>
+                                        <th>Net vendeur</th>
+                                        <th>CRD</th>
+                                        <th>Cash net sortie</th>
+                                        <th>Gain global</th>
+                                        <th>Verdict</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="revente-tbody"></tbody>
+                            </table>
+                        </div>
+                        <div id="revente-summary" class="subtitle" style="margin-top: 10px;"></div>
+                    </div>
                 </div>
-            </div>
-
-            <div class="card" style="margin-top: 20px; text-align: left;">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
-                    <h3 style="margin:0;">📊 Projection Financière (25 ans)</h3>
-                    <button type="button" id="btn-export-csv" class="btn-small btn-load" title="Exporter en CSV">📥 CSV</button>
-                </div>
-                <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
-                <table class="projection-table">
-                    <thead>
-                        <tr>
-                            <th>Année</th>
-                            <th>Capital Amorti <span class="help-tip" data-tip="La part du prêt remboursée cette année. Cet argent devient votre patrimoine : vous possédez cette part du bien.">?</span></th>
-                            <th>Capital Restant <span class="help-tip" data-tip="Ce que vous devez encore à la banque à la fin de l'année.">?</span></th>
-                            <th>Intérêts <span class="help-tip" data-tip="La part d'intérêts payée à la banque cette année. Diminue chaque année car le capital restant baisse.">?</span></th>
-                            <th>Impôts <span class="help-tip" data-tip="Impôt dû sur vos revenus locatifs (IR + CSG/CRDS). Si négatif = économie d'impôt grâce au déficit foncier.">?</span></th>
-                            <th>Cash-Flow Net <span class="help-tip" data-tip="Bilan annuel : loyers encaissés − mensualités − charges − impôts. Le gain (ou la perte) réel de l'année.">?</span></th>
-                        </tr>
-                    </thead>
-                    <tbody id="projection-tbody">
-                        </tbody>
-                </table>
-                </div>
-            </div>
-
-            <!-- Section après le crédit -->
-            <div class="card" id="post-credit-section" style="display:none; margin-top: 20px; text-align: left;">
-                <h3 style="margin-bottom: 8px;">🏁 Après le Crédit</h3>
-                <p class="subtitle" style="margin-bottom: 14px;">Estimation de votre situation une fois le crédit entièrement remboursé.</p>
-                <div id="post-credit-content"></div>
-            </div>
-
-            <div class="card" id="revente-results-section" style="display: none; margin-top: 20px; text-align: left;">
-                <h3 style="margin-bottom: 15px;">💰 Quand Revendre ?</h3>
-                <p class="subtitle" style="margin-bottom: 12px;">Simulation de sortie annuelle selon votre prix estimé, les frais de revente et la fiscalité de plus-value (abattements automatiques en Micro/Reel).</p>
-                <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
-                    <table class="resale-table">
-                        <thead>
-                            <tr>
-                                <th>Année</th>
-                                <th>Prix de vente</th>
-                                <th>Frais de revente</th>
-                                <th>Impôt PV</th>
-                                <th>Net vendeur</th>
-                                <th>CRD</th>
-                                <th>Cash net sortie</th>
-                                <th>Gain global</th>
-                                <th>Verdict</th>
-                            </tr>
-                        </thead>
-                        <tbody id="revente-tbody"></tbody>
-                    </table>
-                </div>
-                <div id="revente-summary" class="subtitle" style="margin-top: 10px;"></div>
-            </div>
+            </details>
 
             <div class="card" id="comments-export-section" style="display: none; margin-top: 20px; text-align: left;">
-                <h3 style="margin-bottom: 10px;">📝 Notes & Commentaires</h3>
+                <h3 style="margin-bottom: 10px;">Notes &amp; Commentaires</h3>
                 <p id="commentaires-display" style="white-space: pre-wrap; font-size: 0.95rem;"></p>
             </div>
 
             <div class="card" id="photos-export-section" style="display: none; margin-top: 20px; text-align: left;">
-                <h3 style="margin-bottom: 10px;">📷 Galerie Photos</h3>
+                <h3 style="margin-bottom: 10px;">Galerie Photos</h3>
                 <div class="photo-grid" id="photo-gallery"></div>
             </div>
+
+            <!-- BLOC MÉTHODOLOGIE : Comprendre les calculs -->
+            <details class="section-collapsible" id="section-methodologie">
+                <summary class="section-collapsible-summary">Comprendre les calculs &mdash; Méthodologie</summary>
+                <div class="section-collapsible-body methodo-body">
+                    <p class="methodo-intro">Ces formules sont celles utilisées par le simulateur. Les résultats sont des estimations à titre indicatif&nbsp;: ils ne remplacent pas un conseil fiscal, juridique ou financier personnalisé.</p>
+
+                    <div class="methodo-section-title">Indicateurs de rendement</div>
+                    <div class="methodo-grid">
+                        <div class="methodo-card">
+                            <div class="methodo-card-title">Coût total de l'opération</div>
+                            <div class="methodo-card-formula">Prix net + Frais notaire + Agence + Travaux + Mobilier + Frais bancaires</div>
+                            <div class="methodo-card-body">
+                                <p>Prix net = Prix affiché − Négociation. Frais de notaire = Prix net × taux notaire (≈ 8% dans l'ancien, 2,5% dans le neuf).</p>
+                                <p class="methodo-limit">Limite : le taux notaire réel varie selon la commune. La valeur saisie est estimative.</p>
+                            </div>
+                        </div>
+                        <div class="methodo-card">
+                            <div class="methodo-card-title">Rentabilité Brute</div>
+                            <div class="methodo-card-formula">(Loyer mensuel × 12) ÷ Coût total × 100</div>
+                            <div class="methodo-card-body">
+                                <p>Utilise les loyers théoriques (sans vacance) divisés par le coût total d'acquisition. Indicateur rapide de premier niveau.</p>
+                                <p class="methodo-interp">Repères : &gt; 7&nbsp;% bon, &gt; 10&nbsp;% très bon en province.</p>
+                                <p class="methodo-limit">Limite : ignore les charges et les impôts. Ne pas comparer deux biens sur ce seul chiffre.</p>
+                            </div>
+                        </div>
+                        <div class="methodo-card">
+                            <div class="methodo-card-title">Rentabilité Nette</div>
+                            <div class="methodo-card-formula">(Loyers encaissés − Charges) ÷ Coût total × 100</div>
+                            <div class="methodo-card-body">
+                                <p>Loyers encaissés = Loyer × 12 × (1 − Vacance %). Charges = Copropriété × 12 + Taxe foncière + Assurance PNO + Frais de gestion.</p>
+                                <p class="methodo-interp">Repères : &gt; 5&nbsp;% correct, &gt; 7&nbsp;% bon.</p>
+                                <p class="methodo-limit">Limite : l'impôt n'est pas encore déduit. Sensible au taux de vacance estimé.</p>
+                            </div>
+                        </div>
+                        <div class="methodo-card">
+                            <div class="methodo-card-title">Rentabilité Nette-Nette</div>
+                            <div class="methodo-card-formula">(Loyers encaissés − Charges − Impôts) ÷ Coût total × 100</div>
+                            <div class="methodo-card-body">
+                                <p>L'indicateur le plus complet. Les impôts sont calculés selon le régime fiscal choisi et votre TMI, sur la base de la première année de détention.</p>
+                                <p class="methodo-interp">Repères : &gt; 4&nbsp;% correct, &gt; 6&nbsp;% bon.</p>
+                                <p class="methodo-limit">Limite : basée sur l'Année 1. Évolue chaque année à mesure que la part intérêts du crédit diminue.</p>
+                            </div>
+                        </div>
+                        <div class="methodo-card">
+                            <div class="methodo-card-title">Cash-Flow Net-Net</div>
+                            <div class="methodo-card-formula">Loyers/12 − Mensualité totale − Charges/12 − Impôts/12</div>
+                            <div class="methodo-card-body">
+                                <p>Ce qui reste dans votre poche chaque mois après tout : remboursement de crédit (capital + intérêts + assurance emprunteur), charges d'exploitation et impôts sur les loyers.</p>
+                                <p class="methodo-interp">CF positif = l'investissement s'autofinance partiellement. CF négatif = effort d'épargne mensuel nécessaire.</p>
+                                <p class="methodo-limit">Limite : calculé sur l'Année 1. Le CF évolue chaque année avec la progression des intérêts et l'inflation.</p>
+                            </div>
+                        </div>
+                        <div class="methodo-card">
+                            <div class="methodo-card-title">Cash-on-Cash (CoC)</div>
+                            <div class="methodo-card-formula">(CF Net-Net × 12) ÷ Apport × 100</div>
+                            <div class="methodo-card-body">
+                                <p>Rendement annuel de votre apport. Mesure l'effet de levier : avec 10&nbsp;000&nbsp;€ d'apport et +100&nbsp;€/mois de CF, le CoC est de 12&nbsp;%.</p>
+                                <p class="methodo-interp">Affiché "&infin;" si apport = 0 (financement 110%).</p>
+                                <p class="methodo-limit">Limite : ne reflète pas l'enrichissement patrimonial via le remboursement du capital.</p>
+                            </div>
+                        </div>
+                        <div class="methodo-card">
+                            <div class="methodo-card-title">Multiplicateur Brut (GRM)</div>
+                            <div class="methodo-card-formula">Coût total ÷ (Loyer mensuel × 12)</div>
+                            <div class="methodo-card-body">
+                                <p>Nombre d'années de loyers bruts pour « rembourser » le prix d'achat. Indicateur rapide de cherté relative.</p>
+                                <p class="methodo-interp">Repères : &lt; 14 bon, &lt; 20 correct, &gt; 20 cher.</p>
+                                <p class="methodo-limit">Limite : ne tient pas compte des charges ni des impôts. À utiliser comme filtre initial.</p>
+                            </div>
+                        </div>
+                        <div class="methodo-card">
+                            <div class="methodo-card-title">DSCR &mdash; Couverture de dette</div>
+                            <div class="methodo-card-formula">(Loyers encaissés − Charges) ÷ (Mensualité totale × 12)</div>
+                            <div class="methodo-card-body">
+                                <p>Ratio de couverture du service de la dette. Indique dans quelle mesure les loyers nets couvrent les remboursements de crédit.</p>
+                                <p class="methodo-interp">Repères : &gt; 1,0 les loyers couvrent le crédit, &gt; 1,25 confortable pour la banque.</p>
+                                <p class="methodo-limit">Limite : calculé avant impôts. Un DSCR &gt; 1 ne garantit pas un CF positif après impôts.</p>
+                            </div>
+                        </div>
+                        <div class="methodo-card">
+                            <div class="methodo-card-title">Seuil de Rentabilité</div>
+                            <div class="methodo-card-formula">Première année où le CF cumulé &gt; 0</div>
+                            <div class="methodo-card-body">
+                                <p>Année à partir de laquelle l'investissement a généré plus d'entrées d'argent qu'il n'en a coûté depuis l'achat (hors enrichissement patrimonial et plus-value).</p>
+                                <p class="methodo-interp">Un seuil rapide renforce la sécurité. Un seuil lointain signale un effort mensuel durable.</p>
+                                <p class="methodo-limit">Limite : ne prend pas en compte la plus-value potentielle ni le capital remboursé.</p>
+                            </div>
+                        </div>
+                        <div class="methodo-card">
+                            <div class="methodo-card-title">Équité (Année 1)</div>
+                            <div class="methodo-card-formula">Apport + Capital amorti en Année 1</div>
+                            <div class="methodo-card-body">
+                                <p>La part du bien que vous possédez réellement, sans dette, après la première année. Le capital amorti est la partie de vos mensualités qui rembourse le capital (hors intérêts).</p>
+                                <p class="methodo-interp">L'enrichissement patrimonial est réel même quand le CF est négatif.</p>
+                                <p class="methodo-limit">Limite : ne reflète pas la valeur de marché du bien, qui évolue indépendamment.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="methodo-section-title">Score de l'investissement</div>
+                    <div class="methodo-grid methodo-grid-single">
+                        <div class="methodo-card">
+                            <div class="methodo-card-title">Logique de score</div>
+                            <div class="methodo-card-formula">CF Net-Net (0→3 pts) + Rentabilité nette (0→3 pts) = note sur 6</div>
+                            <div class="methodo-card-body">
+                                <p>CF &ge; 300&nbsp;€ → 3 pts · &ge; 100&nbsp;€ → 2 pts · &ge; 0&nbsp;€ → 1 pt · négatif → 0 pt.<br>Renta nette &ge; 7&nbsp;% → 3 pts · &ge; 5&nbsp;% → 2 pts · &ge; 3,5&nbsp;% → 1 pt · &lt; 3,5&nbsp;% → 0 pt.<br>Total 5-6 = Excellent · 3-4 = Bon · 1-2 = Moyen · 0 = Risqué.</p>
+                                <p class="methodo-limit">Limite : score orienté décision rapide. Ne prend pas en compte la plus-value potentielle, l'effet patrimonial ni le contexte local du marché.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="methodo-section-title">Logique fiscale par régime</div>
+                    <div class="methodo-grid">
+                        <div class="methodo-card methodo-card-fiscal">
+                            <div class="methodo-card-title">Micro-Foncier</div>
+                            <div class="methodo-card-formula">Impôts = Loyers encaissés × 70&nbsp;% × (TMI + 17,2&nbsp;%)</div>
+                            <div class="methodo-card-body">
+                                <p>Abattement forfaitaire de 30&nbsp;% représentant toutes les charges. Les 70&nbsp;% restants sont imposés à votre taux marginal (TMI) + CSG/CRDS (17,2&nbsp;%). Simple, sans justificatif.</p>
+                                <p class="methodo-limit">Accessible uniquement si loyers &lt; 15&nbsp;000&nbsp;€/an. Déconseillé si vos charges réelles dépassent 30&nbsp;% des loyers.</p>
+                            </div>
+                        </div>
+                        <div class="methodo-card methodo-card-fiscal">
+                            <div class="methodo-card-title">Foncier Réel</div>
+                            <div class="methodo-card-formula">Revenus nets = Loyers − Charges − Intérêts → × (TMI + 17,2&nbsp;%)</div>
+                            <div class="methodo-card-body">
+                                <p>Déduction de toutes les charges réelles : intérêts d'emprunt, travaux (Année 1), charges de copropriété, taxe foncière, assurance PNO, frais de gestion et assurance emprunteur. Si charges &gt; loyers, le déficit est déductible du revenu global jusqu'à 10&nbsp;700&nbsp;€/an, reportable 10 ans.</p>
+                                <p class="methodo-limit">Puissant avec un gros crédit ou des travaux importants. Nécessite la déclaration 2044.</p>
+                            </div>
+                        </div>
+                        <div class="methodo-card methodo-card-fiscal">
+                            <div class="methodo-card-title">SCI à l'IS</div>
+                            <div class="methodo-card-formula">IS = min(Bénéfice, 42&nbsp;500&nbsp;€) × 15&nbsp;% + excédent × 25&nbsp;%</div>
+                            <div class="methodo-card-body">
+                                <p>Amortissement du bâti = Prix net × 80&nbsp;% ÷ 30 ans. Bénéfice = Loyers − Charges − Intérêts − Amortissement. L'amortissement réduit fortement la base imposable les premières années.</p>
+                                <p class="methodo-limit">Avantageux sur le long terme, mais double imposition à la revente (IS + dividendes). Comptabilité obligatoire.</p>
+                            </div>
+                        </div>
+                        <div class="methodo-card">
+                            <div class="methodo-card-title">TMI — Taux Marginal d'Imposition</div>
+                            <div class="methodo-card-formula">Quotient = Revenus ÷ Parts fiscales (barème 2024)</div>
+                            <div class="methodo-card-body">
+                                <p>Parts : 2 adultes = 2 parts + 0,5 part/enfant (1 enfant) ou +1 part/enfant à partir du 2ème. Tranches 2024 : 0&nbsp;% ≤ 11&nbsp;294&nbsp;€, 11&nbsp;% ≤ 28&nbsp;797&nbsp;€, 30&nbsp;% ≤ 82&nbsp;341&nbsp;€, 41&nbsp;% ≤ 177&nbsp;106&nbsp;€, 45&nbsp;% au-delà.</p>
+                                <p class="methodo-limit">Le simulateur utilise 2 enfants par défaut pour le quotient familial. Ajustez vos revenus si votre situation diffère.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="methodo-section-title">Logique de revente &amp; plus-value</div>
+                    <div class="methodo-grid">
+                        <div class="methodo-card">
+                            <div class="methodo-card-title">Plus-value (Micro-Foncier / Foncier Réel)</div>
+                            <div class="methodo-card-formula">PV = Prix de vente net frais − Base d'acquisition</div>
+                            <div class="methodo-card-body">
+                                <p>Base = Prix net + Frais notaire + Agence + Travaux. Abattements progressifs : exonération IR à 22 ans de détention, exonération prélèvements sociaux à 30 ans. Taux appliqués : 19&nbsp;% sur base IR + 17,2&nbsp;% sur base PS.</p>
+                                <p class="methodo-limit">Abattements selon barème légal 2024. La date de départ des abattements est la date de l'acte authentique.</p>
+                            </div>
+                        </div>
+                        <div class="methodo-card">
+                            <div class="methodo-card-title">Plus-value (SCI à l'IS)</div>
+                            <div class="methodo-card-formula">PV comptable = Prix vente − Valeur Nette Comptable</div>
+                            <div class="methodo-card-body">
+                                <p>VNC = Prix net − Amortissements cumulés (80&nbsp;% du prix / 30 ans). Plus la détention est longue, plus la VNC baisse et plus la PV imposable augmente. IS appliqué au taux saisi dans "taux fiscal sortie".</p>
+                                <p class="methodo-limit">L'effet "reprise d'amortissements" rend la sortie SCI-IS souvent très fiscalisée. À anticiper dès l'achat.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="methodo-disclaimer">Simulation indicative &mdash; outil d'aide à la décision uniquement. Ne remplace pas un conseil fiscal, juridique ou financier personnalisé. Consultez un professionnel avant tout acte d'investissement.</p>
+                </div>
+            </details>
         </div>
     </div>
 
     <div id="view-vierzon" class="view-section">
         
         <div class="card highlight-gold" style="margin-bottom: 20px; text-align: left;">
-            <h3 style="font-size: 1.3rem; margin-bottom: 15px;">🎯 Mon Objectif de Renta</h3>
+            <h3 style="font-size: 1.3rem; margin-bottom: 15px;">Mon objectif de rentabilité</h3>
             <p style="font-size: 0.95rem; margin-bottom: 15px; color: #8e8e93;">Définissez le Cash-Flow Net-Net (après tous les impôts et charges) que vous voulez absolument dégager chaque mois sur votre investissement.</p>
             
             <div class="vierzon-cf-row" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--bg-color); padding: 15px; border-radius: 10px;">
@@ -408,7 +673,7 @@
             
             <div class="card" style="text-align: left; border-top: 4px solid var(--primary-color);">
                 <h3 style="color: var(--primary-color); font-size: 1.1rem; margin-bottom: 10px;">Scénario A : Je connais le loyer</h3>
-                <p style="font-size: 0.85rem; color: #8e8e93; margin-bottom: 15px;">Vous connaissez les prix du marché locatif sur Vierzon. Quel prix max pouvez-vous acheter le bien ?</p>
+                <p style="font-size: 0.85rem; color: #8e8e93; margin-bottom: 15px;">Vous connaissez le marché locatif du secteur. Quel prix maximum pouvez-vous payer pour ce bien ?</p>
                 
                 <label style="font-weight: 600;">Loyer estimé : 
                     <div><input type="number" id="vierzon-loyer-estime" value="500" style="width: 80px;"> €/mois</div>
@@ -445,7 +710,7 @@
 <div id="modal-regimes" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-regimes-title" onclick="closeRegimeModal(this, event)">
     <div class="modal-content">
         <div class="modal-header">
-            <h2 id="modal-regimes-title">⚖️ Les 2 Régimes Fiscaux</h2>
+            <h2 id="modal-regimes-title">Les régimes fiscaux</h2>
             <button type="button" class="modal-close" onclick="closeRegimeModal(null, null)" title="Fermer">✕</button>
         </div>
         <div class="modal-body">
@@ -493,7 +758,7 @@
 <div id="modal-deductibles" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-deductibles-title" onclick="closeDeductiblesModal(this, event)">
     <div class="modal-content">
         <div class="modal-header">
-            <h2 id="modal-deductibles-title">💶 Ce qui est déductible de vos impôts</h2>
+            <h2 id="modal-deductibles-title">Ce qui est déductible de vos impôts</h2>
             <button type="button" class="modal-close" onclick="closeDeductiblesModal(null, null)" title="Fermer">✕</button>
         </div>
         <div class="modal-body">
@@ -546,22 +811,30 @@
 <div id="modal-comparator" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-comparator-title" onclick="closeComparatorModal(this, event)">
     <div class="modal-content" style="max-width: 750px;">
         <div class="modal-header">
-            <h2 id="modal-comparator-title">📊 Comparateur de Projets</h2>
+            <div>
+                <h2 id="modal-comparator-title">Comparer deux biens</h2>
+                <p style="font-size:0.78rem;color:#8e8e93;margin-top:3px;">Identifiez en un coup d'œil lequel vaut le coup</p>
+            </div>
             <button type="button" class="modal-close" onclick="closeComparatorModal(null, null)" title="Fermer">✕</button>
         </div>
         <div class="modal-body">
-            <div class="comparator-selectors">
-                <div class="comparator-select-group">
-                    <label>Projet A</label>
-                    <select id="compare-project-a"></select>
-                </div>
-                <div class="comparator-vs">VS</div>
-                <div class="comparator-select-group">
-                    <label>Projet B</label>
-                    <select id="compare-project-b"></select>
-                </div>
+            <div id="comparator-no-projects" class="comparator-empty" style="display:none;">
+                <p>Sauvegardez au moins 2 projets depuis l'onglet <strong>Saisie</strong> pour les comparer ici.</p>
             </div>
-            <button type="button" id="btn-run-compare" class="btn-primary" style="width: 100%; margin-top: 15px;">⚡ Comparer</button>
+            <div id="comparator-selectors-wrap">
+                <div class="comparator-selectors">
+                    <div class="comparator-select-group">
+                        <label>Projet A</label>
+                        <select id="compare-project-a"></select>
+                    </div>
+                    <div class="comparator-vs">VS</div>
+                    <div class="comparator-select-group">
+                        <label>Projet B</label>
+                        <select id="compare-project-b"></select>
+                    </div>
+                </div>
+                <button type="button" id="btn-run-compare" class="btn-primary" style="width: 100%; margin-top: 15px;">Analyser et comparer</button>
+            </div>
             <div id="comparator-results" style="margin-top: 20px;"></div>
         </div>
     </div>
@@ -599,6 +872,137 @@
             </div>
         </div>
         <div id="pdf-preview-scroll" class="pdf-preview-scroll"></div>
+    </div>
+</div>
+
+<!-- Footer légal -->
+<footer class="app-footer">
+    <div class="app-footer-inner">
+        <span class="app-footer-brand">Investisseur Pro</span>
+        <nav class="app-footer-links">
+            <a href="#" onclick="document.getElementById('modal-apropos').style.display='flex';return false;">À propos</a>
+            <a href="#" onclick="document.getElementById('modal-mentions').style.display='flex';return false;">Mentions légales</a>
+            <a href="#" onclick="document.getElementById('modal-confidentialite').style.display='flex';return false;">Confidentialité</a>
+        </nav>
+        <p class="app-footer-notice">Simulation indicative — Ne remplace pas un conseil fiscal, juridique ou financier personnalisé.</p>
+    </div>
+</footer>
+
+<!-- Modal À propos -->
+<div id="modal-apropos" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="modal-apropos-title" onclick="if(event.target===this)this.style.display='none'">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modal-apropos-title">À propos d'Investisseur Pro</h2>
+            <button type="button" class="modal-close" onclick="document.getElementById('modal-apropos').style.display='none'" title="Fermer">✕</button>
+        </div>
+        <div class="modal-body">
+            <p><strong>Investisseur Pro</strong> est un simulateur d'investissement immobilier conçu pour aider les investisseurs particuliers et les professionnels à analyser rapidement la rentabilité d'un bien avant tout acte d'achat.</p>
+
+            <h3 style="margin: 16px 0 8px; font-size: 0.95rem;">Ce que fait l'application</h3>
+            <ul>
+                <li>Simulation complète de rentabilité (brute, nette, nette-nette)</li>
+                <li>Calcul du cash-flow après charges et impôts</li>
+                <li>Comparaison des régimes fiscaux (Micro-Foncier, Foncier Réel, SCI à l'IS)</li>
+                <li>Projection patrimoniale sur 25 ans et scénario de revente</li>
+                <li>Outil de faisabilité : prix cible et loyer minimum à exiger</li>
+                <li>Export et partage de rapport PDF</li>
+            </ul>
+
+            <h3 style="margin: 16px 0 8px; font-size: 0.95rem;">Avertissement important</h3>
+            <p>Les résultats produits par cette application sont <strong>indicatifs</strong>. Ils reposent sur des hypothèses et des estimations saisies par l'utilisateur. Ils ne constituent en aucun cas un conseil fiscal, juridique ou financier personnalisé. Consultez un professionnel qualifié avant tout acte d'investissement.</p>
+
+            <h3 style="margin: 16px 0 8px; font-size: 0.95rem;">Données et vie privée</h3>
+            <p>Toutes vos données restent sur votre appareil (stockage local du navigateur). Aucune information personnelle n'est transmise à un serveur tiers.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Mentions légales -->
+<div id="modal-mentions" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="modal-mentions-title" onclick="if(event.target===this)this.style.display='none'">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modal-mentions-title">Mentions légales</h2>
+            <button type="button" class="modal-close" onclick="document.getElementById('modal-mentions').style.display='none'" title="Fermer">✕</button>
+        </div>
+        <div class="modal-body">
+            <h3 style="margin: 0 0 8px; font-size: 0.95rem;">Éditeur</h3>
+            <p>Cette application est éditée à titre personnel. Pour toute question ou demande, contactez : <a href="mailto:gegertauren@gmail.com" style="color: var(--primary-color);">gegertauren@gmail.com</a></p>
+
+            <h3 style="margin: 16px 0 8px; font-size: 0.95rem;">Nature de l'application</h3>
+            <p>Investisseur Pro est une application web progressive (PWA) fonctionnant entièrement côté client, sans serveur. Elle ne collecte, ne stocke ni ne transmet aucune donnée personnelle à des tiers.</p>
+
+            <h3 style="margin: 16px 0 8px; font-size: 0.95rem;">Propriété intellectuelle</h3>
+            <p>L'ensemble des contenus de cette application (code source, textes, calculs, méthodologie) est protégé. Toute reproduction ou utilisation commerciale sans autorisation préalable est interdite.</p>
+
+            <h3 style="margin: 16px 0 8px; font-size: 0.95rem;">Ressources tierces</h3>
+            <p>L'application utilise des bibliothèques open source chargées depuis CDN (Chart.js, jsPDF) et des polices Google Fonts. Ces ressources sont soumises à leurs licences respectives.</p>
+
+            <h3 style="margin: 16px 0 8px; font-size: 0.95rem;">Limitation de responsabilité</h3>
+            <p>Les simulations produites sont indicatives et basées sur les données saisies par l'utilisateur. L'éditeur décline toute responsabilité quant aux décisions d'investissement prises sur la base de ces résultats. Consultez un professionnel qualifié avant tout acte d'achat immobilier.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Politique de confidentialité -->
+<div id="modal-confidentialite" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="modal-confidentialite-title" onclick="if(event.target===this)this.style.display='none'">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modal-confidentialite-title">Politique de confidentialité</h2>
+            <button type="button" class="modal-close" onclick="document.getElementById('modal-confidentialite').style.display='none'" title="Fermer">✕</button>
+        </div>
+        <div class="modal-body">
+            <h3 style="margin: 0 0 8px; font-size: 0.95rem;">Données collectées</h3>
+            <p>Investisseur Pro ne collecte aucune donnée personnelle. L'application ne dispose d'aucun compte utilisateur, d'aucun formulaire d'inscription et d'aucun système de suivi.</p>
+
+            <h3 style="margin: 16px 0 8px; font-size: 0.95rem;">Stockage local</h3>
+            <p>Vos saisies et projets sauvegardés sont stockés uniquement dans le <strong>localStorage</strong> de votre navigateur, sur votre appareil. Ces données ne quittent jamais votre appareil et peuvent être effacées à tout moment via les paramètres de votre navigateur.</p>
+
+            <h3 style="margin: 16px 0 8px; font-size: 0.95rem;">Ressources externes</h3>
+            <p>L'application charge des ressources depuis des CDN tiers (Chart.js, jsPDF) et Google Fonts. Ces chargements peuvent exposer votre adresse IP aux fournisseurs de ces services, conformément à leurs politiques de confidentialité respectives. Aucune donnée de simulation n'est transmise à ces services.</p>
+
+            <h3 style="margin: 16px 0 8px; font-size: 0.95rem;">Cookies et traceurs</h3>
+            <p>Aucun cookie de tracking ou de publicité n'est utilisé. Aucun outil d'analyse (Google Analytics, etc.) n'est intégré.</p>
+
+            <h3 style="margin: 16px 0 8px; font-size: 0.95rem;">Contact</h3>
+            <p>Pour toute question relative à la confidentialité : <a href="mailto:gegertauren@gmail.com" style="color: var(--primary-color);">gegertauren@gmail.com</a></p>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Compte & Pro+ -->
+<div id="modal-compte" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="modal-compte-title" onclick="if(event.target===this)window.closeAccountModal()">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modal-compte-title">Investisseur Pro+</h2>
+            <button type="button" class="modal-close" onclick="window.closeAccountModal()" title="Fermer">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="account-plan-card account-plan-free">
+                <div class="account-plan-title">Version gratuite — Actuelle</div>
+                <ul class="account-plan-features">
+                    <li>✓ Simulation complète et analyse de rentabilité</li>
+                    <li>✓ Jusqu'à 3 projets sauvegardés sur cet appareil</li>
+                    <li>✓ Export et impression PDF</li>
+                    <li>✓ Outil de faisabilité (prix cible / loyer minimum)</li>
+                    <li>✓ Comparaison de 2 projets</li>
+                </ul>
+            </div>
+            <div class="account-plan-card account-plan-premium">
+                <div class="account-plan-badge">Prochainement</div>
+                <div class="account-plan-title">Pro+ — À venir</div>
+                <ul class="account-plan-features">
+                    <li>★ Projets illimités</li>
+                    <li>★ Sauvegarde cloud — accès depuis tous vos appareils</li>
+                    <li>★ Rapport PDF professionnel</li>
+                    <li>★ Comparaison avancée multi-projets</li>
+                    <li>★ Historique des versions de chaque analyse</li>
+                </ul>
+                <button type="button" class="btn-primary account-waitlist-btn" onclick="window.openWaitlistForm()">
+                    Rejoindre la liste d'attente →
+                </button>
+            </div>
+            <p class="account-plan-notice">La synchronisation cloud est en cours de développement. Vos projets actuels restent stockés sur cet appareil et ne seront jamais perdus.</p>
+        </div>
     </div>
 </div>
 

@@ -14,6 +14,27 @@ let savedProjects = (() => { try { return JSON.parse(localStorage.getItem('simuI
 let calcTimeout = null;
 let projectionData = [];
 
+// --- COMPTE & PREMIUM (Lots 7+8) ---
+// Stub local — brancher ici Firebase Auth / Supabase pour la version cloud réelle
+const FREE_PROJECT_LIMIT = 3;
+let userAccount = (() => { try { return JSON.parse(localStorage.getItem('userAccount')) || { isPremium: false }; } catch(e) { return { isPremium: false }; } })();
+
+function migrateProjects() {
+    let changed = false;
+    savedProjects = savedProjects.map(p => {
+        if (!p._id) {
+            p._id = (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
+            p._createdAt = new Date().toISOString();
+            p._updatedAt = new Date().toISOString();
+            p._syncedAt = null;  // null = non synchronisé avec le cloud
+            p._isLocal = true;
+            changed = true;
+        }
+        return p;
+    });
+    if (changed) localStorage.setItem('simuImmoProjects', JSON.stringify(savedProjects));
+}
+
 // --- LECTURE DES INPUTS ---
 function getCurrentInputs() {
     const data = {};
@@ -442,6 +463,25 @@ function renderProjectsList() {
     const compareBtn = document.getElementById('btn-compare-projects');
     if (compareBtn) compareBtn.style.display = savedProjects.length >= 2 ? 'block' : 'none';
 
+    const badge = document.getElementById('projects-count-badge');
+    if (badge) {
+        if (savedProjects.length > 0) {
+            badge.textContent = savedProjects.length;
+            badge.classList.add('visible');
+        } else {
+            badge.classList.remove('visible');
+        }
+    }
+
+    const limitBar = document.getElementById('projects-limit-bar');
+    const limitCount = document.getElementById('projects-limit-count');
+    if (limitBar && limitCount && !userAccount.isPremium) {
+        limitBar.style.display = savedProjects.length > 0 ? 'flex' : 'none';
+        const isAtLimit = savedProjects.length >= FREE_PROJECT_LIMIT;
+        limitCount.textContent = savedProjects.length + ' / ' + FREE_PROJECT_LIMIT;
+        limitCount.classList.toggle('limit-full', isAtLimit);
+    }
+
     if (savedProjects.length === 0) return;
 
     savedProjects.forEach((project, index) => {
@@ -564,10 +604,20 @@ window.closeDeductiblesModal = function(overlay, event) {
 window.openComparatorModal = function() {
     const selA = document.getElementById('compare-project-a');
     const selB = document.getElementById('compare-project-b');
-    const options = savedProjects.map((p, i) => `<option value="${i}">${p._projectName}</option>`).join('');
-    selA.innerHTML = options;
-    selB.innerHTML = options;
-    if (savedProjects.length > 1) selB.selectedIndex = 1;
+    const noProjects = document.getElementById('comparator-no-projects');
+    const selectorsWrap = document.getElementById('comparator-selectors-wrap');
+
+    if (savedProjects.length < 2) {
+        if (noProjects) noProjects.style.display = 'block';
+        if (selectorsWrap) selectorsWrap.style.display = 'none';
+    } else {
+        if (noProjects) noProjects.style.display = 'none';
+        if (selectorsWrap) selectorsWrap.style.display = 'block';
+        const options = savedProjects.map((p, i) => `<option value="${i}">${p._projectName}</option>`).join('');
+        selA.innerHTML = options;
+        selB.innerHTML = options;
+        if (savedProjects.length > 1) selB.selectedIndex = 1;
+    }
     document.getElementById('comparator-results').innerHTML = '';
     document.getElementById('modal-comparator').classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -576,6 +626,20 @@ window.closeComparatorModal = function(overlay, event) {
     if (overlay && event && event.target !== overlay) return;
     document.getElementById('modal-comparator').classList.remove('open');
     document.body.style.overflow = '';
+};
+
+// --- COMPTE & PRO+ ---
+window.openAccountModal = function() {
+    document.getElementById('modal-compte').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+};
+window.closeAccountModal = function() {
+    document.getElementById('modal-compte').style.display = 'none';
+    document.body.style.overflow = '';
+};
+// Ouvre la boîte mail pré-remplie — aucun backend nécessaire
+window.openWaitlistForm = function() {
+    window.location.href = 'mailto:gegertauren@gmail.com?subject=Investisseur%20Pro%2B%20%E2%80%94%20Liste%20d%27attente&body=Bonjour%2C%0A%0AJe%20suis%20int%C3%A9ress%C3%A9(e)%20par%20la%20version%20Pro%2B%20d%27Investisseur%20Pro.%0A%0AMon%20profil%20%3A%20';
 };
 
 // --- EVENT LISTENERS ---
@@ -633,6 +697,12 @@ document.getElementById('type-bien').addEventListener('change', (e) => {
 
 // Bouton Simulation
 document.getElementById('btn-simulate').addEventListener('click', () => {
+    calculateAndSave();
+    document.querySelector('[data-target="view-results"]').click();
+});
+
+// Bouton Simulation rapide (mode Estimation)
+document.getElementById('btn-simulate-quick')?.addEventListener('click', () => {
     calculateAndSave();
     document.querySelector('[data-target="view-results"]').click();
 });
@@ -698,13 +768,22 @@ document.getElementById('photo-input-camera').addEventListener('change', handleP
 document.getElementById('btn-save-project').addEventListener('click', () => {
     const projectName = document.getElementById('project-name').value.trim();
     if (!projectName) return alert('Veuillez entrer un nom.');
+    if (!userAccount.isPremium && savedProjects.length >= FREE_PROJECT_LIMIT) {
+        window.openAccountModal();
+        return;
+    }
     const currentData = getCurrentInputs();
     currentData._projectName = projectName;
+    currentData._id = crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2);
+    currentData._createdAt = new Date().toISOString();
+    currentData._updatedAt = new Date().toISOString();
+    currentData._syncedAt = null;
+    currentData._isLocal = true;
     savedProjects.push(currentData);
     localStorage.setItem('simuImmoProjects', JSON.stringify(savedProjects));
     document.getElementById('project-name').value = '';
     renderProjectsList();
-    alert(`Projet "${projectName}" sauvegardé !`);
+    showToast(`Projet "${projectName}" sauvegardé.`, 'success');
 });
 
 // Comparateur
@@ -740,6 +819,37 @@ document.getElementById('btn-run-compare').addEventListener('click', function() 
 
     const nameA = savedProjects[idxA]._projectName;
     const nameB = savedProjects[idxB]._projectName;
+
+    // Compter les critères gagnants pour chaque projet
+    let winsA = 0, winsB = 0;
+    const comparableRows = rows.filter(r => r.hib !== null && r.rawA !== null && r.rawB !== null && r.rawA !== r.rawB);
+    comparableRows.forEach(r => {
+        if (r.hib ? r.rawA > r.rawB : r.rawA < r.rawB) winsA++;
+        else winsB++;
+    });
+    const total = comparableRows.length;
+
+    let verdictHTML;
+    if (winsA > winsB) {
+        verdictHTML = `<div class="comparator-verdict comparator-verdict-win">
+            <div class="cv-label">Projet recommandé</div>
+            <div class="cv-winner">${nameA}</div>
+            <div class="cv-detail">${winsA} critères gagnants sur ${total} comparés</div>
+        </div>`;
+    } else if (winsB > winsA) {
+        verdictHTML = `<div class="comparator-verdict comparator-verdict-win">
+            <div class="cv-label">Projet recommandé</div>
+            <div class="cv-winner">${nameB}</div>
+            <div class="cv-detail">${winsB} critères gagnants sur ${total} comparés</div>
+        </div>`;
+    } else {
+        verdictHTML = `<div class="comparator-verdict comparator-verdict-tie">
+            <div class="cv-label">Résultat</div>
+            <div class="cv-winner">Projets équivalents</div>
+            <div class="cv-detail">À égalité sur les ${total} critères comparables — affinez vos hypothèses</div>
+        </div>`;
+    }
+
     let html = `<table class="comparator-table"><thead><tr><th>Métrique</th><th>${nameA}</th><th>${nameB}</th></tr></thead><tbody>`;
     rows.forEach(r => {
         let cA = '', cB = '';
@@ -753,7 +863,7 @@ document.getElementById('btn-run-compare').addEventListener('click', function() 
         html += `<tr><td>${r.label}</td><td class="${cA}">${r.valA}</td><td class="${cB}">${r.valB}</td></tr>`;
     });
     html += '</tbody></table>';
-    document.getElementById('comparator-results').innerHTML = html;
+    document.getElementById('comparator-results').innerHTML = verdictHTML + html;
 });
 
 // Fermeture modales par touche Echap
@@ -762,6 +872,7 @@ document.addEventListener('keydown', (e) => {
     if (document.getElementById('modal-regimes').classList.contains('open'))     window.closeRegimeModal(null, null);
     if (document.getElementById('modal-deductibles').classList.contains('open')) window.closeDeductiblesModal(null, null);
     if (document.getElementById('modal-comparator').classList.contains('open'))  window.closeComparatorModal(null, null);
+    if (document.getElementById('modal-compte').style.display === 'flex')        window.closeAccountModal();
 });
 
 // Tous les inputs du formulaire déclenchent triggerCalculations
@@ -995,8 +1106,42 @@ function animateValue(el, target, suffix, duration) {
     requestAnimationFrame(step);
 }
 
+// --- ACCUEIL ---
+function showAccueil() {
+    document.getElementById('view-accueil').style.display = '';
+    document.querySelector('.tabs-nav').style.display = 'none';
+    document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+    const btnAccueil = document.getElementById('btn-accueil');
+    if (btnAccueil) btnAccueil.style.display = 'none';
+}
+
+function hideAccueil() {
+    document.getElementById('view-accueil').style.display = 'none';
+    document.querySelector('.tabs-nav').style.display = '';
+    const btnAccueil = document.getElementById('btn-accueil');
+    if (btnAccueil) btnAccueil.style.display = '';
+    document.querySelector('[data-target="view-inputs"]').click();
+}
+
+function startWizard(mode) {
+    setWizardMode(mode);
+    goToStep(1);
+    hideAccueil();
+}
+
+document.getElementById('btn-start-rapide').addEventListener('click', () => startWizard('rapide'));
+document.getElementById('btn-start-complet').addEventListener('click', () => startWizard('complet'));
+document.getElementById('btn-reprendre').addEventListener('click', () => {
+    const savedMode = sessionStorage.getItem('simuImmoWizardMode') || 'complet';
+    setWizardMode(savedMode);
+    goToStep(1);
+    hideAccueil();
+});
+document.getElementById('btn-accueil').addEventListener('click', showAccueil);
+
 // --- INITIALISATION ---
 function initApp() {
+    migrateProjects();
     renderProjectsList();
     initTheme();
     const savedDraft = localStorage.getItem('simuImmoDraft');
@@ -1012,9 +1157,12 @@ function initApp() {
                 }
             }
             if (data['regime']) document.getElementById('regime').value = data['regime'];
+            const btnReprendre = document.getElementById('btn-reprendre');
+            if (btnReprendre) btnReprendre.style.display = '';
         } catch (e) {}
     }
     updateFormProgress();
+    showAccueil();
 }
 
 // Déclencher la barre de progression à chaque saisie
