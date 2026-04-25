@@ -85,26 +85,71 @@ export function updateScoreBanner(cfNetNet, rentaNette, tips) {
     if (cfNetNet >= 300) pts += 3; else if (cfNetNet >= 100) pts += 2; else if (cfNetNet >= 0) pts += 1;
     if (rentaNette >= 7) pts += 3; else if (rentaNette >= 5) pts += 2; else if (rentaNette >= 3.5) pts += 1;
 
-    let cls, emoji, label, stars;
-    if (pts >= 5)      { cls = 'score-excellent'; emoji = '🏆'; label = 'Excellent'; stars = '★★★'; }
-    else if (pts >= 3) { cls = 'score-bon';       emoji = '👍'; label = 'Bon';       stars = '★★☆'; }
-    else if (pts >= 1) { cls = 'score-moyen';     emoji = '⚠️'; label = 'Moyen';     stars = '★☆☆'; }
-    else               { cls = 'score-risque';    emoji = '🚫'; label = 'Risqué';    stars = '☆☆☆'; }
+    let cls, label, phrase, stars;
+    if (pts >= 5) {
+        cls    = 'verdict--rentable';
+        label  = 'Rentable';
+        stars  = '★★★';
+        phrase = 'Ce bien présente un profil solide. Vous pouvez avancer sereinement.';
+    } else if (pts >= 3) {
+        cls    = 'verdict--correct';
+        label  = 'Correct — à négocier';
+        stars  = '★★☆';
+        phrase = 'Ce bien est viable, mais une négociation du prix améliorerait sensiblement la rentabilité.';
+    } else if (pts >= 1) {
+        cls    = 'verdict--fragile';
+        label  = 'Fragile';
+        stars  = '★☆☆';
+        phrase = 'Ce bien reste équilibré dans le meilleur des cas. Examinez les leviers avant de vous engager.';
+    } else {
+        cls    = 'verdict--eviter';
+        label  = 'À éviter';
+        stars  = '☆☆☆';
+        phrase = 'Ce bien génère un cash-flow négatif significatif. Il est déconseillé sans renégociation majeure.';
+    }
 
     const banner = document.getElementById('score-banner');
     banner.className = 'score-banner ' + cls;
-    document.getElementById('score-emoji').innerText = emoji;
     document.getElementById('score-label').innerText = label;
     document.getElementById('score-stars').innerText = stars;
+
     const sign = cfNetNet >= 0 ? '+' : '';
-    let detailText = `CF ${sign}${Math.round(cfNetNet)} €/mois · Renta nette ${rentaNette.toFixed(1)} %`;
+    document.getElementById('score-detail').innerText =
+        `CF ${sign}${Math.round(cfNetNet)} €/mois · Renta nette ${rentaNette.toFixed(1)} %`;
 
-    if (tips && tips.length > 0) {
-        const topTip = tips.find(t => t.gainPerMonth && t.gainPerMonth > 0 && t.shortAdvice);
-        if (topTip) detailText += ` · 💡 ${topTip.shortAdvice}`;
+    const phraseEl = document.getElementById('verdict-phrase');
+    if (phraseEl) phraseEl.innerText = phrase;
+
+    const emojiEl = document.getElementById('score-emoji');
+    if (emojiEl) emojiEl.innerText = '';
+
+    _updateVerdictWhy(cfNetNet, rentaNette, tips, pts);
+}
+
+function _updateVerdictWhy(cfNetNet, rentaNette, tips, pts) {
+    const el = document.getElementById('verdict-why');
+    if (!el) return;
+    const sign = cfNetNet >= 0 ? '+' : '';
+    const cfStr = `${sign}${Math.round(cfNetNet)} €/mois`;
+    const rentaStr = `${rentaNette.toFixed(1)} %`;
+    const topTip = tips && tips.find(t => t.gainPerMonth && t.gainPerMonth > 0 && t.shortAdvice);
+
+    let msg = '';
+    if (pts >= 5) {
+        msg = `Ce bien affiche un cash-flow de ${cfStr} et une rentabilité nette de ${rentaStr}. Les fondamentaux sont solides — c'est une opportunité à saisir.`;
+    } else if (pts >= 3) {
+        msg = `Bon investissement. Le cash-flow de ${cfStr} est positif et la rentabilité nette de ${rentaStr} est convenable.`;
+        if (topTip) msg += ` Pour aller plus loin : ${topTip.shortAdvice.toLowerCase()}.`;
+    } else if (pts >= 1) {
+        msg = `Investissement moyen. Le cash-flow de ${cfStr} est limité et la rentabilité nette de ${rentaStr} reste faible.`;
+        if (topTip) msg += ` Levier principal : ${topTip.shortAdvice.toLowerCase()}.`;
+        else msg += ` Des ajustements sont recommandés avant de s'engager.`;
+    } else {
+        msg = `Opération risquée. Le cash-flow de ${cfStr} est négatif — vous devrez compléter le financement chaque mois.`;
+        if (topTip) msg += ` Action prioritaire : ${topTip.shortAdvice.toLowerCase()}.`;
+        else msg += ` Négociez le prix ou optimisez la fiscalité avant de vous engager.`;
     }
-
-    document.getElementById('score-detail').innerText = detailText;
+    el.textContent = msg;
 }
 
 export function updateRegimeComparison(prixNet, inputs, tmi, loyersEncaisses, chargesExploitationAnnuelles, coutAssuranceMensuel, firstYearInterets) {
@@ -550,25 +595,32 @@ function haptic() { if (navigator.vibrate) navigator.vibrate(10); }
             if (el) el.value = val;
         });
     }
+    const btnRapide   = document.getElementById('btn-mode-rapide');
+    const btnExpert   = document.getElementById('btn-mode-expert');
+    const formProgress = document.querySelector('.form-progress');
+
     function setMode(isExpert) {
         if (isExpert) {
             simpDiv.style.display    = 'none';
             if (expertGrid) expertGrid.style.display = '';
-            labelSimple.classList.remove('active');
-            labelExpert.classList.add('active');
+            if (formProgress) formProgress.style.display = '';
+            if (btnRapide) btnRapide.classList.remove('mode-pill-active');
+            if (btnExpert) btnExpert.classList.add('mode-pill-active');
         } else {
             syncRealToProxy();
             applyDefaults();
             syncProxyToReal();
             simpDiv.style.display    = 'block';
             if (expertGrid) expertGrid.style.display = 'none';
-            labelSimple.classList.add('active');
-            labelExpert.classList.remove('active');
+            if (formProgress) formProgress.style.display = 'none';
+            if (btnRapide) btnRapide.classList.add('mode-pill-active');
+            if (btnExpert) btnExpert.classList.remove('mode-pill-active');
         }
         document.getElementById('calc-form').dispatchEvent(new Event('input', { bubbles: true }));
     }
 
-    toggle.addEventListener('change', () => { haptic(); setMode(toggle.checked); });
+    if (btnRapide) btnRapide.addEventListener('click', () => { haptic(); toggle.checked = false; setMode(false); });
+    if (btnExpert) btnExpert.addEventListener('click', () => { haptic(); toggle.checked = true;  setMode(true);  });
 
     // Sync des inputs proxy → real
     document.querySelectorAll('.simple-input').forEach(input => {
@@ -578,9 +630,9 @@ function haptic() { if (navigator.vibrate) navigator.vibrate(10); }
         });
     });
 
-    // Init : mode Expert par défaut (toggle coché)
-    toggle.checked = true;
-    setMode(true);
+    // Init : mode Estimation rapide par défaut
+    toggle.checked = false;
+    setMode(false);
 })();
 
 // === HAPTIQUE SUR BOUTONS PRINCIPAUX ===
