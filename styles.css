@@ -945,6 +945,100 @@ details.accordion[open] summary::after { transform: rotate(90deg); }
 .account-plan-premium .account-plan-features li { color: var(--text-color); }
 .account-waitlist-btn { width: 100%; margin-top: 16px; padding: 12px; border-radius: 10px; font-size: 0.9rem; display: block; text-align: center; cursor: pointer; }
 .account-plan-notice { font-size: 0.77rem; color: var(--text-secondary); text-align: center; margin-top: 10px; line-height: 1.55; }
+
+/* Plans côte à côte dans la modale compte */
+.account-plans-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+}
+.account-plans-row .account-plan-card {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+/* Badge "Actif" sur carte gratuite */
+.account-plan-badge-active {
+    background: var(--success-color) !important;
+}
+
+/* Zone état compte */
+.account-status-zone {
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.account-status-zone-premium {
+    border-color: var(--gold-color);
+    background: linear-gradient(135deg, var(--card-bg) 0%, rgba(201,168,76,0.06) 100%);
+}
+.account-status-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+}
+.account-status-row strong { color: var(--text-color); }
+.account-status-icon { font-size: 1rem; flex-shrink: 0; }
+.account-status-bar-wrap {
+    height: 6px;
+    background: var(--border-color);
+    border-radius: 999px;
+    overflow: hidden;
+    margin: 0 0 4px;
+}
+.account-status-bar {
+    height: 100%;
+    background: var(--primary-color);
+    border-radius: 999px;
+    transition: width 0.3s ease;
+}
+.account-status-bar-full { background: var(--danger-color); }
+
+/* Modale gate PDF */
+.pdf-gate-modal { max-width: 420px; }
+.pdf-gate-intro {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+}
+.pdf-gate-features {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+.pdf-gate-features li {
+    font-size: 0.88rem;
+    color: var(--text-color);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+.pdf-gate-star {
+    color: var(--gold-color);
+    font-weight: 800;
+    flex-shrink: 0;
+}
+.pdf-gate-actions {
+    display: flex;
+    gap: 10px;
+}
+.pdf-gate-actions .btn-primary,
+.pdf-gate-actions .btn-secondary {
+    flex: 1;
+}
+
+@media (max-width: 520px) {
+    .account-plans-row { flex-direction: column; }
+    .pdf-gate-actions { flex-direction: column; }
+}
 /* === ÉCRAN D'ACCUEIL === */
 .view-accueil {
     min-height: 70vh;
