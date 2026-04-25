@@ -773,8 +773,8 @@ Ce tableau peut etre mis a jour a chaque passage de Claude Code.
 | 3 | Effectue | Onglet renomme "Faisabilite", reference locale supprimee, module repositionne comme outil generique prix cible / loyer cible |
 | 4 | Effectue | Section "Comprendre les calculs" repliable dans l'onglet Analyse (10 indicateurs + 3 régimes fiscaux + revente + score + TMI). Lien discret depuis les KPIs. Annexe méthodologie concise dans le PDF. |
 | 5 | Effectue | Header sans emoji + tagline, tabs sans emojis, boutons harmonisés, disclaimer inline dans Analyse, modales À propos / Mentions légales / Confidentialité, footer légal, manifest.json mis à jour |
-| 6 | A faire | Mieux vendre export, partage et comparaison |
-| 7 | A faire plus tard | Compte et sauvegarde cloud |
+| 6 | Effectue | Résumé exécutif PDF (titre + 4 KPIs + phrase verdict-why). Comparateur remplacé par cartes côte à côte avec badge "★ Recommandé". Boutons verdict enrichis (icônes, wording premium, état désactivé si <2 projets). |
+| 7 | Effectue | Gate PDF après 3 générations (modal-pdf-gate, pdfGenCount localStorage, continue sans blocage). Modale compte refondée : zone état dynamique (X/3 projets, barre progression, sync locale), plans côte à côte, badge Actif/Prochainement. openAccountModal() lit savedProjects à l'ouverture. |
 | 8 | A faire plus tard | Freemium et monetisation |
 
 ---
