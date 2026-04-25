@@ -867,6 +867,28 @@
 <div id="tooltip-bubble" class="tooltip-bubble"></div>
 <div id="toast-container" aria-live="polite" aria-atomic="false"></div>
 
+<!-- Modal gate PDF premium -->
+<div id="modal-pdf-gate" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="modal-pdf-gate-title" onclick="if(event.target===this)window.closePdfGateModal()">
+    <div class="modal-content pdf-gate-modal">
+        <div class="modal-header">
+            <h2 id="modal-pdf-gate-title">Rapport Pro+ disponible</h2>
+            <button type="button" class="modal-close" onclick="window.closePdfGateModal()" title="Fermer">✕</button>
+        </div>
+        <div class="modal-body">
+            <p class="pdf-gate-intro">Le rapport Pro+ inclut des fonctionnalités supplémentaires :</p>
+            <ul class="pdf-gate-features">
+                <li><span class="pdf-gate-star">★</span> Résumé exécutif enrichi avec analyse personnalisée</li>
+                <li><span class="pdf-gate-star">★</span> Branding personnalisé avec votre nom ou société</li>
+                <li><span class="pdf-gate-star">★</span> Annexe méthodologie complète</li>
+            </ul>
+            <div class="pdf-gate-actions">
+                <button type="button" class="btn-primary" onclick="window.closePdfGateModal(); window.openAccountModal();">Rejoindre Pro+</button>
+                <button type="button" class="btn-secondary" id="btn-pdf-gate-continue">Continuer quand même</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Barre PDF flottante (au-dessus des onglets, visible sur l'onglet Analyse) -->
 <div id="pdf-action-bar" style="display:none;">
     <button id="btn-preview-pdf" class="btn-pdf-action btn-pdf-preview">🔍 Aperçu</button>
@@ -991,31 +1013,38 @@
             <button type="button" class="modal-close" onclick="window.closeAccountModal()" title="Fermer">✕</button>
         </div>
         <div class="modal-body">
-            <div class="account-plan-card account-plan-free">
-                <div class="account-plan-title">Version gratuite — Actuelle</div>
-                <ul class="account-plan-features">
-                    <li>✓ Simulation complète et analyse de rentabilité</li>
-                    <li>✓ Jusqu'à 3 projets sauvegardés sur cet appareil</li>
-                    <li>✓ Export et impression PDF</li>
-                    <li>✓ Outil de faisabilité (prix cible / loyer minimum)</li>
-                    <li>✓ Comparaison de 2 projets</li>
-                </ul>
+            <!-- Zone état compte — rendue dynamiquement par openAccountModal() -->
+            <div id="account-status-zone" class="account-status-zone"></div>
+
+            <!-- Plans -->
+            <div class="account-plans-row">
+                <div class="account-plan-card account-plan-free">
+                    <div class="account-plan-badge account-plan-badge-active">Actif</div>
+                    <div class="account-plan-title">Gratuit</div>
+                    <ul class="account-plan-features">
+                        <li>✓ Simulation complète et analyse de rentabilité</li>
+                        <li>✓ Jusqu'à 3 projets sauvegardés sur cet appareil</li>
+                        <li>✓ Export et impression PDF</li>
+                        <li>✓ Outil de faisabilité (prix cible / loyer minimum)</li>
+                        <li>✓ Comparaison de 2 projets</li>
+                    </ul>
+                </div>
+                <div class="account-plan-card account-plan-premium">
+                    <div id="account-plan-premium-badge" class="account-plan-badge">Prochainement</div>
+                    <div class="account-plan-title">Pro+</div>
+                    <ul class="account-plan-features">
+                        <li>★ Projets illimités</li>
+                        <li>★ Sauvegarde cloud — accès depuis tous vos appareils</li>
+                        <li>★ Rapport PDF professionnel avec branding</li>
+                        <li>★ Comparaison avancée multi-projets</li>
+                        <li>★ Historique des versions de chaque analyse</li>
+                    </ul>
+                    <button id="account-waitlist-btn" type="button" class="btn-primary account-waitlist-btn" onclick="window.openWaitlistForm()">
+                        Rejoindre la liste d'attente →
+                    </button>
+                </div>
             </div>
-            <div class="account-plan-card account-plan-premium">
-                <div class="account-plan-badge">Prochainement</div>
-                <div class="account-plan-title">Pro+ — À venir</div>
-                <ul class="account-plan-features">
-                    <li>★ Projets illimités</li>
-                    <li>★ Sauvegarde cloud — accès depuis tous vos appareils</li>
-                    <li>★ Rapport PDF professionnel</li>
-                    <li>★ Comparaison avancée multi-projets</li>
-                    <li>★ Historique des versions de chaque analyse</li>
-                </ul>
-                <button type="button" class="btn-primary account-waitlist-btn" onclick="window.openWaitlistForm()">
-                    Rejoindre la liste d'attente →
-                </button>
-            </div>
-            <p class="account-plan-notice">La synchronisation cloud est en cours de développement. Vos projets actuels restent stockés sur cet appareil et ne seront jamais perdus.</p>
+            <p class="account-plan-notice">Vos projets restent toujours sur cet appareil. Aucun risque de perte.</p>
         </div>
     </div>
 </div>
