@@ -467,6 +467,14 @@ function renderProjectsList() {
     const compareBtn = document.getElementById('btn-compare-projects');
     if (compareBtn) compareBtn.style.display = savedProjects.length >= 2 ? 'block' : 'none';
 
+    const verdictCompareBtn = document.getElementById('verdict-action-compare-btn');
+    if (verdictCompareBtn) {
+        const canCompare = savedProjects.length >= 2;
+        verdictCompareBtn.style.opacity = canCompare ? '' : '0.5';
+        verdictCompareBtn.style.pointerEvents = canCompare ? '' : 'none';
+        verdictCompareBtn.title = canCompare ? '' : 'Sauvegardez au moins 2 projets pour comparer';
+    }
+
     const badge = document.getElementById('projects-count-badge');
     if (badge) {
         if (savedProjects.length > 0) {
