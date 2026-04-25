@@ -1163,6 +1163,32 @@ document.getElementById('btn-reprendre').addEventListener('click', () => {
 });
 document.getElementById('btn-accueil').addEventListener('click', showAccueil);
 
+function initExpertCollapse() {
+    const btn = document.getElementById('btn-expand-expert');
+    if (!btn) return;
+
+    function updateCollapseVisibility() {
+        const isMobile = window.innerWidth <= 768;
+        btn.style.display = isMobile ? '' : 'none';
+        if (!isMobile) {
+            document.querySelectorAll('.expert-collapsible').forEach(el => {
+                el.classList.add('expanded');
+            });
+        }
+    }
+
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.expert-collapsible').forEach(el => {
+            el.classList.add('expanded');
+            if (el.tagName === 'DETAILS') el.open = true;
+        });
+        btn.style.display = 'none';
+    });
+
+    window.addEventListener('resize', updateCollapseVisibility);
+    updateCollapseVisibility();
+}
+
 function initWizard() {
     document.querySelectorAll('.wizard-btn-next').forEach(btn => {
         btn.addEventListener('click', () => goToStep(parseInt(btn.dataset.next)));
@@ -1206,6 +1232,7 @@ function initApp() {
     }
     updateFormProgress();
     initWizard();
+    initExpertCollapse();
     showAccueil();
 }
 

@@ -1024,3 +1024,26 @@ details.accordion[open] summary::after { transform: rotate(90deg); }
 }
 .verdict-secondary { margin-top: 12px; }
 .verdict-detail { font-size: 0.78rem; color: var(--text-secondary); opacity: 0.75; }
+
+/* === MOBILE EXPERT COLLAPSE === */
+.btn-expand-expert {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin: 16px 0;
+    background: var(--card-bg);
+    border: 1.5px dashed var(--border-color);
+    border-radius: var(--border-radius);
+    color: var(--primary-color);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.2s;
+}
+.btn-expand-expert:hover { background: var(--border-color); }
+
+@media (max-width: 768px) {
+    .expert-collapsible { display: none; }
+    .expert-collapsible.expanded { display: block; }
+}

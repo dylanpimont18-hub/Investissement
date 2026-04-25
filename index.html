@@ -325,6 +325,11 @@
                 <div id="optimization-tips-container"></div>
             </div>
 
+            <!-- Bouton expand expert sections (mobile) -->
+            <button type="button" id="btn-expand-expert" class="btn-expand-expert" style="display:none;">
+                Voir l'analyse complète ↓
+            </button>
+
             <!-- BLOC 5 : Fiscalité comparée -->
             <div class="card" style="margin-top: 20px; text-align: left;">
                 <div style="display:flex; align-items:center; gap:8px; margin-bottom:15px;">
@@ -340,7 +345,7 @@
             </div>
 
             <!-- BLOC 6 : Détails de l'opération (repliable) -->
-            <details class="section-collapsible" id="section-details-op">
+            <details class="section-collapsible expert-collapsible" id="section-details-op">
                 <summary class="section-collapsible-summary">Détails de l'opération &amp; métriques avancées</summary>
                 <div class="section-collapsible-body">
                     <div class="metrics-grid metrics-grid-secondary" style="margin-top: 15px;">
@@ -389,7 +394,7 @@
             </details>
 
             <!-- BLOC 7 : Scénarios & Sensibilité (repliable) -->
-            <details class="section-collapsible" id="section-details-analyse">
+            <details class="section-collapsible expert-collapsible" id="section-details-analyse">
                 <summary class="section-collapsible-summary">Scénarios &amp; Sensibilité</summary>
                 <div class="section-collapsible-body">
                     <div style="margin-top: 16px; text-align: left;">
@@ -417,7 +422,7 @@
             </details>
 
             <!-- BLOC 7 : Projections sur 25 ans (repliable) -->
-            <details class="section-collapsible" id="section-details-projections">
+            <details class="section-collapsible expert-collapsible" id="section-details-projections">
                 <summary class="section-collapsible-summary">Projections sur 25 ans &amp; Scénario de Sortie</summary>
                 <div class="section-collapsible-body">
                     <div style="margin-top: 16px; text-align: left;">
