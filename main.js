@@ -833,41 +833,46 @@ document.getElementById('btn-run-compare').addEventListener('click', function() 
     });
     const total = comparableRows.length;
 
-    let verdictHTML;
-    if (winsA > winsB) {
-        verdictHTML = `<div class="comparator-verdict comparator-verdict-win">
-            <div class="cv-label">Projet recommandé</div>
-            <div class="cv-winner">${nameA}</div>
-            <div class="cv-detail">${winsA} critères gagnants sur ${total} comparés</div>
-        </div>`;
-    } else if (winsB > winsA) {
-        verdictHTML = `<div class="comparator-verdict comparator-verdict-win">
-            <div class="cv-label">Projet recommandé</div>
-            <div class="cv-winner">${nameB}</div>
-            <div class="cv-detail">${winsB} critères gagnants sur ${total} comparés</div>
-        </div>`;
-    } else {
-        verdictHTML = `<div class="comparator-verdict comparator-verdict-tie">
-            <div class="cv-label">Résultat</div>
-            <div class="cv-winner">Projets équivalents</div>
-            <div class="cv-detail">À égalité sur les ${total} critères comparables — affinez vos hypothèses</div>
+    const isTie = winsA === winsB;
+    const winnerIsA = winsA > winsB;
+    const winnerCfPositive = winnerIsA ? mA.cfNetNet >= 0 : mB.cfNetNet >= 0;
+    const winnerColor = winnerCfPositive ? '#22c55e' : '#3b82f6';
+
+    function buildCard(name, metrics, isWinner, isTie, rows, winnerColor) {
+        const badge = isWinner ? `<div class="comparator-badge-winner">&#9733; Recommandé</div>` : '';
+        const cardClass = isTie ? 'comparator-card' : (isWinner ? 'comparator-card comparator-card-winner' : 'comparator-card comparator-card-loser');
+        const borderStyle = isWinner && !isTie ? `style="border-color:${winnerColor};background:${winnerColor === '#22c55e' ? '#f0fdf4' : '#eff6ff'}"` : '';
+
+        const kpiLines = rows.map(r => {
+            const val  = metrics === 'A' ? r.valA : r.valB;
+            const rawMe = metrics === 'A' ? r.rawA : r.rawB;
+            const rawOther = metrics === 'A' ? r.rawB : r.rawA;
+            let check = '';
+            if (r.hib !== null && rawMe !== null && rawOther !== null && rawMe !== rawOther) {
+                const iWin = r.hib ? rawMe > rawOther : rawMe < rawOther;
+                check = iWin ? ' <span class="comparator-check">✓</span>' : '';
+            }
+            return `<div class="comparator-card-row"><span class="comparator-card-lbl">${r.label}</span><span class="comparator-card-val">${val}${check}</span></div>`;
+        }).join('');
+
+        return `<div class="${cardClass}" ${borderStyle}>
+            <div class="comparator-card-header">
+                <div class="comparator-card-name">${name}</div>
+                ${badge}
+            </div>
+            <div class="comparator-card-kpis">${kpiLines}</div>
         </div>`;
     }
 
-    let html = `<table class="comparator-table"><thead><tr><th>Métrique</th><th>${nameA}</th><th>${nameB}</th></tr></thead><tbody>`;
-    rows.forEach(r => {
-        let cA = '', cB = '';
-        if (r.hib !== null && r.rawA !== null && r.rawB !== null && r.rawA !== r.rawB) {
-            const aWins = r.hib ? r.rawA > r.rawB : r.rawA < r.rawB;
-            cA = aWins ? 'comparator-winner' : 'comparator-loser';
-            cB = aWins ? 'comparator-loser'  : 'comparator-winner';
-        } else if (r.rawA !== null && r.rawA === r.rawB) {
-            cA = 'comparator-equal'; cB = 'comparator-equal';
-        }
-        html += `<tr><td>${r.label}</td><td class="${cA}">${r.valA}</td><td class="${cB}">${r.valB}</td></tr>`;
-    });
-    html += '</tbody></table>';
-    document.getElementById('comparator-results').innerHTML = verdictHTML + html;
+    const cardA = buildCard(nameA, 'A', !isTie && winnerIsA,  isTie, rows, winnerColor);
+    const cardB = buildCard(nameB, 'B', !isTie && !winnerIsA, isTie, rows, winnerColor);
+
+    let tieNote = '';
+    if (isTie) {
+        tieNote = `<div class="comparator-tie-note">Projets comparables — Choisissez selon vos critères personnels</div>`;
+    }
+
+    document.getElementById('comparator-results').innerHTML = `${tieNote}<div class="comparator-cards">${cardA}${cardB}</div>`;
 });
 
 // Fermeture modales par touche Echap
