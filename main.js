@@ -761,8 +761,8 @@ function handlePhotoFiles(event) {
     event.target.value = '';
 }
 
-document.getElementById('photo-input').addEventListener('change', handlePhotoFiles);
-document.getElementById('photo-input-camera').addEventListener('change', handlePhotoFiles);
+document.getElementById('photo-input')?.addEventListener('change', handlePhotoFiles);
+document.getElementById('photo-input-camera')?.addEventListener('change', handlePhotoFiles);
 
 // Sauvegarde de projet
 document.getElementById('btn-save-project').addEventListener('click', () => {

@@ -65,188 +65,190 @@
 
     <div id="view-inputs" class="view-section active">
         <form id="calc-form">
-            <!-- Sélecteur de mode d'entrée -->
-            <div class="entry-mode-selector">
-                <button type="button" id="btn-mode-rapide" class="mode-pill mode-pill-active">
-                    <span class="mode-pill-title">Estimation rapide</span>
-                    <span class="mode-pill-desc">4 champs · résultat immédiat</span>
-                </button>
-                <button type="button" id="btn-mode-expert" class="mode-pill">
-                    <span class="mode-pill-title">Analyse complète</span>
-                    <span class="mode-pill-desc">Tous les paramètres</span>
-                </button>
-            </div>
-            <!-- Champs cachés pour la compatibilité JS existante -->
-            <input type="checkbox" id="mode-toggle" style="display:none">
-            <span id="label-simple" style="display:none"></span>
-            <span id="label-expert" style="display:none"></span>
+<!-- Bouton simulate caché (conservé pour compat event listener main.js) -->
+<button type="button" id="btn-simulate" style="display:none;">Analyser</button>
 
-<div id="simplified-inputs">
-    <div class="card quick-estimate-card">
-        <div class="quick-estimate-header">
-            <span class="quick-estimate-badge">Estimation rapide</span>
-            <span class="quick-estimate-hint">Modifiable à tout moment</span>
-        </div>
-        <div class="simple-fields-grid">
-            <div class="simple-field">
-                <div class="simple-label">Prix du bien</div>
-                <div class="simple-input-wrap">
-                    <input type="number" id="simple-prix" inputmode="numeric" class="simple-input" data-real-id="prix" value="107000">
-                    <span class="simple-unit">€</span>
-                </div>
-            </div>
-            <div class="simple-field">
-                <div class="simple-label">Loyer mensuel</div>
-                <div class="simple-input-wrap">
-                    <input type="number" id="simple-loyer" inputmode="numeric" class="simple-input" data-real-id="loyer" value="700">
-                    <span class="simple-unit">€/mois</span>
-                </div>
-            </div>
-            <div class="simple-field">
-                <div class="simple-label">Apport</div>
-                <div class="simple-input-wrap">
-                    <input type="number" id="simple-apport" inputmode="numeric" class="simple-input" data-real-id="apport" value="0">
-                    <span class="simple-unit">€</span>
-                </div>
-            </div>
-            <div class="simple-field">
-                <div class="simple-label">Durée</div>
-                <div class="simple-input-wrap">
-                    <input type="number" id="simple-duree" inputmode="numeric" class="simple-input" data-real-id="duree" value="20">
-                    <span class="simple-unit">ans</span>
-                </div>
-            </div>
-        </div>
-        <button type="button" id="btn-simulate-quick" class="btn-simulate-quick">Analyser ce bien →</button>
+<!-- Wizard : indicateur d'étapes -->
+<div class="wizard-step-indicator">
+    <div class="wizard-step-dot current" data-step="1">
+        <span class="wsd-num">1</span>
+        <span class="wsd-label">Le Bien</span>
+    </div>
+    <div class="wizard-step-connector"></div>
+    <div class="wizard-step-dot" data-step="2">
+        <span class="wsd-num">2</span>
+        <span class="wsd-label">Financement</span>
+    </div>
+    <div class="wizard-step-connector"></div>
+    <div class="wizard-step-dot" data-step="3">
+        <span class="wsd-num">3</span>
+        <span class="wsd-label">Exploitation</span>
+    </div>
+    <div class="wizard-step-connector"></div>
+    <div class="wizard-step-dot" data-step="4">
+        <span class="wsd-num">4</span>
+        <span class="wsd-label">Fiscalité</span>
     </div>
 </div>
-            <div id="form-warnings"></div>
 
-            <details class="projects-details" id="projects-section">
-                <summary class="projects-summary">📁 Mes projets sauvegardés <span class="projects-count-badge" id="projects-count-badge"></span></summary>
-                <div class="projects-body">
-                    <p class="photo-help" style="margin-bottom: 10px; text-align: left;">Sauvegardez vos visites pour les comparer plus tard.</p>
-                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                        <input type="text" id="project-name" placeholder="Nom du projet (ex: T2 Centre)" style="flex: 1; text-align: left;">
-                        <button type="button" id="btn-save-project" class="btn-primary" style="padding: 10px; white-space: nowrap;">Sauvegarder</button>
-                    </div>
-                    <ul id="projects-list" class="projects-list"></ul>
-                    <div class="projects-limit-bar" id="projects-limit-bar" style="display:none;">
-                        <span>Sauvegardés : <span class="limit-count" id="projects-limit-count">0 / 3</span></span>
-                        <button type="button" class="limit-upgrade" onclick="window.openAccountModal()">Illimité avec Pro+ →</button>
-                    </div>
-                    <button type="button" id="btn-compare-projects" class="btn-secondary" style="width: 100%; margin-top: 10px; display: none;">Comparer les projets</button>
-                    <div class="cloud-sync-strip">
-                        <span class="cloud-sync-icon">☁</span>
-                        <span class="cloud-sync-text">Sync multi-appareils — <em>Prochainement dans Pro+</em></span>
-                        <button type="button" class="cloud-sync-cta" onclick="window.openAccountModal()">En savoir plus</button>
-                    </div>
-                </div>
-            </details>
+<div id="form-warnings"></div>
 
-            <div class="form-progress">
-                <div class="form-progress-bar-track"><div class="form-progress-bar-fill" id="form-progress-fill"></div></div>
-                <div class="form-progress-label" id="form-progress-label">1 / 4 sections remplies</div>
+<!-- Étape 1 : Le Bien -->
+<div class="wizard-step" id="wizard-step-1">
+    <div class="wizard-step-card">
+        <h3 class="wizard-step-title">Le Bien</h3>
+
+        <label><span>Prix affiché (€) <span class="help-tip" data-tip="Le prix de vente annoncé par le vendeur ou l'agence, avant toute négociation de votre part.">?</span></span>
+            <input type="number" inputmode="numeric" id="prix" value="107000"></label>
+        <label><span>Loyer mensuel HC (€) <span class="help-tip" data-tip="Loyer Hors Charges : le montant que le locataire vous verse chaque mois, sans compter les charges récupérables.">?</span></span>
+            <input type="number" inputmode="numeric" id="loyer" value="700"></label>
+
+        <label class="wizard-expert-only"><span>Négociation obtenue (€) <span class="help-tip" data-tip="La réduction que vous avez négociée sur le prix affiché. Prix réellement payé = prix affiché − négociation.">?</span></span>
+            <input type="number" inputmode="numeric" id="nego" value="0"></label>
+        <label class="wizard-expert-only"><span>Type de bien <span class="help-tip" data-tip="Ancien = bien de plus de 5 ans (~8% de frais de notaire). Neuf = moins de 5 ans (~2.5% de frais de notaire).">?</span></span>
+            <select id="type-bien">
+                <option value="ancien">Ancien (~8%)</option>
+                <option value="neuf">Neuf (~2.5%)</option>
+            </select>
+        </label>
+        <label class="wizard-expert-only"><span>Frais notaire (%) <span class="help-tip" data-tip="Frais obligatoires payés au notaire lors de l'achat. ~8% dans l'ancien, ~2.5% dans le neuf.">?</span></span>
+            <input type="number" inputmode="decimal" step="0.1" id="notaire" value="8"></label>
+        <label class="wizard-expert-only"><span>Travaux estim. (€) <span class="help-tip" data-tip="Budget prévu pour les rénovations. Déductible des impôts en régime Foncier Réel.">?</span></span>
+            <input type="number" inputmode="numeric" id="travaux" value="5000"></label>
+        <label class="wizard-expert-only"><span>Mobilier (€) <span class="help-tip" data-tip="Coût de l'ameublement si vous louez en meublé.">?</span></span>
+            <input type="number" inputmode="numeric" id="meubles" value="4000"></label>
+    </div>
+    <div class="wizard-nav">
+        <div></div>
+        <button type="button" class="wizard-btn-next btn-primary" data-next="2">Suivant →</button>
+    </div>
+</div>
+
+<!-- Étape 2 : Financement -->
+<div class="wizard-step" id="wizard-step-2" style="display:none;">
+    <div class="wizard-step-card">
+        <h3 class="wizard-step-title">Financement</h3>
+
+        <label><span>Apport personnel (€) <span class="help-tip" data-tip="L'argent que vous investissez de votre poche, sans emprunter.">?</span></span>
+            <input type="number" inputmode="numeric" id="apport" value="0"></label>
+        <div class="complex-input" style="margin-top:15px;">
+            <label><span>Taux d'intérêt annuel (%) <span class="help-tip" data-tip="Le pourcentage annuel que la banque vous facture pour vous prêter l'argent.">?</span></span>
+                <input type="number" inputmode="decimal" step="0.01" id="taux-input" value="3.17"></label>
+            <input type="range" id="taux-slider" class="styled-slider" min="0.5" max="6" step="0.05" value="3.17">
+        </div>
+        <label><span>Durée du prêt (Années) <span class="help-tip" data-tip="Nombre d'années de remboursement.">?</span></span>
+            <input type="number" inputmode="numeric" id="duree" value="20"></label>
+
+        <label class="wizard-expert-only"><span>Taux assurance (%) <span class="help-tip" data-tip="Coût de l'assurance emprunteur (décès, invalidité), en % du capital emprunté par an.">?</span></span>
+            <input type="number" inputmode="decimal" step="0.01" id="assurance" value="0.30"></label>
+        <label class="wizard-expert-only"><span>Frais d'agence (€) <span class="help-tip" data-tip="La commission payée à l'agence immobilière.">?</span></span>
+            <input type="number" inputmode="numeric" id="agence" value="0"></label>
+        <label class="wizard-expert-only"><span>Frais bancaires (€) <span class="help-tip" data-tip="Frais de dossier et de garantie facturés par la banque.">?</span></span>
+            <input type="number" inputmode="numeric" id="frais-bancaires" value="1500"></label>
+    </div>
+    <div class="wizard-nav">
+        <button type="button" class="wizard-btn-prev btn-secondary" data-prev="1">← Retour</button>
+        <button type="button" class="wizard-btn-next btn-primary" data-next="3">Suivant →</button>
+    </div>
+</div>
+
+<!-- Étape 3 : Exploitation -->
+<div class="wizard-step" id="wizard-step-3" style="display:none;">
+    <div class="wizard-step-card">
+        <h3 class="wizard-step-title">Exploitation</h3>
+
+        <label><span>Vacance locative (%) <span class="help-tip" data-tip="Le % du temps où le logement est vide entre deux locataires. 5% ≈ 18 jours/an.">?</span></span>
+            <input type="number" inputmode="decimal" step="0.1" id="vacance" value="5"></label>
+
+        <label class="wizard-expert-only"><span>Charges copropriété/mois (€) <span class="help-tip" data-tip="Votre part mensuelle des frais de l'immeuble.">?</span></span>
+            <input type="number" inputmode="numeric" id="copro" value="40"></label>
+        <label class="wizard-expert-only"><span>Taxe foncière/an (€) <span class="help-tip" data-tip="Impôt annuel payé par le propriétaire. Non récupérable sur le locataire.">?</span></span>
+            <input type="number" inputmode="numeric" id="fonciere" value="1500"></label>
+        <label class="wizard-expert-only"><span>Assurance propriétaire/an (€) <span class="help-tip" data-tip="Assurance PNO (Propriétaire Non Occupant). Obligatoire quand on loue un bien.">?</span></span>
+            <input type="number" inputmode="numeric" id="pno" value="150"></label>
+        <label class="wizard-expert-only"><span>Frais de gestion (%) <span class="help-tip" data-tip="Commission versée à une agence pour gérer la location. Si vous gérez seul, mettez 0%.">?</span></span>
+            <input type="number" inputmode="decimal" step="0.1" id="gestion" value="7"></label>
+    </div>
+    <div class="wizard-nav">
+        <button type="button" class="wizard-btn-prev btn-secondary" data-prev="2">← Retour</button>
+        <button type="button" class="wizard-btn-next btn-primary" data-next="4">Suivant →</button>
+    </div>
+</div>
+
+<!-- Étape 4 : Fiscalité -->
+<div class="wizard-step" id="wizard-step-4" style="display:none;">
+    <div class="wizard-step-card">
+        <h3 class="wizard-step-title">Fiscalité</h3>
+
+        <label><span>Revenus du foyer (€) <span class="help-tip" data-tip="Total des revenus annuels de votre foyer. Sert à calculer votre tranche d'imposition (TMI). Foyer : 2 adultes + 2 enfants.">?</span></span>
+            <input type="number" inputmode="numeric" id="revenus" value="60000"></label>
+        <div class="tmi-box">Votre TMI <span class="help-tip" data-tip="Taux Marginal d'Imposition : la tranche la plus haute de votre barème d'impôt sur le revenu.">?</span> : <strong id="tmi-display">-- %</strong></div>
+        <label><span>Régime fiscal <span class="help-tip" data-tip="Le mode de calcul de l'impôt sur vos loyers. Micro-Foncier : abattement 30%. Foncier Réel : déduction charges réelles. SCI à l'IS : impôt société.">?</span></span>
+            <div style="display:flex; align-items:center; gap:6px;">
+                <select id="regime">
+                    <option value="micro-foncier">Micro-Foncier (-30%)</option>
+                    <option value="reel">Foncier Réel</option>
+                    <option value="sci-is">SCI à l'IS</option>
+                </select>
+                <button type="button" class="btn-info-regime" onclick="openRegimeModal()" title="Détails des régimes fiscaux">i</button>
+                <button type="button" class="btn-info-deductibles" onclick="openDeductiblesModal()" title="Que peut-on déduire des impôts ?">Que déduire ?</button>
             </div>
+        </label>
 
-            <div class="grid-2-cols">
-                <details class="accordion">
-                    <summary>🛒 Acquisition</summary>
-                    <div class="accordion-content">
-                        <label><span>Prix affiché (€) <span class="help-tip" data-tip="Le prix de vente annoncé par le vendeur ou l'agence, avant toute négociation de votre part.">?</span></span> <input type="number" inputmode="numeric" id="prix" value="107000"></label>
-                        <label><span>Négociation obtenue (€) <span class="help-tip" data-tip="La réduction que vous avez négociée sur le prix affiché. Prix réellement payé = prix affiché − négociation.">?</span></span> <input type="number" inputmode="numeric" id="nego" value="0"></label>
-                        <label><span>Frais d'agence (€) <span class="help-tip" data-tip="La commission payée à l'agence immobilière. Parfois déjà incluse dans le prix affiché (FAI = Frais d'Agence Inclus).">?</span></span> <input type="number" inputmode="numeric" id="agence" value="0"></label>
-                        <label><span>Type de bien <span class="help-tip" data-tip="Ancien = bien de plus de 5 ans (~8% de frais de notaire). Neuf = moins de 5 ans (~2.5% de frais de notaire).">?</span></span>
-                            <select id="type-bien">
-                                <option value="ancien">Ancien (~8%)</option>
-                                <option value="neuf">Neuf (~2.5%)</option>
-                            </select>
-                        </label>
-                        <label><span>Frais notaire (%) <span class="help-tip" data-tip="Frais obligatoires payés au notaire lors de l'achat : taxes, droits d'enregistrement et honoraires. ~8% dans l'ancien, ~2.5% dans le neuf.">?</span></span> <input type="number" inputmode="decimal" step="0.1" id="notaire" value="8"></label>
-                        <label><span>Travaux estim. (€) <span class="help-tip" data-tip="Budget prévu pour les rénovations : peinture, plomberie, électricité, sols… Déductible des impôts en régime Foncier Réel.">?</span></span> <input type="number" inputmode="numeric" id="travaux" value="5000"></label>
-                        <label><span>Mobilier (€) <span class="help-tip" data-tip="Coût de l'ameublement si vous louez en meublé : lit, canapé, table, électroménager…">?</span></span> <input type="number" inputmode="numeric" id="meubles" value="4000"></label>
-                        <label><span>Frais bancaires (€) <span class="help-tip" data-tip="Frais de dossier et de garantie facturés par la banque pour monter votre prêt immobilier.">?</span></span> <input type="number" inputmode="numeric" id="frais-bancaires" value="1500"></label>
-                    </div>
-                </details>
-
-                <details class="accordion">
-                    <summary>🏦 Financement</summary>
-                    <div class="accordion-content">
-                        <label><span>Apport personnel (€) <span class="help-tip" data-tip="L'argent que vous investissez de votre poche, sans emprunter. Plus l'apport est élevé, moins vous empruntez et moins la mensualité est forte.">?</span></span> <input type="number" inputmode="numeric" id="apport" value="0"></label>
-                        <div class="complex-input">
-                            <label><span>Taux d'intérêt annuel (%) <span class="help-tip" data-tip="Le pourcentage annuel que la banque vous facture pour vous prêter l'argent. Ex : 3% sur 100 000 € = ~3 000 €/an d'intérêts la 1re année.">?</span></span> <input type="number" inputmode="decimal" step="0.01" id="taux-input" value="3.17"></label>
-                            <input type="range" id="taux-slider" class="styled-slider" min="0.5" max="6" step="0.05" value="3.17">
-                        </div>
-                        <label><span>Durée du prêt (Années) <span class="help-tip" data-tip="Nombre d'années de remboursement. Plus c'est long, moins la mensualité est élevée, mais plus le coût total du crédit augmente.">?</span></span> <input type="number" inputmode="numeric" id="duree" value="20"></label>
-                        <label><span>Taux assurance (%) <span class="help-tip" data-tip="Coût de l'assurance emprunteur (décès, invalidité), en % du capital emprunté par an. Obligatoire pour obtenir le prêt.">?</span></span> <input type="number" inputmode="decimal" step="0.01" id="assurance" value="0.30"></label>
-                    </div>
-                </details>
-
-                <details class="accordion">
-                    <summary>📈 Exploitation</summary>
-                    <div class="accordion-content">
-                        <label><span>Loyer mensuel HC (€) <span class="help-tip" data-tip="Loyer Hors Charges : le montant que le locataire vous verse chaque mois, sans compter les charges récupérables (eau, ordures…).">?</span></span> <input type="number" inputmode="numeric" id="loyer" value="700"></label>
-                        <label><span>Charges copropriété/mois (€) <span class="help-tip" data-tip="Votre part mensuelle des frais de l'immeuble : entretien des parties communes, ascenseur, gardien… La part non récupérable sur le locataire.">?</span></span> <input type="number" inputmode="numeric" id="copro" value="40"></label>
-                        <label><span>Taxe foncière/an (€) <span class="help-tip" data-tip="Impôt annuel payé par le propriétaire. Son montant dépend de la commune et de la valeur du bien. Non récupérable sur le locataire.">?</span></span> <input type="number" inputmode="numeric" id="fonciere" value="1500"></label>
-                        <label><span>Assurance propriétaire/an (€) <span class="help-tip" data-tip="Assurance PNO (Propriétaire Non Occupant). Obligatoire quand on loue un bien. Couvre les dégâts quand le logement est vide ou en complément de l'assurance du locataire.">?</span></span> <input type="number" inputmode="numeric" id="pno" value="150"></label>
-                        <label><span>Vacance locative (%) <span class="help-tip" data-tip="Le % du temps où le logement est vide entre deux locataires. 5% ≈ 18 jours/an sans loyer. Prévoyez 5 à 8% pour être prudent.">?</span></span> <input type="number" inputmode="decimal" step="0.1" id="vacance" value="5"></label>
-                        <label><span>Frais de gestion (%) <span class="help-tip" data-tip="Commission versée à une agence pour gérer la location : recherche de locataires, états des lieux, encaissement des loyers. Si vous gérez seul, mettez 0%.">?</span></span> <input type="number" inputmode="decimal" step="0.1" id="gestion" value="7"></label>
-                    </div>
-                </details>
-
-                <details class="accordion">
-                    <summary>⚖️ Fiscalité <span class="tmi-accordion-badge" id="tmi-accordion-badge" style="display:none;"></span></summary>
-                    <div class="accordion-content">
-                        <label><span>Revenus du foyer (€) <span class="help-tip" data-tip="Total des revenus annuels de votre couple (salaires, pensions…). Sert à calculer votre tranche d'imposition (TMI). Foyer : 2 adultes + 2 enfants (3 parts).">?</span></span> <input type="number" inputmode="numeric" id="revenus" value="60000"></label>
-                        <div class="tmi-box">Votre TMI <span class="help-tip" data-tip="Taux Marginal d'Imposition : la tranche la plus haute de votre barème d'impôt sur le revenu. C'est à ce taux que seront taxés vos revenus locatifs en plus.">?</span> : <strong id="tmi-display">-- %</strong></div>
-                        <label><span>Régime fiscal <span class="help-tip" data-tip="Le mode de calcul de l'impôt sur vos loyers. Micro-Foncier : abattement simple de 30%. Foncier Réel : déduction de toutes vos charges réelles. SCI à l'IS : impôt société 15% jusqu'à 42 500 € de bénéfice, 25% au-delà, avec amortissement comptable du bâti.">?</span></span>
-                            <div style="display:flex; align-items:center; gap:6px;">
-                                <select id="regime">
-                                    <option value="micro-foncier">Micro-Foncier (-30%)</option>
-                                    <option value="reel">Foncier Réel</option>
-                                    <option value="sci-is">SCI à l'IS</option>
-                                </select>
-                                <button type="button" class="btn-info-regime" onclick="openRegimeModal()" title="Détails des régimes fiscaux">i</button>
-                                <button type="button" class="btn-info-deductibles" onclick="openDeductiblesModal()" title="Que peut-on déduire des impôts ?">Que déduire ?</button>
-                            </div>
-                        </label>
-                        <label><span>Inflation annuelle (%) <span class="help-tip" data-tip="Taux d'augmentation annuelle des loyers et des charges. 0% = pas d'inflation (scénario conservateur). 2% = scénario moyen. Impacte la projection sur 25 ans.">?</span></span>
-                            <div class="complex-input">
-                                <input type="number" inputmode="decimal" step="0.5" id="inflation" value="0" min="0" max="5">
-                                <input type="range" id="inflation-slider" class="styled-slider" min="0" max="5" step="0.5" value="0">
-                            </div>
-                        </label>
-                        <label><span>Prix de revente estimé (€) <span class="help-tip" data-tip="Prix de vente cible que vous estimez pouvoir obtenir aujourd'hui pour ce bien. Sert de base au scénario de revente.">?</span></span> <input type="number" inputmode="numeric" id="prix-revente-estime" value="120000"></label>
-                        <label><span>Evolution prix revente/an (%) <span class="help-tip" data-tip="Hypothèse d'évolution annuelle du prix de revente. 0% = prix constant, 2% = hausse moyenne de 2% par an.">?</span></span>
-                            <div class="complex-input">
-                                <input type="number" inputmode="decimal" step="0.5" id="appreciation" value="0" min="-5" max="10">
-                                <input type="range" id="appreciation-slider" class="styled-slider" min="-5" max="10" step="0.5" value="0" aria-label="Evolution annuelle du prix de revente">
-                            </div>
-                        </label>
-                        <label><span>Frais de revente (%) <span class="help-tip" data-tip="Frais globaux estimés à la revente (agence, frais administratifs, etc.). Déduits du prix de vente.">?</span></span> <input type="number" inputmode="decimal" step="0.1" id="frais-revente" value="7"></label>
-                        <label><span>Taux fiscal sortie SCI-IS (%) <span class="help-tip" data-tip="Utilisé en SCI à l'IS pour estimer l'impôt de sortie. En Micro-Foncier et Foncier Réel, l'app applique automatiquement les abattements de durée de détention.">?</span></span> <input type="number" inputmode="decimal" step="0.1" id="taux-pv" value="25"></label>
-                    </div>
-                </details>
-
-                <details class="accordion">
-                    <summary>📝 Notes & Photos</summary>
-                    <div class="accordion-content">
-                        <textarea id="commentaires-input" rows="3" placeholder="Notes sur la visite, l'état du bien..."></textarea>
-                        <div class="photo-upload-btns">
-                            <label class="photo-upload-btn">
-                                <span>🖼️ Galerie</span>
-                                <input type="file" id="photo-input" accept="image/*" multiple style="display: none;">
-                            </label>
-                            <label class="photo-upload-btn photo-upload-btn-camera">
-                                <span>📷 Caméra</span>
-                                <input type="file" id="photo-input-camera" accept="image/*" capture="environment" style="display: none;">
-                            </label>
-                        </div>
-                        <div class="photo-grid" id="photo-gallery-preview" style="margin-top: 10px;"></div>
-                    </div>
-                </details>
+        <label class="wizard-expert-only"><span>Inflation annuelle (%) <span class="help-tip" data-tip="Taux d'augmentation annuelle des loyers et des charges.">?</span></span>
+            <div class="complex-input">
+                <input type="number" inputmode="decimal" step="0.5" id="inflation" value="0" min="0" max="5">
+                <input type="range" id="inflation-slider" class="styled-slider" min="0" max="5" step="0.5" value="0">
             </div>
-            <button type="button" id="btn-simulate" class="btn-simulate">Analyser ce bien</button>
+        </label>
+        <label class="wizard-expert-only"><span>Prix de revente estimé (€) <span class="help-tip" data-tip="Prix de vente cible que vous estimez pouvoir obtenir. Sert de base au scénario de revente.">?</span></span>
+            <input type="number" inputmode="numeric" id="prix-revente-estime" value="120000"></label>
+        <label class="wizard-expert-only"><span>Evolution prix revente/an (%) <span class="help-tip" data-tip="Hypothèse d'évolution annuelle du prix de revente.">?</span></span>
+            <div class="complex-input">
+                <input type="number" inputmode="decimal" step="0.5" id="appreciation" value="0" min="-5" max="10">
+                <input type="range" id="appreciation-slider" class="styled-slider" min="-5" max="10" step="0.5" value="0" aria-label="Evolution annuelle du prix de revente">
+            </div>
+        </label>
+        <label class="wizard-expert-only"><span>Frais de revente (%) <span class="help-tip" data-tip="Frais globaux estimés à la revente (agence, frais administratifs, etc.).">?</span></span>
+            <input type="number" inputmode="decimal" step="0.1" id="frais-revente" value="7"></label>
+        <label class="wizard-expert-only"><span>Taux fiscal sortie SCI-IS (%) <span class="help-tip" data-tip="Utilisé en SCI à l'IS pour estimer l'impôt de sortie.">?</span></span>
+            <input type="number" inputmode="decimal" step="0.1" id="taux-pv" value="25"></label>
+
+        <!-- Notes (expert) -->
+        <div class="wizard-expert-only" style="margin-top:15px;">
+            <label style="display:block; margin-bottom:6px; font-size:0.95rem; font-weight:500;">Notes de visite</label>
+            <textarea id="commentaires-input" rows="3" placeholder="Notes sur la visite, l'état du bien..."></textarea>
+        </div>
+    </div>
+
+    <!-- Projets sauvegardés (accessible depuis étape 4) -->
+    <details class="projects-details" id="projects-section" style="margin-top:16px;">
+        <summary class="projects-summary">Mes projets sauvegardés <span class="projects-count-badge" id="projects-count-badge"></span></summary>
+        <div class="projects-body">
+            <p class="photo-help" style="margin-bottom: 10px; text-align: left;">Sauvegardez vos visites pour les comparer plus tard.</p>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <input type="text" id="project-name" placeholder="Nom du projet (ex: T2 Centre)" style="flex: 1; text-align: left;">
+                <button type="button" id="btn-save-project" class="btn-primary" style="padding: 10px; white-space: nowrap;">Sauvegarder</button>
+            </div>
+            <ul id="projects-list" class="projects-list"></ul>
+            <div class="projects-limit-bar" id="projects-limit-bar" style="display:none;">
+                <span>Sauvegardés : <span class="limit-count" id="projects-limit-count">0 / 3</span></span>
+                <button type="button" class="limit-upgrade" onclick="window.openAccountModal()">Illimité avec Pro+ →</button>
+            </div>
+            <button type="button" id="btn-compare-projects" class="btn-secondary" style="width: 100%; margin-top: 10px; display: none;">Comparer les projets</button>
+            <div class="cloud-sync-strip">
+                <span class="cloud-sync-icon">☁</span>
+                <span class="cloud-sync-text">Sync multi-appareils — <em>Prochainement dans Pro+</em></span>
+                <button type="button" class="cloud-sync-cta" onclick="window.openAccountModal()">En savoir plus</button>
+            </div>
+        </div>
+    </details>
+
+    <div class="wizard-nav" style="margin-top:16px;">
+        <button type="button" class="wizard-btn-prev btn-secondary" data-prev="3">← Retour</button>
+        <button type="button" id="btn-wizard-analyser" class="btn-primary">Analyser ce bien →</button>
+    </div>
+</div>
         </form>
     </div>
 
