@@ -600,6 +600,7 @@ details.accordion[open] summary::after { transform: rotate(90deg); }
     align-items: center;
     gap: 2px;
 }
+.vab-icon { font-size: 1.1rem; line-height: 1; }
 .vab-label { font-size: 0.88rem; font-weight: 700; }
 .vab-sub { font-size: 0.68rem; opacity: 0.72; font-weight: 400; }
 
@@ -648,6 +649,99 @@ details.accordion[open] summary::after { transform: rotate(90deg); }
     border: 1px solid var(--border-color);
 }
 .comparator-empty strong { color: var(--primary-color); }
+
+/* Cartes comparateur côte à côte */
+.comparator-cards {
+    display: flex;
+    gap: 14px;
+}
+.comparator-card {
+    flex: 1;
+    border: 1.5px solid var(--border-color);
+    border-radius: 16px;
+    padding: 16px 14px;
+    background: var(--card-bg);
+    transition: border-color 0.2s, background 0.2s;
+}
+.comparator-card-winner {
+    border-color: var(--success-color);
+}
+.comparator-card-loser {
+    opacity: 0.82;
+}
+.comparator-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+.comparator-card-name {
+    font-size: 0.95rem;
+    font-weight: 800;
+    font-family: var(--font-display);
+    color: var(--text-color);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+.comparator-badge-winner {
+    flex-shrink: 0;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #fff;
+    background: var(--success-color);
+    border-radius: 999px;
+    padding: 3px 8px;
+    white-space: nowrap;
+}
+.comparator-card-kpis {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+.comparator-card-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.84rem;
+}
+.comparator-card-row:last-child {
+    border-bottom: none;
+}
+.comparator-card-lbl {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+.comparator-card-val {
+    font-weight: 700;
+    color: var(--text-color);
+    text-align: right;
+}
+.comparator-check {
+    color: var(--success-color);
+    margin-left: 3px;
+    font-weight: 800;
+}
+.comparator-tie-note {
+    text-align: center;
+    padding: 10px 16px;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    background: var(--bg-color);
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 14px;
+}
+
+@media (max-width: 500px) {
+    .comparator-cards {
+        flex-direction: column;
+    }
+}
 
 /* Sections repliables expert */
 .section-collapsible {
