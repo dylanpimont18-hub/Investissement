@@ -257,12 +257,16 @@
 
             <!-- BLOC 1 : Verdict global -->
             <div id="score-banner" class="score-banner">
-                <div class="score-left">
-                    <span id="score-emoji"></span>
-                    <span id="score-label">--</span>
-                    <span id="score-stars">☆☆☆</span>
+                <div class="verdict-level">
+                    <span id="score-label" class="verdict-label">--</span>
                 </div>
-                <div id="score-detail" class="score-detail">Lancez un calcul pour voir le score</div>
+                <p id="verdict-phrase" class="verdict-phrase"></p>
+                <div class="verdict-secondary">
+                    <span id="score-detail" class="verdict-detail">Lancez un calcul pour voir l'analyse</span>
+                </div>
+                <!-- Éléments conservés pour compatibilité pdf.js (non affichés) -->
+                <span id="score-emoji" style="display:none;"></span>
+                <span id="score-stars" style="display:none;"></span>
             </div>
 
             <!-- Synthèse verdict -->
