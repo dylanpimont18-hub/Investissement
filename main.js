@@ -14,6 +14,10 @@ let savedProjects = (() => { try { return JSON.parse(localStorage.getItem('simuI
 let calcTimeout = null;
 let projectionData = [];
 
+// --- WIZARD ---
+let currentWizardStep = 1;
+let wizardMode = 'rapide';
+
 // --- COMPTE & PREMIUM (Lots 7+8) ---
 // Stub local — brancher ici Firebase Auth / Supabase pour la version cloud réelle
 const FREE_PROJECT_LIMIT = 3;
@@ -1106,6 +1110,26 @@ function animateValue(el, target, suffix, duration) {
     requestAnimationFrame(step);
 }
 
+function setWizardMode(mode) {
+    wizardMode = mode;
+    sessionStorage.setItem('simuImmoWizardMode', mode);
+    document.querySelectorAll('.wizard-expert-only').forEach(el => {
+        el.style.display = mode === 'complet' ? '' : 'none';
+    });
+}
+
+function goToStep(n) {
+    currentWizardStep = n;
+    document.querySelectorAll('.wizard-step').forEach((el, i) => {
+        el.style.display = (i + 1 === n) ? '' : 'none';
+    });
+    document.querySelectorAll('.wizard-step-dot').forEach((el, i) => {
+        el.classList.toggle('active', i + 1 < n);
+        el.classList.toggle('current', i + 1 === n);
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 // --- ACCUEIL ---
 function showAccueil() {
     document.getElementById('view-accueil').style.display = '';
@@ -1139,6 +1163,25 @@ document.getElementById('btn-reprendre').addEventListener('click', () => {
 });
 document.getElementById('btn-accueil').addEventListener('click', showAccueil);
 
+function initWizard() {
+    document.querySelectorAll('.wizard-btn-next').forEach(btn => {
+        btn.addEventListener('click', () => goToStep(parseInt(btn.dataset.next)));
+    });
+    document.querySelectorAll('.wizard-btn-prev').forEach(btn => {
+        btn.addEventListener('click', () => goToStep(parseInt(btn.dataset.prev)));
+    });
+    const btnAnalyser = document.getElementById('btn-wizard-analyser');
+    if (btnAnalyser) {
+        btnAnalyser.addEventListener('click', () => {
+            calculateAndSave();
+            document.querySelector('[data-target="view-results"]').click();
+        });
+    }
+    const savedMode = sessionStorage.getItem('simuImmoWizardMode') || 'rapide';
+    setWizardMode(savedMode);
+    goToStep(1);
+}
+
 // --- INITIALISATION ---
 function initApp() {
     migrateProjects();
@@ -1162,6 +1205,7 @@ function initApp() {
         } catch (e) {}
     }
     updateFormProgress();
+    initWizard();
     showAccueil();
 }
 
