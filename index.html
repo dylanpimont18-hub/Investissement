@@ -26,6 +26,7 @@
     <div class="header-actions">
         <button class="btn-accueil" id="btn-accueil" title="Accueil" style="display:none;">⌂</button>
         <button class="btn-theme-toggle" id="btn-theme-toggle" title="Basculer thème clair/sombre">☀️</button>
+        <button class="btn-pricing-header" id="btn-pricing-header" onclick="window.openPricingModal()" title="Découvrir Pro+">Voir Pro+</button>
         <button class="account-btn" id="btn-account" onclick="window.openAccountModal()" title="Mon espace Pro+">
             <span class="account-btn-label" id="account-btn-label">Pro+</span>
         </button>
@@ -228,18 +229,18 @@
             <p class="photo-help" style="margin-bottom: 10px; text-align: left;">Sauvegardez vos visites pour les comparer plus tard.</p>
             <div style="display: flex; gap: 10px; margin-bottom: 15px;">
                 <input type="text" id="project-name" placeholder="Nom du projet (ex: T2 Centre)" style="flex: 1; text-align: left;">
-                <button type="button" id="btn-save-project" class="btn-primary" style="padding: 10px; white-space: nowrap;">Sauvegarder</button>
+                <button type="button" id="btn-save-project" class="btn-primary" style="padding: 10px; white-space: nowrap;">Sauvegarder<span class="pro-badge">Pro+</span></button>
             </div>
             <ul id="projects-list" class="projects-list"></ul>
             <div class="projects-limit-bar" id="projects-limit-bar" style="display:none;">
                 <span>Sauvegardés : <span class="limit-count" id="projects-limit-count">0 / 3</span></span>
                 <button type="button" class="limit-upgrade" onclick="window.openAccountModal()">Illimité avec Pro+ →</button>
             </div>
-            <button type="button" id="btn-compare-projects" class="btn-secondary" style="width: 100%; margin-top: 10px; display: none;">Comparer les projets</button>
+            <button type="button" id="btn-compare-projects" class="btn-secondary" style="width: 100%; margin-top: 10px; display: none;">Comparer les projets<span class="pro-badge">Pro+</span></button>
             <div class="cloud-sync-strip">
                 <span class="cloud-sync-icon">☁</span>
                 <span class="cloud-sync-text">Sync multi-appareils — <em>Prochainement dans Pro+</em></span>
-                <button type="button" class="cloud-sync-cta" onclick="window.openAccountModal()">En savoir plus</button>
+                <button type="button" class="cloud-sync-cta" onclick="window.openPricingModal()">En savoir plus →</button>
             </div>
         </div>
     </details>
@@ -884,6 +885,7 @@
             <div class="pdf-gate-actions">
                 <button type="button" class="btn-primary" onclick="window.closePdfGateModal(); window.openAccountModal();">Rejoindre Pro+</button>
                 <button type="button" class="btn-secondary" id="btn-pdf-gate-continue">Continuer quand même</button>
+                <button type="button" class="btn-ghost" onclick="window.closePdfGateModal(); window.openPricingModal();">En savoir plus sur Pro+</button>
             </div>
         </div>
     </div>
@@ -892,7 +894,7 @@
 <!-- Barre PDF flottante (au-dessus des onglets, visible sur l'onglet Analyse) -->
 <div id="pdf-action-bar" style="display:none;">
     <button id="btn-preview-pdf" class="btn-pdf-action btn-pdf-preview">🔍 Aperçu</button>
-    <button id="btn-save-pdf" class="btn-pdf-action btn-pdf-save">🖨️ Imprimer / PDF</button>
+    <button id="btn-save-pdf" class="btn-pdf-action btn-pdf-save">🖨️ Imprimer / PDF<span class="pro-badge">Pro+</span></button>
     <button id="btn-share-pdf" class="btn-pdf-action btn-pdf-share" style="display:none;">📤</button>
 </div>
 
@@ -1001,6 +1003,52 @@
 
             <h3 style="margin: 16px 0 8px; font-size: 0.95rem;">Contact</h3>
             <p>Pour toute question relative à la confidentialité : <a href="mailto:gegertauren@gmail.com" style="color: var(--primary-color);">gegertauren@gmail.com</a></p>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Pricing Pro+ -->
+<div id="modal-pricing" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="modal-pricing-title" onclick="if(event.target===this)window.closePricingModal()">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modal-pricing-title">Passez à Pro+</h2>
+            <button type="button" class="modal-close" onclick="window.closePricingModal()" title="Fermer">✕</button>
+        </div>
+        <div class="modal-body">
+            <p class="pricing-subtitle">Choisissez la formule adaptée à votre usage</p>
+            <div class="pricing-plans-grid">
+                <div class="pricing-plan-card">
+                    <div class="pricing-plan-title">Gratuit</div>
+                    <ul class="pricing-plan-features">
+                        <li>✓ Simulation complète et analyse</li>
+                        <li>✓ 3 projets sauvegardés</li>
+                        <li>✓ 3 exports PDF</li>
+                        <li>✓ Outil de faisabilité</li>
+                        <li>✓ Comparaison de 2 projets</li>
+                        <li style="color:var(--text-secondary);opacity:0.5;">✗ Sync cloud</li>
+                        <li style="color:var(--text-secondary);opacity:0.5;">✗ Projets illimités</li>
+                        <li style="color:var(--text-secondary);opacity:0.5;">✗ PDF illimités</li>
+                    </ul>
+                </div>
+                <div class="pricing-plan-card featured">
+                    <div class="pricing-plan-label">Bientôt</div>
+                    <div class="pricing-plan-title">Pro+</div>
+                    <ul class="pricing-plan-features">
+                        <li>✓ Simulation complète et analyse</li>
+                        <li>★ Projets illimités</li>
+                        <li>★ Exports PDF illimités</li>
+                        <li>★ Outil de faisabilité avancé</li>
+                        <li>★ Comparaison multi-projets</li>
+                        <li>★ Sauvegarde cloud multi-appareils</li>
+                        <li>★ Rapport PDF professionnel</li>
+                        <li>★ Historique des analyses</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="pricing-actions">
+                <a href="mailto:gegertauren@gmail.com?subject=Investisseur%20Pro%2B%20%E2%80%94%20Liste%20d%27attente&body=Bonjour%2C%0A%0AJe%20suis%20int%C3%A9ress%C3%A9(e)%20par%20la%20version%20Pro%2B%20d%27Investisseur%20Pro.%0A%0AMon%20profil%20%3A%20" class="btn-primary">Rejoindre la liste d'attente →</a>
+                <button type="button" class="btn-ghost" onclick="window.closePricingModal()">Continuer en version gratuite</button>
+            </div>
         </div>
     </div>
 </div>
