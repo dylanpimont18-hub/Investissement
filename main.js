@@ -1360,7 +1360,8 @@ window.addEventListener('beforeinstallprompt', (e) => {
     // Ne pas afficher si déjà installée (mode standalone)
     if (window.matchMedia('(display-mode: standalone)').matches) return;
 
-    document.getElementById('install-banner').style.display = 'flex';
+    const banner = document.getElementById('install-banner');
+    if (banner) banner.style.display = 'flex';
 });
 
 document.getElementById('btn-install')?.addEventListener('click', () => {
@@ -1379,7 +1380,8 @@ document.getElementById('btn-install-dismiss')?.addEventListener('click', () => 
 
 // Cacher la bannière si l'app est lancée en mode standalone (déjà installée)
 if (window.matchMedia('(display-mode: standalone)').matches) {
-    document.getElementById('install-banner').style.display = 'none';
+    const bannerEl = document.getElementById('install-banner');
+    if (bannerEl) bannerEl.style.display = 'none';
 }
 
 // Bandeau mode offline

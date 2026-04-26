@@ -9,7 +9,6 @@ const STATIC_ASSETS = [
     './pdf.js',
     './styles.css',
     './manifest.json',
-    './icon.png',
     'https://cdn.jsdelivr.net/npm/chart.js',
     'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js',
     'https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js',
