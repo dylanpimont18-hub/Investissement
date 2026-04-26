@@ -1039,6 +1039,111 @@ details.accordion[open] summary::after { transform: rotate(90deg); }
     .account-plans-row { flex-direction: column; }
     .pdf-gate-actions { flex-direction: column; }
 }
+
+/* === LOT 8 — Pro Badge & Pricing Modal === */
+.pro-badge {
+    display: inline-block;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: #fff;
+    background: var(--gold-color, #C9A84C);
+    border-radius: 8px;
+    padding: 1px 6px;
+    margin-left: 5px;
+    vertical-align: middle;
+    line-height: 1.6;
+    pointer-events: none;
+    user-select: none;
+}
+body.is-premium .pro-badge { display: none; }
+
+#modal-pricing .modal-content {
+    max-width: 640px;
+}
+#modal-pricing .pricing-subtitle {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-align: center;
+    margin: 0 0 20px;
+}
+#modal-pricing .pricing-plans-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 20px;
+}
+#modal-pricing .pricing-plan-card {
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px 18px;
+    position: relative;
+}
+#modal-pricing .pricing-plan-card.featured {
+    border-color: var(--gold-color, #C9A84C);
+    background: linear-gradient(135deg, var(--card-bg) 0%, rgba(201,168,76,0.06) 100%);
+}
+#modal-pricing .pricing-plan-label {
+    position: absolute;
+    top: -10px;
+    right: 14px;
+    background: var(--gold-color, #C9A84C);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 9px;
+    letter-spacing: 0.05em;
+}
+#modal-pricing .pricing-plan-title {
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: var(--font-display);
+    margin-bottom: 12px;
+}
+#modal-pricing .pricing-plan-features {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin: 0;
+    padding: 0;
+}
+#modal-pricing .pricing-plan-features li {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+#modal-pricing .pricing-plan-card.featured .pricing-plan-features li {
+    color: var(--text-color);
+}
+#modal-pricing .pricing-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    margin-top: 4px;
+}
+#modal-pricing .pricing-actions .btn-primary {
+    width: 100%;
+    text-align: center;
+    text-decoration: none;
+}
+.btn-ghost {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 8px;
+    transition: color 0.2s;
+}
+.btn-ghost:hover { color: var(--text-color); }
+
+@media (max-width: 500px) {
+    #modal-pricing .pricing-plans-grid { grid-template-columns: 1fr; }
+}
+
 /* === ÉCRAN D'ACCUEIL === */
 .view-accueil {
     min-height: 70vh;
