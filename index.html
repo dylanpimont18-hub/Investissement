@@ -18,6 +18,13 @@
 </head>
 <body>
 
+<!-- Bannière installation PWA -->
+<div id="install-banner" style="display:none;" role="banner" aria-label="Installer l'application">
+    <span>📲 Installer Investisseur Pro sur votre appareil</span>
+    <button id="btn-install" type="button">Installer</button>
+    <button id="btn-install-dismiss" type="button" aria-label="Fermer la bannière">✕</button>
+</div>
+
 <div class="header">
     <div class="header-brand">
         <h1>Investisseur Pro</h1>
@@ -31,6 +38,11 @@
             <span class="account-btn-label" id="account-btn-label">Pro+</span>
         </button>
     </div>
+</div>
+
+<!-- Bandeau mode hors-ligne -->
+<div id="offline-banner" role="status" aria-live="polite">
+    ⚠️ Mode hors-ligne — Les données locales restent disponibles
 </div>
 
 <nav class="tabs-nav">
