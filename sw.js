@@ -32,19 +32,19 @@ self.addEventListener('install', (event) => {
                         .catch(() => { /* CDN indisponible au premier chargement, ignoré */ })
                 ),
             ]);
-        })
+        }).then(() => self.skipWaiting())
     );
-    self.skipWaiting();
 });
 
 // Activation : supprime les anciens caches
 self.addEventListener('activate', (event) => {
     event.waitUntil(
-        caches.keys().then((keys) =>
-            Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-        )
+        caches.keys()
+            .then((keys) =>
+                Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+            )
+            .then(() => self.clients.claim())
     );
-    self.clients.claim();
 });
 
 // Fetch : Network-First pour index.html, Cache-First pour tout le reste
@@ -55,7 +55,7 @@ self.addEventListener('fetch', (event) => {
     if (event.request.method !== 'GET') return;
 
     // Network-First pour index.html (évite de servir un HTML obsolète)
-    if (url.pathname === '/' || url.pathname.endsWith('/index.html') || url.pathname.endsWith('/')) {
+    if (url.pathname === '/' || url.pathname.endsWith('/index.html')) {
         event.respondWith(
             fetch(event.request)
                 .then(response => {
@@ -78,7 +78,7 @@ self.addEventListener('fetch', (event) => {
                     caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
                 }
                 return response;
-            }).catch(() => cached);
+            }).catch(() => new Response('Ressource non disponible hors-ligne', { status: 503, statusText: 'Service Unavailable' }));
         })
     );
 });
