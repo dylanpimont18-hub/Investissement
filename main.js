@@ -1339,4 +1339,60 @@ document.querySelectorAll('#calc-form input, #calc-form select').forEach(el => {
     el.addEventListener('change', updateFormProgress);
 });
 
+// --- LOT 9 : PWA ---
+
+// Enregistrement du Service Worker
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(err => {
+        console.warn('Service Worker registration failed:', err);
+    });
+}
+
+// Bannière d'installation PWA
+let _deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    _deferredInstallPrompt = e;
+
+    // Ne pas afficher si déjà dismissée dans cette session
+    if (sessionStorage.getItem('installBannerDismissed')) return;
+    // Ne pas afficher si déjà installée (mode standalone)
+    if (window.matchMedia('(display-mode: standalone)').matches) return;
+
+    document.getElementById('install-banner').style.display = 'flex';
+});
+
+document.getElementById('btn-install')?.addEventListener('click', () => {
+    if (!_deferredInstallPrompt) return;
+    _deferredInstallPrompt.prompt();
+    _deferredInstallPrompt.userChoice.then(() => {
+        _deferredInstallPrompt = null;
+        document.getElementById('install-banner').style.display = 'none';
+    });
+});
+
+document.getElementById('btn-install-dismiss')?.addEventListener('click', () => {
+    sessionStorage.setItem('installBannerDismissed', '1');
+    document.getElementById('install-banner').style.display = 'none';
+});
+
+// Cacher la bannière si l'app est lancée en mode standalone (déjà installée)
+if (window.matchMedia('(display-mode: standalone)').matches) {
+    document.getElementById('install-banner').style.display = 'none';
+}
+
+// Bandeau mode offline
+function setOfflineBanner(isOffline) {
+    const banner = document.getElementById('offline-banner');
+    if (!banner) return;
+    banner.style.display = isOffline ? 'block' : 'none';
+}
+
+// Initialisation au chargement
+setOfflineBanner(!navigator.onLine);
+
+window.addEventListener('offline', () => setOfflineBanner(true));
+window.addEventListener('online',  () => setOfflineBanner(false));
+
 window.onload = initApp;
