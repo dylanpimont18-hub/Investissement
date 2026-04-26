@@ -1058,7 +1058,8 @@ body.is-premium .btn-pricing-header { display: none; }
     gap: 10px;
 }
 .pdf-gate-actions .btn-primary,
-.pdf-gate-actions .btn-secondary {
+.pdf-gate-actions .btn-secondary,
+.pdf-gate-actions .btn-ghost {
     flex: 1;
 }
 
@@ -1360,7 +1361,7 @@ body.is-premium .pro-badge { display: none; }
 /* === LOT 9 — Install Banner & Offline Banner === */
 #install-banner {
     position: fixed;
-    bottom: 50px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 56px);
     left: 0;
     right: 0;
     z-index: 999;
@@ -1369,7 +1370,6 @@ body.is-premium .pro-badge { display: none; }
     justify-content: center;
     gap: 10px;
     padding: 10px 16px;
-    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
     background: var(--card-bg);
     border-top: 1px solid var(--border-color);
     box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
@@ -1412,7 +1412,7 @@ body.is-premium .pro-badge { display: none; }
     text-align: center;
     padding: 7px 16px;
     position: sticky;
-    top: 0;
+    top: 56px;
     z-index: 400;
     box-sizing: border-box;
 }

@@ -1370,6 +1370,8 @@ document.getElementById('btn-install')?.addEventListener('click', () => {
     _deferredInstallPrompt.userChoice.then(() => {
         _deferredInstallPrompt = null;
         document.getElementById('install-banner').style.display = 'none';
+    }).catch(() => {
+        _deferredInstallPrompt = null;
     });
 });
 
