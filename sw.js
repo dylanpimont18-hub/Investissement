@@ -1,4 +1,4 @@
-const CACHE_NAME = 'investpro-v1';
+const CACHE_NAME = 'investpro-v2';
 
 const STATIC_ASSETS = [
     './',
@@ -9,6 +9,10 @@ const STATIC_ASSETS = [
     './pdf.js',
     './styles.css',
     './manifest.json',
+    './icons/icon-192.png',
+    './icons/icon-512.png',
+    './icons/icon-maskable-512.png',
+    './icons/apple-touch-icon.png',
     'https://cdn.jsdelivr.net/npm/chart.js',
     'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js',
     'https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js',
@@ -46,20 +50,18 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Fetch : Network-First pour index.html, Cache-First pour tout le reste
+// Fetch : Network-First pour les navigations HTML, Cache-First pour tout le reste
 self.addEventListener('fetch', (event) => {
-    const url = new URL(event.request.url);
-
     // Ne pas intercepter les requêtes non-GET
     if (event.request.method !== 'GET') return;
 
-    // Network-First pour index.html (évite de servir un HTML obsolète)
-    if (url.pathname === '/' || url.pathname.endsWith('/index.html')) {
+    // Network-First pour les navigations (raccourcis PWA, reload, ouverture installée)
+    if (event.request.mode === 'navigate') {
         event.respondWith(
             fetch(event.request)
                 .then(response => {
                     const clone = response.clone();
-                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+                    caches.open(CACHE_NAME).then(cache => cache.put('./index.html', clone));
                     return response;
                 })
                 .catch(() => caches.match('./index.html'))

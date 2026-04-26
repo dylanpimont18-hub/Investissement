@@ -14,13 +14,14 @@ Ce fichier liste les responsabilités de chaque fichier du dépôt. Lisez ceci p
 * **`script.js`** : Fichier historique vide (conservé pour référence).
 
 ## Configuration et Métadonnées
-* **`manifest.json`** : Configuration de la PWA (nom "Investisseur Pro", short_name "InvestPro", couleurs, icône).
-* **`sw.js`** : Service Worker PWA. Stratégie Cache-First pour les assets statiques (JS, CSS, images, CDN), Network-First pour `index.html`. Nom de cache versionné `investpro-v1`. Enregistré depuis `main.js`.
+* **`manifest.json`** : Configuration de la PWA (nom "Investisseur Pro", short_name "InvestPro", couleurs, icônes, raccourcis d'application et lancement direct en mode web app).
+* **`sw.js`** : Service Worker PWA. Stratégie Cache-First pour les assets statiques (JS, CSS, images, CDN), Network-First pour les navigations HTML. Nom de cache versionné `investpro-v2`. Enregistré depuis `main.js`.
+* **`icons/`** : Icônes d'installation PWA (Android, iOS et icône maskable) utilisées par le manifeste et le head HTML.
 * **`commercial.md`** : Note de cadrage produit et commercial. Liste les améliorations UX, design, confiance, positionnement et monétisation pour professionnaliser l'application.
 * **`README_mobile_only_stores.txt`** : Guide détaillé pour transformer l'application en produit smartphone/tablette only, l'emballer en natif et la publier sur App Store / Play Store.
 * **`CLAUDE.md`** : Instructions système et architecture pour Claude Code.
 * **`WORKFLOW.md`** : Méthode de pilotage des tâches (anti-surcharge conversationnelle, checklist de suivi, et optimisation tokens via regroupement des changements par fichier).
-* **`.gitignore`** : Ignore le dossier `backups/` contenant les sauvegardes locales datées du dépôt avant synchronisation Git.
+* **`.gitignore`** : Ignore les sauvegardes locales (`backups/`) ainsi que les fichiers de pilotage interne et notes non destinés au dépôt public (`CLAUDE.md`, `WORKFLOW.md`, `commercial.md`, `README_mobile_only_stores.txt`, `.claudesignore`, `docs/superpowers/`).
 * **`.claudesignore`** / **`.gitattributes`** : Règles d'exclusion et configuration Git.
 
 ## Compte & Premium — Surfaces UI (Lots 7+8)

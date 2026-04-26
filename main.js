@@ -17,6 +17,7 @@ let projectionData = [];
 // --- WIZARD ---
 let currentWizardStep = 1;
 let wizardMode = 'rapide';
+const VIEW_TARGETS = new Set(['view-inputs', 'view-results', 'view-vierzon']);
 
 // --- COMPTE & PREMIUM (Lots 7+8) ---
 // Stub local — brancher ici Firebase Auth / Supabase pour la version cloud réelle
@@ -719,26 +720,51 @@ window.closePricingModal = function() {
 
 // --- EVENT LISTENERS ---
 
+function activateTab(target, options = {}) {
+    const { updateHash = true, scroll = true } = options;
+    if (!VIEW_TARGETS.has(target)) return;
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.target === target);
+    });
+    document.querySelectorAll('.view-section').forEach(view => {
+        view.classList.toggle('active', view.id === target);
+    });
+
+    const pdfBar = document.getElementById('pdf-action-bar');
+    if (target === 'view-results') {
+        pdfBar.style.display = 'flex';
+        calculateAndSave();
+    } else if (target === 'view-vierzon') {
+        pdfBar.style.display = 'none';
+        calculateVierzonStrategy();
+    } else {
+        pdfBar.style.display = 'none';
+    }
+
+    if (updateHash) {
+        history.replaceState(null, '', `${window.location.pathname}${window.location.search}#${target}`);
+    }
+    if (scroll) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+}
+
+function getHashViewTarget() {
+    const hashTarget = window.location.hash.replace('#', '');
+    return VIEW_TARGETS.has(hashTarget) ? hashTarget : null;
+}
+
+function clearViewHash() {
+    if (getHashViewTarget()) {
+        history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+    }
+}
+
 // Onglets
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
-
-        btn.classList.add('active');
-        document.getElementById(btn.dataset.target).classList.add('active');
-        window.scrollTo(0, 0);
-
-        const pdfBar = document.getElementById('pdf-action-bar');
-        if (btn.dataset.target === 'view-results') {
-            pdfBar.style.display = 'flex';
-            calculateAndSave();
-        } else if (btn.dataset.target === 'view-vierzon') {
-            pdfBar.style.display = 'none';
-            calculateVierzonStrategy();
-        } else {
-            pdfBar.style.display = 'none';
-        }
+        activateTab(btn.dataset.target);
     });
 });
 
@@ -1136,6 +1162,15 @@ document.getElementById('btn-export-csv').addEventListener('click', function() {
 });
 
 // --- THÈME DARK/LIGHT ---
+function syncThemeColor() {
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (!metaTheme) return;
+    const html = document.documentElement;
+    const isDark = html.classList.contains('theme-dark') ||
+        (!html.classList.contains('theme-light') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    metaTheme.setAttribute('content', isDark ? '#0D1117' : '#F6F8FA');
+}
+
 function initTheme() {
     const saved = localStorage.getItem('simuImmoTheme');
     const btn = document.getElementById('btn-theme-toggle');
@@ -1149,6 +1184,7 @@ function initTheme() {
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         if (btn) btn.textContent = prefersDark ? '☀️' : '🌙';
     }
+    syncThemeColor();
 }
 
 document.getElementById('btn-theme-toggle').addEventListener('click', function() {
@@ -1167,6 +1203,7 @@ document.getElementById('btn-theme-toggle').addEventListener('click', function()
         localStorage.setItem('simuImmoTheme', 'dark');
         this.textContent = '☀️';
     }
+    syncThemeColor();
 });
 
 // --- BARRE DE PROGRESSION FORMULAIRE ---
@@ -1216,7 +1253,8 @@ function setWizardMode(mode) {
     });
 }
 
-function goToStep(n) {
+function goToStep(n, options = {}) {
+    const { scroll = true } = options;
     currentWizardStep = n;
     document.querySelectorAll('.wizard-step').forEach((el, i) => {
         el.style.display = (i + 1 === n) ? '' : 'none';
@@ -1225,7 +1263,9 @@ function goToStep(n) {
         el.classList.toggle('active', i + 1 < n);
         el.classList.toggle('current', i + 1 === n);
     });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (scroll) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 }
 
 // --- ACCUEIL ---
@@ -1233,22 +1273,26 @@ function showAccueil() {
     document.getElementById('view-accueil').style.display = '';
     document.querySelector('.tabs-nav').style.display = 'none';
     document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+    const pdfBar = document.getElementById('pdf-action-bar');
+    if (pdfBar) pdfBar.style.display = 'none';
     const btnAccueil = document.getElementById('btn-accueil');
     if (btnAccueil) btnAccueil.style.display = 'none';
+    clearViewHash();
 }
 
-function hideAccueil() {
+function hideAccueil(target = 'view-inputs', options = {}) {
+    const { updateHash = true, scroll = true } = options;
     document.getElementById('view-accueil').style.display = 'none';
     document.querySelector('.tabs-nav').style.display = '';
     const btnAccueil = document.getElementById('btn-accueil');
     if (btnAccueil) btnAccueil.style.display = '';
-    document.querySelector('[data-target="view-inputs"]').click();
+    activateTab(target, { updateHash, scroll });
 }
 
 function startWizard(mode) {
     setWizardMode(mode);
     goToStep(1);
-    hideAccueil();
+    hideAccueil('view-inputs');
 }
 
 document.getElementById('btn-start-rapide').addEventListener('click', () => startWizard('rapide'));
@@ -1257,9 +1301,20 @@ document.getElementById('btn-reprendre').addEventListener('click', () => {
     const savedMode = sessionStorage.getItem('simuImmoWizardMode') || 'complet';
     setWizardMode(savedMode);
     goToStep(1);
-    hideAccueil();
+    hideAccueil('view-inputs');
 });
 document.getElementById('btn-accueil').addEventListener('click', showAccueil);
+
+window.addEventListener('hashchange', () => {
+    const target = getHashViewTarget();
+    if (!target) return;
+    const accueilVisible = document.getElementById('view-accueil').style.display !== 'none';
+    if (accueilVisible) {
+        hideAccueil(target, { updateHash: false, scroll: false });
+    } else {
+        activateTab(target, { updateHash: false, scroll: false });
+    }
+});
 
 function initExpertCollapse() {
     const btn = document.getElementById('btn-expand-expert');
@@ -1311,6 +1366,7 @@ function initApp() {
     migrateProjects();
     renderProjectsList();
     initTheme();
+    syncAppShellMode();
     const savedDraft = localStorage.getItem('simuImmoDraft');
     if (savedDraft) {
         try {
@@ -1331,7 +1387,7 @@ function initApp() {
     updateFormProgress();
     initWizard();
     initExpertCollapse();
-    showAccueil();
+    applyLaunchRoute();
 }
 
 // Déclencher la barre de progression à chaque saisie
@@ -1340,6 +1396,38 @@ document.querySelectorAll('#calc-form input, #calc-form select').forEach(el => {
 });
 
 // --- LOT 9 : PWA ---
+
+function isStandaloneMode() {
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
+function syncAppShellMode() {
+    document.body.classList.toggle('is-standalone', isStandaloneMode());
+}
+
+function setInstallBannerVisible(isVisible) {
+    const banner = document.getElementById('install-banner');
+    if (!banner) return;
+
+    const shouldShow = Boolean(isVisible && !sessionStorage.getItem('installBannerDismissed') && !isStandaloneMode());
+    banner.style.display = shouldShow ? 'flex' : 'none';
+    document.body.classList.toggle('has-install-banner', shouldShow);
+}
+
+function applyLaunchRoute() {
+    const hashTarget = getHashViewTarget();
+    const launchedFromApp = isStandaloneMode() || new URLSearchParams(window.location.search).get('source') === 'pwa';
+
+    if (hashTarget || launchedFromApp) {
+        const savedMode = sessionStorage.getItem('simuImmoWizardMode') || 'rapide';
+        setWizardMode(savedMode);
+        goToStep(1, { scroll: false });
+        hideAccueil(hashTarget || 'view-inputs', { updateHash: Boolean(hashTarget), scroll: false });
+        return;
+    }
+
+    showAccueil();
+}
 
 // Enregistrement du Service Worker
 if ('serviceWorker' in navigator) {
@@ -1354,36 +1442,45 @@ let _deferredInstallPrompt = null;
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     _deferredInstallPrompt = e;
-
-    // Ne pas afficher si déjà dismissée dans cette session
-    if (sessionStorage.getItem('installBannerDismissed')) return;
-    // Ne pas afficher si déjà installée (mode standalone)
-    if (window.matchMedia('(display-mode: standalone)').matches) return;
-
-    const banner = document.getElementById('install-banner');
-    if (banner) banner.style.display = 'flex';
+    setInstallBannerVisible(true);
 });
 
 document.getElementById('btn-install')?.addEventListener('click', () => {
     if (!_deferredInstallPrompt) return;
-    _deferredInstallPrompt.prompt();
-    _deferredInstallPrompt.userChoice.then(() => {
+    const installPrompt = _deferredInstallPrompt;
+    installPrompt.prompt();
+    installPrompt.userChoice.then(() => {
         _deferredInstallPrompt = null;
-        document.getElementById('install-banner').style.display = 'none';
+        setInstallBannerVisible(false);
     }).catch(() => {
         _deferredInstallPrompt = null;
+        setInstallBannerVisible(false);
     });
 });
 
 document.getElementById('btn-install-dismiss')?.addEventListener('click', () => {
     sessionStorage.setItem('installBannerDismissed', '1');
-    document.getElementById('install-banner').style.display = 'none';
+    setInstallBannerVisible(false);
 });
 
-// Cacher la bannière si l'app est lancée en mode standalone (déjà installée)
-if (window.matchMedia('(display-mode: standalone)').matches) {
-    const bannerEl = document.getElementById('install-banner');
-    if (bannerEl) bannerEl.style.display = 'none';
+window.addEventListener('appinstalled', () => {
+    _deferredInstallPrompt = null;
+    sessionStorage.removeItem('installBannerDismissed');
+    syncAppShellMode();
+    setInstallBannerVisible(false);
+});
+
+const standaloneMediaQuery = window.matchMedia('(display-mode: standalone)');
+const handleStandaloneModeChange = () => {
+    syncAppShellMode();
+    if (isStandaloneMode()) {
+        setInstallBannerVisible(false);
+    }
+};
+if (standaloneMediaQuery.addEventListener) {
+    standaloneMediaQuery.addEventListener('change', handleStandaloneModeChange);
+} else if (standaloneMediaQuery.addListener) {
+    standaloneMediaQuery.addListener(handleStandaloneModeChange);
 }
 
 // Bandeau mode offline

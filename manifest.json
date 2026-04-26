@@ -1,10 +1,85 @@
 {
   "name": "Investisseur Pro",
   "short_name": "InvestPro",
+  "lang": "fr",
+  "dir": "ltr",
   "description": "Simulez et analysez la rentabilité de vos investissements immobiliers.",
-  "start_url": ".",
+  "id": "./?source=pwa",
+  "start_url": "./?source=pwa#view-inputs",
+  "scope": "./",
   "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "any",
   "background_color": "#0D1117",
   "theme_color": "#3B82F6",
-  "icons": []
+  "categories": [
+    "finance",
+    "business",
+    "productivity"
+  ],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Nouvelle analyse",
+      "short_name": "Saisie",
+      "description": "Ouvrir directement le formulaire de simulation.",
+      "url": "./?source=pwa#view-inputs",
+      "icons": [
+        {
+          "src": "./icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Voir l'analyse",
+      "short_name": "Analyse",
+      "description": "Accéder rapidement à l'onglet Analyse.",
+      "url": "./?source=pwa#view-results",
+      "icons": [
+        {
+          "src": "./icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Faisabilité",
+      "short_name": "Faisabilité",
+      "description": "Ouvrir directement le module de faisabilité.",
+      "url": "./?source=pwa#view-vierzon",
+      "icons": [
+        {
+          "src": "./icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
 }

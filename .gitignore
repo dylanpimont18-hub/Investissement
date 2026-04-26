@@ -1,0 +1,9 @@
+backups/
+
+# Fichiers de pilotage locaux et notes internes
+.claudesignore
+CLAUDE.md
+WORKFLOW.md
+commercial.md
+README_mobile_only_stores.txt
+docs/superpowers/

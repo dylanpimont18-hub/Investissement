@@ -6,7 +6,14 @@
     <title>Investisseur Pro - Outil d'Aide à la Décision</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="manifest" href="manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Investisseur Pro">
+    <meta name="application-name" content="Investisseur Pro">
+    <meta name="theme-color" content="#F6F8FA">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
@@ -196,7 +203,7 @@
             <input type="number" inputmode="numeric" id="revenus" value="60000"></label>
         <div class="tmi-box">Votre TMI <span class="help-tip" data-tip="Taux Marginal d'Imposition : la tranche la plus haute de votre barème d'impôt sur le revenu.">?</span> : <strong id="tmi-display">-- %</strong></div>
         <label><span>Régime fiscal <span class="help-tip" data-tip="Le mode de calcul de l'impôt sur vos loyers. Micro-Foncier : abattement 30%. Foncier Réel : déduction charges réelles. SCI à l'IS : impôt société.">?</span></span>
-            <div style="display:flex; align-items:center; gap:6px;">
+            <div class="regime-picker-row">
                 <select id="regime">
                     <option value="micro-foncier">Micro-Foncier (-30%)</option>
                     <option value="reel">Foncier Réel</option>
@@ -238,7 +245,7 @@
         <summary class="projects-summary">Mes projets sauvegardés <span class="projects-count-badge" id="projects-count-badge"></span></summary>
         <div class="projects-body">
             <p class="photo-help" style="margin-bottom: 10px; text-align: left;">Sauvegardez vos visites pour les comparer plus tard.</p>
-            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <div class="projects-save-row">
                 <input type="text" id="project-name" placeholder="Nom du projet (ex: T2 Centre)" style="flex: 1; text-align: left;">
                 <button type="button" id="btn-save-project" class="btn-primary" style="padding: 10px; white-space: nowrap;">Sauvegarder<span class="pro-badge">Pro+</span></button>
             </div>
@@ -689,7 +696,7 @@
             
             <div class="vierzon-cf-row" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--bg-color); padding: 15px; border-radius: 10px;">
                 <label style="margin:0; font-weight:bold; font-size: 1.1rem;">Je veux un Cash-Flow de <span class="help-tip" data-tip="Le montant net que vous voulez gagner chaque mois après avoir tout payé : crédit, charges et impôts.">?</span> :</label>
-                <div style="display: flex; align-items: center; gap: 5px;">
+                <div class="vierzon-target-input">
                     <input type="number" id="vierzon-target-cf" value="100" step="10" style="width: 100px; font-size: 1.2rem; font-weight: bold; text-align: center; border: 2px solid var(--gold-color); color: var(--gold-color);"> <strong>€ / mois</strong>
                 </div>
             </div>
@@ -702,7 +709,7 @@
                 <p style="font-size: 0.85rem; color: #8e8e93; margin-bottom: 15px;">Vous connaissez le marché locatif du secteur. Quel prix maximum pouvez-vous payer pour ce bien ?</p>
                 
                 <label style="font-weight: 600;">Loyer estimé : 
-                    <div><input type="number" id="vierzon-loyer-estime" value="500" style="width: 80px;"> €/mois</div>
+                    <div class="vierzon-field-inline"><input type="number" id="vierzon-loyer-estime" value="500" style="width: 80px;"> €/mois</div>
                 </label>
                 
                 <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color);">
@@ -716,7 +723,7 @@
                 <p style="font-size: 0.85rem; color: #8e8e93; margin-bottom: 15px;">Vous avez vu un bien à la vente. A combien devrez-vous le louer au minimum ?</p>
                 
                 <label style="font-weight: 600;"><span>Prix de l'annonce <span class="help-tip" data-tip="FAI = Frais d'Agence Inclus. C'est le prix affiché dans l'annonce, qui inclut déjà la commission de l'agence.">?</span> :</span>
-                    <div><input type="number" id="vierzon-prix-annonce" value="80000" style="width: 90px;"> € FAI</div>
+                    <div class="vierzon-field-inline"><input type="number" id="vierzon-prix-annonce" value="80000" style="width: 90px;"> € FAI</div>
                 </label>
                 
                 <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color);">

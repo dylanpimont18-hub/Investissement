@@ -1,7 +1,0 @@
-# 1. Bloquer absolument tous les fichiers et dossiers par défaut
-# *
-# **/*
-
-# 2. AUTORISER explicitement les fichiers vitaux pour le workflow de l'agent
-# !CLAUDE.md
-# !contenu.md
