@@ -1360,7 +1360,7 @@ body.is-premium .pro-badge { display: none; }
 /* === LOT 9 — Install Banner & Offline Banner === */
 #install-banner {
     position: fixed;
-    bottom: 0;
+    bottom: 50px;
     left: 0;
     right: 0;
     z-index: 999;
@@ -1369,6 +1369,7 @@ body.is-premium .pro-badge { display: none; }
     justify-content: center;
     gap: 10px;
     padding: 10px 16px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
     background: var(--card-bg);
     border-top: 1px solid var(--border-color);
     box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
