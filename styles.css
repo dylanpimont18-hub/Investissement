@@ -46,6 +46,17 @@ body { font-family: var(--font-body); background-color: var(--bg-color); color: 
 .btn-secondary { background-color: transparent; color: var(--primary-color); border: 1.5px solid var(--primary-color); padding: 10px 16px; border-radius: 12px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
 .btn-secondary:hover { background-color: var(--primary-color); color: white; }
 .btn-secondary:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-ghost {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 8px;
+    transition: color 0.2s;
+}
+.btn-ghost:hover { color: var(--text-color); }
 
 .accordion { background: var(--card-bg); border-radius: var(--border-radius); border: 1px solid var(--border-color); overflow: hidden; box-shadow: var(--shadow-light); margin-bottom: 15px;}
 .accordion summary { padding: 16px; font-weight: 600; font-size: 1.05rem; cursor: pointer; list-style: none; outline: none; }
@@ -1081,7 +1092,7 @@ body.is-premium .pro-badge { display: none; }
 }
 #modal-pricing .pricing-plan-card.featured {
     border-color: var(--gold-color, #C9A84C);
-    background: linear-gradient(135deg, var(--card-bg) 0%, rgba(201,168,76,0.06) 100%);
+    background: linear-gradient(135deg, var(--card-bg) 0%, rgba(201,168,76,0.06) 100%); /* keep in sync with --gold-color */
 }
 #modal-pricing .pricing-plan-label {
     position: absolute;
@@ -1120,7 +1131,7 @@ body.is-premium .pro-badge { display: none; }
     display: flex;
     flex-direction: column;
     gap: 10px;
-    align-items: center;
+    align-items: stretch;
     margin-top: 4px;
 }
 #modal-pricing .pricing-actions .btn-primary {
@@ -1128,17 +1139,6 @@ body.is-premium .pro-badge { display: none; }
     text-align: center;
     text-decoration: none;
 }
-.btn-ghost {
-    background: none;
-    border: none;
-    color: var(--text-secondary);
-    font-size: 0.85rem;
-    cursor: pointer;
-    padding: 4px 8px;
-    border-radius: 8px;
-    transition: color 0.2s;
-}
-.btn-ghost:hover { color: var(--text-color); }
 
 @media (max-width: 500px) {
     #modal-pricing .pricing-plans-grid { grid-template-columns: 1fr; }
