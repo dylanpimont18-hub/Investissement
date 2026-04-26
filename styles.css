@@ -1024,6 +1024,7 @@ body.is-premium .btn-pricing-header { display: none; }
 .account-plan-premium .account-plan-features li { color: var(--text-color); }
 .account-waitlist-btn { width: 100%; margin-top: 16px; padding: 12px; border-radius: 10px; font-size: 0.9rem; display: block; text-align: center; cursor: pointer; }
 .account-plan-notice { font-size: 0.77rem; color: var(--text-secondary); text-align: center; margin-top: 10px; line-height: 1.55; }
+.account-plan-premium .pricing-plan-price { margin-bottom: 12px; }
 
 /* Plans côte à côte dans la modale compte */
 .account-plans-row {
@@ -1181,6 +1182,19 @@ body.is-premium .pro-badge { display: none; }
     font-family: var(--font-display);
     margin-bottom: 12px;
 }
+#modal-pricing .pricing-plan-price,
+.account-plan-premium .pricing-plan-price {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text-color);
+    letter-spacing: -0.02em;
+}
+#modal-pricing .pricing-plan-meta {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin: 6px 0 14px;
+    line-height: 1.5;
+}
 #modal-pricing .pricing-plan-features {
     list-style: none;
     display: flex;
@@ -1207,6 +1221,16 @@ body.is-premium .pro-badge { display: none; }
     width: 100%;
     text-align: center;
     text-decoration: none;
+}
+#modal-pricing .pricing-actions .btn-primary:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+#modal-pricing .pricing-helper-text {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    text-align: center;
+    line-height: 1.55;
 }
 
 @media (max-width: 500px) {

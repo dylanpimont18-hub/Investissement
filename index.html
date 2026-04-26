@@ -1049,8 +1049,10 @@
                     </ul>
                 </div>
                 <div class="pricing-plan-card featured">
-                    <div class="pricing-plan-label">Bientôt</div>
+                    <div id="pricing-plan-label" class="pricing-plan-label">9,99 EUR / mois</div>
                     <div class="pricing-plan-title">Pro+</div>
+                    <div id="pricing-plan-price" class="pricing-plan-price" data-billing-price>9,99 EUR / mois</div>
+                    <p id="pricing-plan-meta" class="pricing-plan-meta">Checkout Stripe et portail client a brancher.</p>
                     <ul class="pricing-plan-features">
                         <li>✓ Simulation complète et analyse</li>
                         <li>★ Projets illimités</li>
@@ -1064,8 +1066,10 @@
                 </div>
             </div>
             <div class="pricing-actions">
-                <a href="mailto:gegertauren@gmail.com?subject=Investisseur%20Pro%2B%20%E2%80%94%20Liste%20d%27attente&body=Bonjour%2C%0A%0AJe%20suis%20int%C3%A9ress%C3%A9(e)%20par%20la%20version%20Pro%2B%20d%27Investisseur%20Pro.%0A%0AMon%20profil%20%3A%20" class="btn-primary">Rejoindre la liste d'attente →</a>
+                <button type="button" id="pricing-primary-cta" class="btn-primary" onclick="window.startPremiumCheckout()">Activer Pro+ - 9,99 EUR / mois</button>
+                <button type="button" id="pricing-portal-cta" class="btn-secondary" onclick="window.openBillingPortal()" style="display:none;">Gerer mon abonnement</button>
                 <button type="button" class="btn-ghost" onclick="window.closePricingModal()">Continuer en version gratuite</button>
+                <p id="pricing-helper-text" class="pricing-helper-text">Sans configuration Stripe, le CTA revient sur la liste d'attente par email.</p>
             </div>
         </div>
     </div>
@@ -1098,6 +1102,7 @@
                 <div class="account-plan-card account-plan-premium">
                     <div id="account-plan-premium-badge" class="account-plan-badge">Prochainement</div>
                     <div class="account-plan-title">Pro+</div>
+                    <div class="pricing-plan-price" data-billing-price>9,99 EUR / mois</div>
                     <ul class="account-plan-features">
                         <li>★ Projets illimités</li>
                         <li>★ Sauvegarde cloud — accès depuis tous vos appareils</li>
@@ -1115,6 +1120,7 @@
     </div>
 </div>
 
+<script src="billing.config.js"></script>
 <script type="module" src="main.js"></script>
 </body>
 </html>

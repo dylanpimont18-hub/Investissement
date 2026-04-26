@@ -7,6 +7,18 @@ import {
     updateNegoTable, showToast, validateInputs
 } from './ui.js';
 import { buildPDFDOM, buildPrintDocument, buildSharePDFFile, cleanupPDFDOM } from './pdf.js';
+import {
+    applyBillingReturnState,
+    applyPremiumClass,
+    canOpenBillingPortal,
+    formatBillingPeriodEnd,
+    getBillingConfig,
+    isHostedBillingConfigured,
+    loadBillingState,
+    openHostedCheckout,
+    openHostedPortal,
+    saveBillingState
+} from './billing.js';
 
 // --- ÉTAT GLOBAL ---
 let uploadedPhotos = [];
@@ -20,13 +32,85 @@ let wizardMode = 'rapide';
 const VIEW_TARGETS = new Set(['view-inputs', 'view-results', 'view-vierzon']);
 
 // --- COMPTE & PREMIUM (Lots 7+8) ---
-// Stub local — brancher ici Firebase Auth / Supabase pour la version cloud réelle
+// Etat premium centralise dans billing.js pour preparer Stripe + Supabase
 const FREE_PROJECT_LIMIT = 3;
 const PDF_GEN_LIMIT = 3;
-let userAccount = (() => { try { return JSON.parse(localStorage.getItem('userAccount')) || { isPremium: false }; } catch(e) { return { isPremium: false }; } })();
+const BILLING_WAITLIST_MAILTO = 'mailto:gegertauren@gmail.com?subject=Investisseur%20Pro%2B%20%E2%80%94%20Liste%20d%27attente&body=Bonjour%2C%0A%0AJe%20suis%20int%C3%A9ress%C3%A9(e)%20par%20la%20version%20Pro%2B%20d%27Investisseur%20Pro.%0A%0AMon%20profil%20%3A%20';
+const billingConfig = getBillingConfig();
+let userAccount = loadBillingState();
 let pdfGenCount = (() => { try { return parseInt(localStorage.getItem('pdfGenCount') || '0', 10); } catch(e) { return 0; } })();
-// Applique la classe CSS qui masque tous les .pro-badge pour les utilisateurs premium
-if (userAccount.isPremium) document.body.classList.add('is-premium');
+applyPremiumClass(userAccount);
+
+function setUserAccountState(patch) {
+    userAccount = saveBillingState({ ...userAccount, ...patch });
+    applyPremiumClass(userAccount);
+    return userAccount;
+}
+
+function openLegacyWaitlistEmail() {
+    window.location.href = BILLING_WAITLIST_MAILTO;
+}
+
+function getPremiumCtaLabel() {
+    return isHostedBillingConfigured(billingConfig)
+        ? `S'abonner a ${billingConfig.priceLabel} ->`
+        : 'Rejoindre la liste d\'attente ->';
+}
+
+function hydrateBillingUi() {
+    document.querySelectorAll('[data-billing-price]').forEach(node => {
+        node.textContent = billingConfig.priceLabel;
+    });
+
+    const pricingLabel = document.getElementById('pricing-plan-label');
+    if (pricingLabel) {
+        pricingLabel.textContent = userAccount.isPremium
+            ? 'Actif'
+            : (isHostedBillingConfigured(billingConfig) ? billingConfig.priceLabel : 'A configurer');
+    }
+
+    const pricingMeta = document.getElementById('pricing-plan-meta');
+    if (pricingMeta) {
+        if (userAccount.isPremium) {
+            pricingMeta.textContent = canOpenBillingPortal(userAccount, billingConfig)
+                ? 'Le portail client est disponible pour gerer votre abonnement.'
+                : 'Abonnement actif. Ajoutez portalUrl pour ouvrir le portail client.';
+        } else if (isHostedBillingConfigured(billingConfig)) {
+            pricingMeta.textContent = 'Checkout heberge pret. Ajoutez le webhook Stripe et Supabase pour activer automatiquement Pro+.';
+        } else {
+            pricingMeta.textContent = 'Renseignez checkoutUrl et portalUrl dans billing.config.js pour activer le flux Stripe.';
+        }
+    }
+
+    const pricingHelper = document.getElementById('pricing-helper-text');
+    if (pricingHelper) {
+        pricingHelper.textContent = userAccount.isPremium
+            ? 'Le statut Pro+ est centralise dans billing.js et pret pour Stripe + Supabase.'
+            : (isHostedBillingConfigured(billingConfig)
+                ? 'Le retour Stripe peut utiliser ?billing=success ou ?billing=cancel avant la confirmation webhook.'
+                : 'Sans configuration Stripe, le CTA repasse sur l\'email de liste d\'attente.');
+    }
+
+    const pricingPrimaryCta = document.getElementById('pricing-primary-cta');
+    if (pricingPrimaryCta) {
+        pricingPrimaryCta.disabled = userAccount.isPremium;
+        pricingPrimaryCta.textContent = userAccount.isPremium
+            ? `${userAccount.planName} actif`
+            : getPremiumCtaLabel();
+    }
+
+    const pricingPortalCta = document.getElementById('pricing-portal-cta');
+    if (pricingPortalCta) {
+        pricingPortalCta.style.display = userAccount.isPremium && canOpenBillingPortal(userAccount, billingConfig) ? '' : 'none';
+    }
+
+    const accountNotice = document.querySelector('.account-plan-notice');
+    if (accountNotice) {
+        accountNotice.textContent = billingConfig.supabaseUrl && billingConfig.supabaseAnonKey
+            ? 'Les projets sont locaux tant que la synchronisation cloud n\'est pas encore branchee dans main.js.'
+            : 'Les projets restent sur cet appareil tant que Supabase n\'est pas branche pour la sync cloud.';
+    }
+}
 
 function incrementPdfGenCount() {
     if (userAccount.isPremium) return;
@@ -521,11 +605,15 @@ function renderProjectsList() {
 
     const limitBar = document.getElementById('projects-limit-bar');
     const limitCount = document.getElementById('projects-limit-count');
-    if (limitBar && limitCount && !userAccount.isPremium) {
-        limitBar.style.display = savedProjects.length > 0 ? 'flex' : 'none';
-        const isAtLimit = savedProjects.length >= FREE_PROJECT_LIMIT;
-        limitCount.textContent = savedProjects.length + ' / ' + FREE_PROJECT_LIMIT;
-        limitCount.classList.toggle('limit-full', isAtLimit);
+    if (limitBar && limitCount) {
+        if (userAccount.isPremium) {
+            limitBar.style.display = 'none';
+        } else {
+            limitBar.style.display = savedProjects.length > 0 ? 'flex' : 'none';
+            const isAtLimit = savedProjects.length >= FREE_PROJECT_LIMIT;
+            limitCount.textContent = savedProjects.length + ' / ' + FREE_PROJECT_LIMIT;
+            limitCount.classList.toggle('limit-full', isAtLimit);
+        }
     }
 
     if (savedProjects.length === 0) return;
@@ -677,25 +765,49 @@ window.closeComparatorModal = function(overlay, event) {
 // --- COMPTE & PRO+ ---
 window.openAccountModal = function() {
     const zone = document.getElementById('account-status-zone');
+    const badge = document.getElementById('account-plan-premium-badge');
+    const waitlistBtn = document.getElementById('account-waitlist-btn');
+
+    hydrateBillingUi();
+
     if (zone) {
         if (userAccount.isPremium) {
+            const renewalLabel = formatBillingPeriodEnd(userAccount.currentPeriodEnd);
+            const syncLabel = billingConfig.supabaseUrl && billingConfig.supabaseAnonKey ? 'pret a connecter' : 'a brancher';
             zone.innerHTML = `
-                <div class="account-status-row"><span class="account-status-icon">&#128196;</span><span>Projets : <strong>illimités</strong></span></div>
-                <div class="account-status-row"><span class="account-status-icon">&#9729;</span><span>Sync cloud : <strong>active</strong></span></div>`;
+                <div class="account-status-row"><span class="account-status-icon">&#11088;</span><span>Abonnement : <strong>${userAccount.planName}</strong></span></div>
+                <div class="account-status-row"><span class="account-status-icon">&#128197;</span><span>${renewalLabel ? `Renouvellement : <strong>${renewalLabel}</strong>` : 'Renouvellement : <strong>gere cote facturation</strong>'}</span></div>
+                <div class="account-status-row"><span class="account-status-icon">&#9729;</span><span>Sync cloud : <strong>${syncLabel}</strong></span></div>
+                ${canOpenBillingPortal(userAccount, billingConfig) ? '<div class="account-status-row"><button type="button" class="btn-secondary" onclick="window.openBillingPortal()">Gerer mon abonnement</button></div>' : ''}`;
             zone.className = 'account-status-zone account-status-zone-premium';
-            const badge = document.getElementById('account-plan-premium-badge');
             if (badge) { badge.textContent = 'Actif'; badge.classList.add('account-plan-badge-active'); }
-            const waitlistBtn = document.getElementById('account-waitlist-btn');
             if (waitlistBtn) waitlistBtn.style.display = 'none';
         } else {
             const count = savedProjects.length;
             const pct = Math.min(count / FREE_PROJECT_LIMIT * 100, 100);
             const atLimit = count >= FREE_PROJECT_LIMIT;
+            const subscriptionLabel = userAccount.subscriptionStatus === 'pending_activation'
+                ? 'Activation en attente'
+                : billingConfig.priceLabel;
+            const billingMode = isHostedBillingConfigured(billingConfig)
+                ? 'Checkout Stripe pret'
+                : 'Liste d\'attente / configuration';
             zone.innerHTML = `
                 <div class="account-status-row"><span class="account-status-icon">&#128194;</span><span>Projets : <strong>${count} / ${FREE_PROJECT_LIMIT} sauvegardés</strong></span></div>
                 <div class="account-status-bar-wrap"><div class="account-status-bar ${atLimit ? 'account-status-bar-full' : ''}" style="width:${pct}%"></div></div>
-                <div class="account-status-row"><span class="account-status-icon">&#128190;</span><span>Stockage : <strong>local uniquement</strong></span></div>`;
+                <div class="account-status-row"><span class="account-status-icon">&#128190;</span><span>Stockage : <strong>local uniquement</strong></span></div>
+                <div class="account-status-row"><span class="account-status-icon">&#128179;</span><span>Abonnement : <strong>${subscriptionLabel}</strong></span></div>
+                <div class="account-status-row"><span class="account-status-icon">&#128274;</span><span>Mode Pro+ : <strong>${billingMode}</strong></span></div>`;
             zone.className = 'account-status-zone';
+            if (badge) {
+                badge.textContent = isHostedBillingConfigured(billingConfig) ? billingConfig.priceLabel : 'A configurer';
+                badge.classList.remove('account-plan-badge-active');
+            }
+            if (waitlistBtn) {
+                waitlistBtn.style.display = '';
+                waitlistBtn.textContent = getPremiumCtaLabel();
+                waitlistBtn.onclick = () => window.startPremiumCheckout();
+            }
         }
     }
     document.getElementById('modal-compte').style.display = 'flex';
@@ -705,11 +817,19 @@ window.closeAccountModal = function() {
     document.getElementById('modal-compte').style.display = 'none';
     document.body.style.overflow = '';
 };
-// Ouvre la boîte mail pré-remplie — aucun backend nécessaire
+window.startPremiumCheckout = function() {
+    if (openHostedCheckout(billingConfig)) return;
+    openLegacyWaitlistEmail();
+};
+window.openBillingPortal = function() {
+    if (openHostedPortal(userAccount, billingConfig)) return;
+    showToast('Ajoutez portalUrl dans billing.config.js pour activer la gestion d\'abonnement.', 'error');
+};
 window.openWaitlistForm = function() {
-    window.location.href = 'mailto:gegertauren@gmail.com?subject=Investisseur%20Pro%2B%20%E2%80%94%20Liste%20d%27attente&body=Bonjour%2C%0A%0AJe%20suis%20int%C3%A9ress%C3%A9(e)%20par%20la%20version%20Pro%2B%20d%27Investisseur%20Pro.%0A%0AMon%20profil%20%3A%20';
+    window.startPremiumCheckout();
 };
 window.openPricingModal = function() {
+    hydrateBillingUi();
     document.getElementById('modal-pricing').style.display = 'flex';
     document.body.style.overflow = 'hidden';
 };
@@ -1363,8 +1483,19 @@ function initWizard() {
 
 // --- INITIALISATION ---
 function initApp() {
+    const billingReturn = applyBillingReturnState();
+    userAccount = loadBillingState();
+    applyPremiumClass(userAccount);
+
+    if (billingReturn.status === 'success') {
+        showToast('Retour de paiement detecte. Activez le webhook Stripe pour confirmer automatiquement Pro+.', 'success');
+    } else if (billingReturn.status === 'cancel') {
+        showToast('Abonnement annule avant confirmation.', 'error');
+    }
+
     migrateProjects();
     renderProjectsList();
+    hydrateBillingUi();
     initTheme();
     syncAppShellMode();
     const savedDraft = localStorage.getItem('simuImmoDraft');
