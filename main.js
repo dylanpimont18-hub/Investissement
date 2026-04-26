@@ -24,6 +24,7 @@ const FREE_PROJECT_LIMIT = 3;
 const PDF_GEN_LIMIT = 3;
 let userAccount = (() => { try { return JSON.parse(localStorage.getItem('userAccount')) || { isPremium: false }; } catch(e) { return { isPremium: false }; } })();
 let pdfGenCount = (() => { try { return parseInt(localStorage.getItem('pdfGenCount') || '0', 10); } catch(e) { return 0; } })();
+// Applique la classe CSS qui masque tous les .pro-badge pour les utilisateurs premium
 if (userAccount.isPremium) document.body.classList.add('is-premium');
 
 function incrementPdfGenCount() {
@@ -844,6 +845,7 @@ document.getElementById('btn-save-project').addEventListener('click', () => {
     if (!projectName) return alert('Veuillez entrer un nom.');
     if (!userAccount.isPremium && savedProjects.length >= FREE_PROJECT_LIMIT) {
         window.openAccountModal();
+        // Ajouter un lien contextuel vers le pricing dans la zone status
         const zone = document.getElementById('account-status-zone');
         if (zone && !zone.querySelector('.pricing-nudge')) {
             const nudge = document.createElement('div');
