@@ -775,7 +775,8 @@ Ce tableau peut etre mis a jour a chaque passage de Claude Code.
 | 5 | Effectue | Header sans emoji + tagline, tabs sans emojis, boutons harmonisés, disclaimer inline dans Analyse, modales À propos / Mentions légales / Confidentialité, footer légal, manifest.json mis à jour |
 | 6 | Effectue | Résumé exécutif PDF (titre + 4 KPIs + phrase verdict-why). Comparateur remplacé par cartes côte à côte avec badge "★ Recommandé". Boutons verdict enrichis (icônes, wording premium, état désactivé si <2 projets). |
 | 7 | Effectue | Gate PDF après 3 générations (modal-pdf-gate, pdfGenCount localStorage, continue sans blocage). Modale compte refondée : zone état dynamique (X/3 projets, barre progression, sync locale), plans côte à côte, badge Actif/Prochainement. openAccountModal() lit savedProjects à l'ouverture. |
-| 8 | A faire plus tard | Freemium et monetisation |
+| 8 | Effectue | Modale #modal-pricing (comparaison Gratuit/Pro+, CTA liste d'attente). Micro-badges .pro-badge sur Sauvegarder, Comparer, Exporter PDF. Bouton "Voir Pro+" dans le header. Lien "En savoir plus sur Pro+" dans les gates existantes. body.is-premium masque tous les badges. |
+| 9 | Effectue | Service Worker sw.js (Cache-First assets, Network-First index.html). Bannière #install-banner (beforeinstallprompt, dismiss sessionStorage). Bandeau #offline-banner (ambre, auto-hide à la reconnexion). |
 
 ---
 
