@@ -24,6 +24,7 @@ const FREE_PROJECT_LIMIT = 3;
 const PDF_GEN_LIMIT = 3;
 let userAccount = (() => { try { return JSON.parse(localStorage.getItem('userAccount')) || { isPremium: false }; } catch(e) { return { isPremium: false }; } })();
 let pdfGenCount = (() => { try { return parseInt(localStorage.getItem('pdfGenCount') || '0', 10); } catch(e) { return 0; } })();
+if (userAccount.isPremium) document.body.classList.add('is-premium');
 
 function incrementPdfGenCount() {
     if (userAccount.isPremium) return;
@@ -706,6 +707,14 @@ window.closeAccountModal = function() {
 window.openWaitlistForm = function() {
     window.location.href = 'mailto:gegertauren@gmail.com?subject=Investisseur%20Pro%2B%20%E2%80%94%20Liste%20d%27attente&body=Bonjour%2C%0A%0AJe%20suis%20int%C3%A9ress%C3%A9(e)%20par%20la%20version%20Pro%2B%20d%27Investisseur%20Pro.%0A%0AMon%20profil%20%3A%20';
 };
+window.openPricingModal = function() {
+    document.getElementById('modal-pricing').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+};
+window.closePricingModal = function() {
+    document.getElementById('modal-pricing').style.display = 'none';
+    document.body.style.overflow = '';
+};
 
 // --- EVENT LISTENERS ---
 
@@ -835,6 +844,14 @@ document.getElementById('btn-save-project').addEventListener('click', () => {
     if (!projectName) return alert('Veuillez entrer un nom.');
     if (!userAccount.isPremium && savedProjects.length >= FREE_PROJECT_LIMIT) {
         window.openAccountModal();
+        const zone = document.getElementById('account-status-zone');
+        if (zone && !zone.querySelector('.pricing-nudge')) {
+            const nudge = document.createElement('div');
+            nudge.className = 'pricing-nudge';
+            nudge.style.cssText = 'margin-top:10px;text-align:center;font-size:0.82rem;';
+            nudge.innerHTML = `<a href="#" onclick="window.closeAccountModal();window.openPricingModal();return false;" style="color:var(--gold-color,#C9A84C);font-weight:600;">Voir les avantages Pro+ →</a>`;
+            zone.appendChild(nudge);
+        }
         return;
     }
     const currentData = getCurrentInputs();
@@ -943,6 +960,7 @@ document.addEventListener('keydown', (e) => {
     if (document.getElementById('modal-deductibles').classList.contains('open')) window.closeDeductiblesModal(null, null);
     if (document.getElementById('modal-comparator').classList.contains('open'))  window.closeComparatorModal(null, null);
     if (document.getElementById('modal-compte').style.display === 'flex')        window.closeAccountModal();
+    if (document.getElementById('modal-pricing').style.display === 'flex')       window.closePricingModal();
 });
 
 // Tous les inputs du formulaire déclenchent triggerCalculations
