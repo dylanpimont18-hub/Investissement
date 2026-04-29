@@ -1,9 +1,34 @@
 export const CSG_CRDS_RATE = 0.172; // Taux CSG+CRDS sur revenus du capital (2024)
 
-export function calculateTMI(revenus, enfants) {
+function computeParts(enfants) {
+    const n = enfants || 0;
     let parts = 2;
-    if (enfants === 1) parts += 0.5;
-    else if (enfants >= 2) parts += 1.0 + (enfants - 2);
+    if (n === 1) parts += 0.5;
+    else if (n >= 2) parts += 1.0 + (n - 2);
+    return parts;
+}
+
+// Impôt progressif sur le revenu selon le barème 2024
+function computeProgressiveImpot(revenu, parts) {
+    if (revenu <= 0 || parts <= 0) return 0;
+    const q = revenu / parts;
+    let impotParPart = 0;
+    if (q > 177106) impotParPart += (q - 177106) * 0.45;
+    if (q > 82341)  impotParPart += (Math.min(q, 177106) - 82341) * 0.41;
+    if (q > 28797)  impotParPart += (Math.min(q, 82341) - 28797) * 0.30;
+    if (q > 11294)  impotParPart += (Math.min(q, 28797) - 11294) * 0.11;
+    return impotParPart * parts;
+}
+
+// Surcoût IR marginal dû à l'investissement : IR(revenus + immo) − IR(revenus seuls)
+function computeImpotMarginal(revenusBase, revenusImmo, parts) {
+    const irSans = computeProgressiveImpot(Math.max(0, revenusBase), parts);
+    const irAvec = computeProgressiveImpot(Math.max(0, revenusBase + revenusImmo), parts);
+    return irAvec - irSans;
+}
+
+export function calculateTMI(revenus, enfants) {
+    const parts = computeParts(enfants);
     const quotient = revenus / parts;
     if (quotient <= 11294) return 0;
     if (quotient <= 28797) return 11;
@@ -13,6 +38,7 @@ export function calculateTMI(revenus, enfants) {
 }
 
 // ALGORITHME MOTEUR : Calcule le CF Net-Net pour n'importe quelle configuration
+// tmi conservé en signature pour compatibilité des appelants, non utilisé en interne
 export function computeCF(prixVendeur, loyerMensuel, inputs, tmi) {
     const fraisNotaire = prixVendeur * (inputs['notaire'] / 100);
     const fraisFixes = inputs['agence'] + inputs['travaux'] + inputs['meubles'] + inputs['frais-bancaires'];
@@ -43,20 +69,24 @@ export function computeCF(prixVendeur, loyerMensuel, inputs, tmi) {
         }
     }
 
-    const tauxGlobalImpot = (tmi / 100) + CSG_CRDS_RATE;
+    const revenusBase = inputs['revenus'] || 0;
+    const parts = computeParts(inputs['enfants']);
     let impotsAnnee = 0;
 
     if (inputs['regime'] === 'micro-foncier') {
-        impotsAnnee = (loyersEncaisses * 0.7) * tauxGlobalImpot;
+        const baseImposable = loyersEncaisses * 0.7;
+        impotsAnnee = computeImpotMarginal(revenusBase, baseImposable, parts) + baseImposable * CSG_CRDS_RATE;
     } else if (inputs['regime'] === 'reel') {
-        let chargesAnnuees = chargesExploitationAnnuelles + (coutAssuranceMensuel * 12) + inputs['travaux'] + inputs['frais-bancaires'];
-        let revenusNets = loyersEncaisses - chargesAnnuees - interetsAnnee1;
+        const chargesAnnuees = chargesExploitationAnnuelles + (coutAssuranceMensuel * 12) + inputs['travaux'] + inputs['frais-bancaires'];
+        const revenusNets = loyersEncaisses - chargesAnnuees - interetsAnnee1;
         if (revenusNets > 0) {
-            impotsAnnee = revenusNets * tauxGlobalImpot;
+            impotsAnnee = computeImpotMarginal(revenusBase, revenusNets, parts) + revenusNets * CSG_CRDS_RATE;
         } else {
+            // Déficit foncier : économie IR sur la part hors intérêts, plafonnée à 10 700 €
             const soldeHorsInterets = loyersEncaisses - chargesAnnuees;
             if (soldeHorsInterets < 0) {
-                impotsAnnee = -(Math.min(10700, Math.abs(soldeHorsInterets)) * (tmi / 100));
+                const deduction = Math.min(10700, Math.abs(soldeHorsInterets));
+                impotsAnnee = -computeImpotMarginal(revenusBase - deduction, deduction, parts);
             }
         }
     } else if (inputs['regime'] === 'sci-is') {
@@ -77,7 +107,8 @@ export function computeCF(prixVendeur, loyerMensuel, inputs, tmi) {
 // --- MÉTRIQUES PROJET (pour comparateur) ---
 export function computeProjectMetrics(projectData) {
     const inputs = projectData;
-    const tmi = calculateTMI(inputs.revenus || 0, 2);
+    const revenusBase = inputs['revenus'] || 0;
+    const parts = computeParts(inputs['enfants'] || 0);
     const prixNet = (inputs['prix'] || 0) - (inputs['nego'] || 0);
     const fraisNotaire = prixNet * ((inputs['notaire'] || 0) / 100);
     const fraisFixes = (inputs['agence'] || 0) + (inputs['travaux'] || 0) + (inputs['meubles'] || 0) + (inputs['frais-bancaires'] || 0);
@@ -95,11 +126,10 @@ export function computeProjectMetrics(projectData) {
     const coutAssuranceMensuel = (montantFinance * ((inputs['assurance'] || 0) / 100)) / 12;
     const mensualiteTotale = mensualiteCredit + coutAssuranceMensuel;
 
-    const cfNetNet = computeCF(prixNet, loyer, inputs, tmi);
+    const cfNetNet = computeCF(prixNet, loyer, inputs, 0);
     const rentaBrute = coutTotal > 0 ? (loyersAnnuelsTheoriques / coutTotal) * 100 : 0;
     const rentaNette = coutTotal > 0 ? ((loyersEncaisses - chargesExploitationAnnuelles) / coutTotal) * 100 : 0;
 
-    const tauxGlobalImpot = (tmi / 100) + CSG_CRDS_RATE;
     let capitalRestant = montantFinance;
     let firstYearInterets = 0;
     for (let m = 0; m < 12; m++) {
@@ -111,14 +141,19 @@ export function computeProjectMetrics(projectData) {
     }
     let firstYearImpots = 0;
     if (inputs['regime'] === 'micro-foncier') {
-        firstYearImpots = (loyersEncaisses * 0.7) * tauxGlobalImpot;
+        const baseImposable = loyersEncaisses * 0.7;
+        firstYearImpots = computeImpotMarginal(revenusBase, baseImposable, parts) + baseImposable * CSG_CRDS_RATE;
     } else if (inputs['regime'] === 'reel') {
-        let chargesAnnuees = chargesExploitationAnnuelles + (coutAssuranceMensuel * 12) + (inputs['travaux'] || 0) + (inputs['frais-bancaires'] || 0);
-        let revenusNets = loyersEncaisses - chargesAnnuees - firstYearInterets;
-        if (revenusNets > 0) firstYearImpots = revenusNets * tauxGlobalImpot;
-        else {
+        const chargesAnnuees = chargesExploitationAnnuelles + (coutAssuranceMensuel * 12) + (inputs['travaux'] || 0) + (inputs['frais-bancaires'] || 0);
+        const revenusNets = loyersEncaisses - chargesAnnuees - firstYearInterets;
+        if (revenusNets > 0) {
+            firstYearImpots = computeImpotMarginal(revenusBase, revenusNets, parts) + revenusNets * CSG_CRDS_RATE;
+        } else {
             const soldeHorsInterets = loyersEncaisses - chargesAnnuees;
-            if (soldeHorsInterets < 0) firstYearImpots = -(Math.min(10700, Math.abs(soldeHorsInterets)) * (tmi / 100));
+            if (soldeHorsInterets < 0) {
+                const deduction = Math.min(10700, Math.abs(soldeHorsInterets));
+                firstYearImpots = -computeImpotMarginal(revenusBase - deduction, deduction, parts);
+            }
         }
     } else if (inputs['regime'] === 'sci-is') {
         const amortissement = prixNet * 0.80 / 30;
@@ -135,9 +170,9 @@ export function computeProjectMetrics(projectData) {
     const grm = loyersAnnuelsTheoriques > 0 ? coutTotal / loyersAnnuelsTheoriques : Infinity;
     const dscr = (mensualiteTotale * 12) > 0 ? (loyersEncaisses - chargesExploitationAnnuelles) / (mensualiteTotale * 12) : 0;
 
-    const cfMicro = computeCF(prixNet, loyer, Object.assign({}, inputs, { regime: 'micro-foncier' }), tmi);
-    const cfReel  = computeCF(prixNet, loyer, Object.assign({}, inputs, { regime: 'reel' }), tmi);
-    const cfSciIs = computeCF(prixNet, loyer, Object.assign({}, inputs, { regime: 'sci-is' }), tmi);
+    const cfMicro = computeCF(prixNet, loyer, Object.assign({}, inputs, { regime: 'micro-foncier' }), 0);
+    const cfReel  = computeCF(prixNet, loyer, Object.assign({}, inputs, { regime: 'reel' }), 0);
+    const cfSciIs = computeCF(prixNet, loyer, Object.assign({}, inputs, { regime: 'sci-is' }), 0);
     const maxCf = Math.max(cfMicro, cfReel, cfSciIs);
     const bestRegime = maxCf === cfMicro ? 'Micro-Foncier' : (maxCf === cfReel ? 'Foncier Réel' : 'SCI à l\'IS');
 
