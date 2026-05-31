@@ -30,6 +30,24 @@ let projectionData = [];
 let currentWizardStep = 1;
 let wizardMode = 'rapide';
 const VIEW_TARGETS = new Set(['view-inputs', 'view-results', 'view-vierzon']);
+const WIZARD_STEP_CONTENT = {
+    1: {
+        title: 'Le Bien',
+        hint: 'Renseignez les deux chiffres clés pour obtenir une première lecture fiable du bien.'
+    },
+    2: {
+        title: 'Financement',
+        hint: 'Cadrez la mensualité avec l\'apport, le taux et la durée avant d\'affiner.'
+    },
+    3: {
+        title: 'Exploitation',
+        hint: 'Sécurisez votre cash-flow avec la vacance, les charges et la gestion réelle.'
+    },
+    4: {
+        title: 'Fiscalité',
+        hint: 'Finalisez le scénario fiscal pour transformer la saisie en verdict exploitable.'
+    }
+};
 
 // --- COMPTE & PREMIUM (Lots 7+8) ---
 // Etat premium centralise dans billing.js pour preparer Stripe + Supabase
@@ -850,6 +868,7 @@ function activateTab(target, options = {}) {
     document.querySelectorAll('.view-section').forEach(view => {
         view.classList.toggle('active', view.id === target);
     });
+    syncAppShellMode();
 
     const pdfBar = document.getElementById('pdf-action-bar');
     if (target === 'view-results') {
@@ -1349,6 +1368,19 @@ function updateFormProgress() {
     if (label) label.textContent = filled + ' / ' + sections.length + ' sections remplies';
 }
 
+function updateWizardShell() {
+    const meta = WIZARD_STEP_CONTENT[currentWizardStep] || WIZARD_STEP_CONTENT[1];
+    const currentStep = document.getElementById('wizard-current-step');
+    const currentTitle = document.getElementById('wizard-current-title');
+    const currentHint = document.getElementById('wizard-current-hint');
+    const modeBadge = document.getElementById('wizard-mode-badge');
+
+    if (currentStep) currentStep.textContent = 'Etape ' + currentWizardStep + ' sur 4';
+    if (currentTitle) currentTitle.textContent = meta.title;
+    if (currentHint) currentHint.textContent = meta.hint;
+    if (modeBadge) modeBadge.textContent = wizardMode === 'complet' ? 'Mode complet' : 'Mode rapide';
+}
+
 // --- ANIMATION KPI ---
 function animateValue(el, target, suffix, duration) {
     if (!el) return;
@@ -1371,6 +1403,7 @@ function setWizardMode(mode) {
     document.querySelectorAll('.wizard-expert-only').forEach(el => {
         el.style.display = mode === 'complet' ? '' : 'none';
     });
+    updateWizardShell();
 }
 
 function goToStep(n, options = {}) {
@@ -1383,6 +1416,8 @@ function goToStep(n, options = {}) {
         el.classList.toggle('active', i + 1 < n);
         el.classList.toggle('current', i + 1 === n);
     });
+    updateWizardShell();
+    updateFormProgress();
     if (scroll) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -1398,6 +1433,7 @@ function showAccueil() {
     const btnAccueil = document.getElementById('btn-accueil');
     if (btnAccueil) btnAccueil.style.display = 'none';
     clearViewHash();
+    syncAppShellMode();
 }
 
 function hideAccueil(target = 'view-inputs', options = {}) {
@@ -1533,7 +1569,16 @@ function isStandaloneMode() {
 }
 
 function syncAppShellMode() {
+    const accueilVisible = document.getElementById('view-accueil').style.display !== 'none';
+    const activeView = document.querySelector('.view-section.active')?.id || '';
     document.body.classList.toggle('is-standalone', isStandaloneMode());
+    document.body.classList.toggle('is-app-view', !accueilVisible);
+    document.body.classList.toggle('is-inputs-view', activeView === 'view-inputs' && !accueilVisible);
+    if (activeView) {
+        document.body.dataset.activeView = activeView;
+    } else {
+        delete document.body.dataset.activeView;
+    }
 }
 
 function setInstallBannerVisible(isVisible) {

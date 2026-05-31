@@ -87,6 +87,21 @@
 <!-- Bouton simulate caché (conservé pour compat event listener main.js) -->
 <button type="button" id="btn-simulate" style="display:none;">Analyser</button>
 
+<div class="wizard-mobile-shell" aria-live="polite">
+    <div class="wizard-mobile-topline">
+        <span id="wizard-current-step" class="wizard-current-step">Étape 1 sur 4</span>
+        <span id="wizard-mode-badge" class="wizard-mode-badge">Mode rapide</span>
+    </div>
+    <h2 id="wizard-current-title" class="wizard-current-title">Le Bien</h2>
+    <p id="wizard-current-hint" class="wizard-current-hint">Renseignez les deux chiffres clés pour obtenir une première lecture fiable du bien.</p>
+    <div class="form-progress">
+        <div class="form-progress-bar-track">
+            <div id="form-progress-fill" class="form-progress-bar-fill"></div>
+        </div>
+        <div id="form-progress-label" class="form-progress-label">1 / 4 sections remplies</div>
+    </div>
+</div>
+
 <!-- Wizard : indicateur d'étapes -->
 <div class="wizard-step-indicator">
     <div class="wizard-step-dot current" data-step="1">
@@ -116,6 +131,7 @@
 <div class="wizard-step" id="wizard-step-1">
     <div class="wizard-step-card">
         <h3 class="wizard-step-title">Le Bien</h3>
+        <p class="wizard-step-copy">Posez rapidement l'économie du bien: prix affiché, loyer visé et, si besoin, votre marge de négociation.</p>
 
         <label><span>Prix affiché (€) <span class="help-tip" data-tip="Le prix de vente annoncé par le vendeur ou l'agence, avant toute négociation de votre part.">?</span></span>
             <input type="number" inputmode="numeric" id="prix" value="107000"></label>
@@ -147,6 +163,7 @@
 <div class="wizard-step" id="wizard-step-2" style="display:none;">
     <div class="wizard-step-card">
         <h3 class="wizard-step-title">Financement</h3>
+        <p class="wizard-step-copy">Cadrez votre mensualité avec l'apport, le taux et la durée, puis affinez seulement si nécessaire.</p>
 
         <label><span>Apport personnel (€) <span class="help-tip" data-tip="L'argent que vous investissez de votre poche, sans emprunter.">?</span></span>
             <input type="number" inputmode="numeric" id="apport" value="0"></label>
@@ -175,6 +192,7 @@
 <div class="wizard-step" id="wizard-step-3" style="display:none;">
     <div class="wizard-step-card">
         <h3 class="wizard-step-title">Exploitation</h3>
+        <p class="wizard-step-copy">Sécurisez le cash-flow avec les frais réels d'exploitation plutôt qu'une hypothèse trop optimiste.</p>
 
         <label><span>Vacance locative (%) <span class="help-tip" data-tip="Le % du temps où le logement est vide entre deux locataires. 5% ≈ 18 jours/an.">?</span></span>
             <input type="number" inputmode="decimal" step="0.1" id="vacance" value="5"></label>
@@ -198,6 +216,7 @@
 <div class="wizard-step" id="wizard-step-4" style="display:none;">
     <div class="wizard-step-card">
         <h3 class="wizard-step-title">Fiscalité</h3>
+        <p class="wizard-step-copy">Finalisez le scénario fiscal pour transformer la saisie en verdict exploitable et comparable.</p>
 
         <label><span>Revenus du foyer (€) <span class="help-tip" data-tip="Total des revenus annuels de votre foyer. Sert à calculer votre tranche d'imposition (TMI). Foyer : 2 adultes + 2 enfants.">?</span></span>
             <input type="number" inputmode="numeric" id="revenus" value="60000"></label>
