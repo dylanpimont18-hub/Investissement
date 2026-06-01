@@ -1155,7 +1155,7 @@ function openPdfPreview() {
     document.head.appendChild(_previewStyleEl);
 
     // Déplacer le container dans la zone de scroll de la modale
-    container.style.cssText = 'width:680px;max-width:100%;background:white;';
+    container.style.cssText = 'width:100%;max-width:680px;background:white;';
     const scrollEl = document.getElementById('pdf-preview-scroll');
     scrollEl.innerHTML = '';
     scrollEl.appendChild(container);
@@ -1391,6 +1391,22 @@ function updateWizardShell() {
 // --- ANIMATION KPI ---
 function animateValue(el, target, suffix, duration) {
     if (!el) return;
+    if (!Number.isFinite(target)) {
+        delete el.dataset.value;
+        delete el.dataset.animated;
+        return;
+    }
+
+    const formattedTarget = (target % 1 === 0 ? Math.round(target) : target.toFixed(2)) + suffix;
+    el.dataset.value = formattedTarget;
+
+    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (document.visibilityState !== 'visible' || prefersReducedMotion || duration <= 0) {
+        el.textContent = formattedTarget;
+        el.dataset.animated = target;
+        return;
+    }
+
     const start = performance.now();
     const from = parseFloat(el.dataset.animated) || 0;
     function step(now) {

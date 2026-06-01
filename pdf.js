@@ -1,4 +1,16 @@
 function buildPDFParts(uploadedPhotos) {
+  const readExportValue = (id, fallback = '—') => {
+    const el = document.getElementById(id);
+    if (!el) return fallback;
+
+    const dataValue = el.dataset?.value?.trim();
+    if (dataValue) return dataValue;
+
+    const text = el.innerText.trim();
+    if (!text || /^--(?:\s*[%€])?$/.test(text)) return fallback;
+    return text;
+  };
+
     const projectName = document.getElementById('project-name').value.trim() || 'Investissement';
     const today = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
 
@@ -8,11 +20,11 @@ function buildPDFParts(uploadedPhotos) {
     const scoreStars  = document.getElementById('score-stars').innerText;
     const scoreDetail = document.getElementById('score-detail').innerText;
 
-    const rentaBrute  = document.getElementById('renta-brute').innerText;
-    const rentaNette  = document.getElementById('renta-nette').innerText;
-    const rentaNetnet = document.getElementById('renta-netnet').innerText;
+    const rentaBrute  = readExportValue('renta-brute', '-- %');
+    const rentaNette  = readExportValue('renta-nette', '-- %');
+    const rentaNetnet = readExportValue('renta-netnet', '-- %');
     const cfNetnetEl  = document.getElementById('cf-netnet');
-    const cfNetnet    = cfNetnetEl.innerText;
+    const cfNetnet    = readExportValue('cf-netnet', '-- €');
     const cfIsNeg     = cfNetnetEl.classList.contains('negative');
 
     const outPrixNet     = document.getElementById('out-prix-net').innerText;
@@ -55,9 +67,15 @@ function buildPDFParts(uploadedPhotos) {
     const photosHTML   = activePhotos.map(p => `<img src="${p}" class="r-photo-img">`).join('');
 
     let scoreBg = '#fffbeb', scoreBorder = '#f59e0b', scoreColor = '#92400e';
-    if (scoreClass.includes('score-excellent')) { scoreBg = '#f0fdf4'; scoreBorder = '#22c55e'; scoreColor = '#166534'; }
-    else if (scoreClass.includes('score-bon'))  { scoreBg = '#eff6ff'; scoreBorder = '#3b82f6'; scoreColor = '#1e40af'; }
-    else if (scoreClass.includes('score-risque')){ scoreBg = '#fef2f2'; scoreBorder = '#ef4444'; scoreColor = '#991b1b'; }
+    if (scoreClass.includes('score-excellent') || scoreClass.includes('verdict--rentable')) {
+      scoreBg = '#f0fdf4'; scoreBorder = '#22c55e'; scoreColor = '#166534';
+    } else if (scoreClass.includes('score-bon') || scoreClass.includes('verdict--correct')) {
+      scoreBg = '#eff6ff'; scoreBorder = '#3b82f6'; scoreColor = '#1e40af';
+    } else if (scoreClass.includes('score-moyen') || scoreClass.includes('verdict--fragile')) {
+      scoreBg = '#fffbeb'; scoreBorder = '#f59e0b'; scoreColor = '#92400e';
+    } else if (scoreClass.includes('score-risque') || scoreClass.includes('verdict--eviter')) {
+      scoreBg = '#fef2f2'; scoreBorder = '#ef4444'; scoreColor = '#991b1b';
+    }
 
     const css = `
 #pdf-render {
@@ -663,10 +681,37 @@ function buildPDFParts(uploadedPhotos) {
 }
 
 @media (max-width: 720px) {
+  #pdf-render {
+    width: 100%;
+  }
+
   #pdf-render .r-header,
   #pdf-render .r-score,
   #pdf-render .r-summary-row {
     display: block;
+  }
+
+  #pdf-render .r-title-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  #pdf-render .r-exec-grid,
+  #pdf-render .r-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #pdf-render .r-exec-item {
+    border-right: none !important;
+    padding: 7px 0;
+  }
+
+  #pdf-render .r-exec-item:nth-child(-n + 2) {
+    border-bottom: 1px solid #dbe5ef;
+  }
+
+  #pdf-render .regime-compare-grid {
+    grid-template-columns: 1fr;
   }
 
   #pdf-render .r-date-wrap {
@@ -681,6 +726,15 @@ function buildPDFParts(uploadedPhotos) {
   #pdf-render .r-chart {
     width: 100%;
     margin-top: 12px;
+  }
+
+  #pdf-render .nego-table,
+  #pdf-render .r-proj-table,
+  #pdf-render .fiscal-breakdown-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
   }
 }
 

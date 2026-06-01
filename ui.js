@@ -8,7 +8,9 @@ export function setNegoTableMode(mode) { negoTableMode = mode; }
 
 export function updateColor(id, value) {
     const el = document.getElementById(id);
-    el.innerText = value.toFixed(2) + ' €';
+    const formattedValue = value.toFixed(2) + ' €';
+    el.innerText = formattedValue;
+    el.dataset.value = formattedValue;
     el.className = 'value ' + (value >= 0 ? 'positive' : 'negative');
 }
 
