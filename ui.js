@@ -285,11 +285,11 @@ export function generateOptimizationTips(inputs, tmi, data) {
         } else {
             expl = `Vos charges réelles ne représentent que ${pctChargesReelles} % de vos loyers. L'abattement forfaitaire de 30 % du Micro-Foncier serait plus avantageux et simplifie votre comptabilité.`;
         }
-        tips.push({ icon: '⚖️', title: `Passez au ${otherLabel}`, explanation: expl, gainPerMonth: diff, shortAdvice: `Passez au ${otherLabel} pour +${diff} €/mois`, category: 'fiscal' });
+        tips.push({ icon: 'Fiscal', title: `Passez au ${otherLabel}`, explanation: expl, gainPerMonth: diff, shortAdvice: `Passez au ${otherLabel} pour +${diff} €/mois`, category: 'fiscal' });
     } else {
         const saving = Math.abs(diff);
         const currentLabel = currentRegime === 'micro-foncier' ? 'Micro-Foncier' : (currentRegime === 'reel' ? 'Foncier Réel' : 'SCI à l\'IS');
-        tips.push({ icon: '✅', title: `Régime fiscal optimal`, explanation: `Vous êtes déjà sur le régime le plus avantageux (${currentLabel}). Il vous fait économiser ${saving} €/mois par rapport aux autres régimes.`, gainPerMonth: 0, shortAdvice: null, category: 'fiscal' });
+        tips.push({ icon: 'Optimal', title: `Régime fiscal optimal`, explanation: `Vous êtes déjà sur le régime le plus avantageux (${currentLabel}). Il vous fait économiser ${saving} €/mois par rapport aux autres régimes.`, gainPerMonth: 0, shortAdvice: null, category: 'fiscal' });
     }
 
     if (currentRegime === 'reel' || cfReel > cfMicro) {
@@ -303,7 +303,7 @@ export function generateOptimizationTips(inputs, tmi, data) {
                 const economieIR      = Math.round(imputable * (tmi / 100));
                 const capaciteRestante = 10700 - imputable;
                 tips.push({
-                    icon: '🏗️', title: 'Déficit foncier actif',
+                    icon: 'Déficit', title: 'Déficit foncier actif',
                     explanation: `Votre déficit foncier est de ${Math.round(deficitTotal).toLocaleString('fr-FR')} €/an. La part imputable sur votre revenu global (hors intérêts) est de ${Math.round(imputable).toLocaleString('fr-FR')} € (plafond 10 700 €). Cela vous fait économiser ${economieIR.toLocaleString('fr-FR')} € d'impôt sur le revenu cette année, soit ${Math.round(economieIR / 12)} €/mois.${capaciteRestante > 0 ? ` Il vous reste ${Math.round(capaciteRestante).toLocaleString('fr-FR')} € de capacité d'imputation.` : ' Vous utilisez 100 % du plafond.'}`,
                     gainPerMonth: null, shortAdvice: null, category: 'fiscal'
                 });
@@ -311,7 +311,7 @@ export function generateOptimizationTips(inputs, tmi, data) {
                 if (capaciteRestante > 0 && tmi > 0) {
                     const economiePotentielle = Math.round(capaciteRestante * (tmi / 100));
                     tips.push({
-                        icon: '🔧', title: 'Optimisez via des travaux',
+                        icon: 'Travaux', title: 'Optimisez via des travaux',
                         explanation: `Chaque euro de travaux supplémentaires vous fait économiser ${tmi} centimes d'impôt (TMI à ${tmi} %). Vous pouvez encore déduire jusqu'à ${Math.round(capaciteRestante).toLocaleString('fr-FR')} € de travaux avant d'atteindre le plafond de déficit foncier, soit une économie potentielle de ${economiePotentielle.toLocaleString('fr-FR')} €/an (${Math.round(economiePotentielle / 12)} €/mois).`,
                         gainPerMonth: Math.round(economiePotentielle / 12), shortAdvice: `+${Math.round(economiePotentielle / 12)} €/mois possibles via travaux`, category: 'fiscal'
                     });
@@ -323,7 +323,7 @@ export function generateOptimizationTips(inputs, tmi, data) {
     if ((currentRegime === 'reel' || cfReel > cfMicro) && firstYearInterets > 0) {
         const economieInterets = Math.round(firstYearInterets * tauxGlobalImpot);
         tips.push({
-            icon: '🏦', title: 'Intérêts d\'emprunt déductibles',
+            icon: 'Crédit', title: 'Intérêts d\'emprunt déductibles',
             explanation: `En 1ère année, vous déduisez ${Math.round(firstYearInterets).toLocaleString('fr-FR')} € d'intérêts d'emprunt. Cela représente une économie fiscale potentielle de ${economieInterets.toLocaleString('fr-FR')} €/an (soit ${Math.round(economieInterets / 12)} €/mois). Cette déduction diminue chaque année à mesure que le capital est remboursé.`,
             gainPerMonth: null, shortAdvice: null, category: 'fiscal'
         });
@@ -335,7 +335,7 @@ export function generateOptimizationTips(inputs, tmi, data) {
         if (gain > 0) {
             const fraisGestionAnnuels = Math.round(loyersEncaisses * (inputs['gestion'] / 100));
             tips.push({
-                icon: '🤝', title: 'Gérez vous-même votre bien',
+                icon: 'Gestion', title: 'Gérez vous-même votre bien',
                 explanation: `En gérant vous-même votre bien (sans agence), votre cash-flow augmenterait de ${gain} €/mois. Les frais de gestion actuels de ${inputs['gestion']} % représentent ${fraisGestionAnnuels.toLocaleString('fr-FR')} €/an.`,
                 gainPerMonth: gain, shortAdvice: `Autogestion : +${gain} €/mois`, category: 'profit'
             });
@@ -347,7 +347,7 @@ export function generateOptimizationTips(inputs, tmi, data) {
         const gain = Math.round(cfSansVacance - cfNetNet);
         if (gain > 0) {
             tips.push({
-                icon: '🏠', title: 'Réduisez la vacance locative',
+                icon: 'Vacance', title: 'Réduisez la vacance locative',
                 explanation: `En éliminant la vacance locative de ${inputs['vacance']} %, votre cash-flow augmenterait de ${gain} €/mois. Visez un bail solide et un emplacement attractif pour garder votre bien toujours loué.`,
                 gainPerMonth: gain, shortAdvice: `0 % vacance : +${gain} €/mois`, category: 'profit'
             });
@@ -360,7 +360,7 @@ export function generateOptimizationTips(inputs, tmi, data) {
         const cfGain = Math.round(computeCF(prixNetMoins1, loyer, inputs, tmi) - cfNetNet);
         if (cfGain > 0) {
             tips.push({
-                icon: '📉', title: 'Négociez le prix d\'achat',
+                icon: 'Négo', title: 'Négociez le prix d\'achat',
                 explanation: `Chaque 1 % de négociation supplémentaire sur le prix affiché (soit ${Math.round(prixAffiche * 0.01).toLocaleString('fr-FR')} €) améliorerait votre cash-flow de ${cfGain} €/mois.`,
                 gainPerMonth: cfGain, shortAdvice: `1 % de négo = +${cfGain} €/mois`, category: 'profit'
             });
@@ -372,7 +372,7 @@ export function generateOptimizationTips(inputs, tmi, data) {
         const gain = Math.round(cfMeilleurAssurance - cfNetNet);
         if (gain > 0) {
             tips.push({
-                icon: '🛡️', title: 'Renégociez votre assurance emprunteur',
+                icon: 'Assurance', title: 'Renégociez votre assurance emprunteur',
                 explanation: `Votre taux d'assurance emprunteur est de ${inputs['assurance']} %. En le renégociant à 0.15 % (délégation d'assurance), vous économiseriez ${gain} €/mois. La loi Lemoine vous permet de changer à tout moment.`,
                 gainPerMonth: gain, shortAdvice: `Assurance à 0.15 % : +${gain} €/mois`, category: 'profit'
             });
@@ -393,7 +393,7 @@ export function renderOptimizationSection(tips) {
     if (!container) return;
 
     if (tips.length === 0) {
-        container.innerHTML = '<div class="tip-optimized">✅ Votre investissement est déjà bien optimisé !</div>';
+        container.innerHTML = '<div class="tip-optimized">Votre investissement est déjà bien optimisé.</div>';
         return;
     }
 

@@ -3,20 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Investisseur Pro - Outil d'Aide à la Décision</title>
+    <title>Investisseur Pro | Décision immobilière claire et mobile</title>
+    <meta name="description" content="Investisseur Pro aide à décider vite sur un bien immobilier avec verdict, KPI utiles, leviers d'optimisation, faisabilité et rapport partageable.">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Investisseur Pro">
     <meta name="application-name" content="Investisseur Pro">
-    <meta name="theme-color" content="#F6F8FA">
+    <meta name="theme-color" content="#0F5D84">
     <meta name="format-detection" content="telephone=no">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
     <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -33,8 +34,12 @@
 
 <div class="header">
     <div class="header-brand">
-        <h1>Investisseur Pro</h1>
-        <span class="header-tagline">Outil d'analyse immobilière</span>
+        <div class="brand-mark" aria-hidden="true">IP</div>
+        <div class="header-brand-copy">
+            <span class="header-overline">Assistant de décision immobilier</span>
+            <h1>Investisseur Pro</h1>
+            <span class="header-tagline">Verdict clair, faisabilité immédiate, rapport partageable</span>
+        </div>
     </div>
     <div class="header-actions">
         <button class="btn-accueil" id="btn-accueil" title="Accueil" style="display:none;">⌂</button>
@@ -60,26 +65,96 @@
 <div class="container">
 
 <div id="view-accueil" class="view-accueil">
-    <div class="accueil-hero">
-        <div class="accueil-logo-mark">IP</div>
-        <h2 class="accueil-title">Analysez un bien immobilier en 2 minutes.</h2>
-        <p class="accueil-subtitle">Décidez en confiance.</p>
-    </div>
-    <div class="accueil-ctas">
-        <button type="button" id="btn-start-rapide" class="accueil-cta accueil-cta-primary">
-            <span class="accueil-cta-title">Estimation rapide</span>
-            <span class="accueil-cta-desc">Les essentiels · résultat en 1 minute</span>
-        </button>
-        <button type="button" id="btn-start-complet" class="accueil-cta accueil-cta-secondary">
-            <span class="accueil-cta-title">Analyse complète</span>
-            <span class="accueil-cta-desc">Tous les paramètres · analyse experte</span>
-        </button>
-        <button type="button" id="btn-reprendre" class="accueil-cta accueil-cta-ghost" style="display:none;">
-            <span class="accueil-cta-title">Reprendre ma saisie</span>
-            <span class="accueil-cta-desc">Continuer là où vous vous êtes arrêté</span>
-        </button>
-    </div>
-    <p class="accueil-disclaimer">Simulation indicative · outil d'aide à la décision</p>
+    <section class="accueil-hero">
+        <div class="accueil-hero-copy">
+            <span class="accueil-kicker">Assistant de décision immobilier</span>
+            <h2 class="accueil-title">Passez d'une visite à un verdict exploitable, sans tableur ni approximation.</h2>
+            <p class="accueil-subtitle">Investisseur Pro transforme vos hypothèses d'achat, de financement et de fiscalité en lecture claire, leviers d'optimisation et rapport présentable.</p>
+            <div class="accueil-proof-list">
+                <span class="accueil-proof-pill">100 % local sur l'appareil</span>
+                <span class="accueil-proof-pill">Optimisé mobile terrain</span>
+                <span class="accueil-proof-pill">Projection 25 ans et PDF</span>
+            </div>
+        </div>
+
+        <div class="accueil-preview-card">
+            <div class="accueil-preview-head">
+                <span class="accueil-preview-badge">Ce que vous obtenez</span>
+                <span class="accueil-preview-note">En moins de 3 minutes</span>
+            </div>
+            <div class="accueil-preview-grid">
+                <article class="accueil-preview-item">
+                    <span class="accueil-preview-label">Verdict</span>
+                    <strong class="accueil-preview-value">Rentable, correct, fragile ou à éviter</strong>
+                    <p class="accueil-preview-copy">Une lecture exploitable dès l'ouverture de l'onglet Analyse.</p>
+                </article>
+                <article class="accueil-preview-item">
+                    <span class="accueil-preview-label">KPI utiles</span>
+                    <strong class="accueil-preview-value">CF net-net, renta nette-nette, DSCR</strong>
+                    <p class="accueil-preview-copy">Les chiffres qui comptent vraiment pour arbitrer.</p>
+                </article>
+                <article class="accueil-preview-item">
+                    <span class="accueil-preview-label">Leviers</span>
+                    <strong class="accueil-preview-value">Fiscalité, négociation, vacance, assurance</strong>
+                    <p class="accueil-preview-copy">Des pistes concrètes plutôt qu'une simple note.</p>
+                </article>
+                <article class="accueil-preview-item">
+                    <span class="accueil-preview-label">Partage</span>
+                    <strong class="accueil-preview-value">Aperçu rapport, PDF et historique local</strong>
+                    <p class="accueil-preview-copy">Présentable pour un associé, un banquier ou un client.</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="accueil-entry-panel">
+        <div class="accueil-entry-head">
+            <div>
+                <span class="accueil-entry-badge">Démarrer une analyse</span>
+                <p class="accueil-entry-copy">Choisissez votre rythme. Vous pouvez rester en saisie minimale ou ouvrir toute la profondeur expert.</p>
+            </div>
+            <div class="accueil-journey">
+                <div class="accueil-journey-step"><span>01</span><p>Saisie guidée</p></div>
+                <div class="accueil-journey-step"><span>02</span><p>Verdict immédiat</p></div>
+                <div class="accueil-journey-step"><span>03</span><p>Rapport partageable</p></div>
+            </div>
+        </div>
+
+        <div class="accueil-ctas">
+            <button type="button" id="btn-start-rapide" class="accueil-cta accueil-cta-primary">
+                <span class="accueil-cta-title">Estimation rapide</span>
+                <span class="accueil-cta-desc">Les entrées essentielles pour qualifier un bien sur le terrain</span>
+            </button>
+            <button type="button" id="btn-start-complet" class="accueil-cta accueil-cta-secondary">
+                <span class="accueil-cta-title">Analyse complète</span>
+                <span class="accueil-cta-desc">Le montage détaillé, la fiscalité et les projections expertes</span>
+            </button>
+            <button type="button" id="btn-reprendre" class="accueil-cta accueil-cta-ghost" style="display:none;">
+                <span class="accueil-cta-title">Reprendre ma saisie</span>
+                <span class="accueil-cta-desc">Continuer un brouillon local déjà enregistré sur cet appareil</span>
+            </button>
+        </div>
+
+        <p class="accueil-disclaimer">Simulation indicative • outil d'aide à la décision • ne remplace pas un conseil personnalisé</p>
+    </section>
+
+    <section class="accueil-benefits-grid">
+        <article class="accueil-benefit-card">
+            <span class="accueil-benefit-label">Décision</span>
+            <h3>Une hiérarchie pensée pour trancher vite</h3>
+            <p>Verdict, prochaine action et détails experts repliables au même endroit.</p>
+        </article>
+        <article class="accueil-benefit-card">
+            <span class="accueil-benefit-label">Négociation</span>
+            <h3>Des leviers actionnables, pas seulement des ratios</h3>
+            <p>Le simulateur explicite ce qui améliore réellement le cash-flow ou la fiscalité.</p>
+        </article>
+        <article class="accueil-benefit-card">
+            <span class="accueil-benefit-label">Mobilité</span>
+            <h3>Utilisable en visite, au bureau et hors ligne</h3>
+            <p>Les données restent locales et l'app garde un flux mobile propre jusqu'au PDF.</p>
+        </article>
+    </section>
 </div>
 
     <div id="view-inputs" class="view-section active">
@@ -323,22 +398,45 @@
                     </div>
                 </div>
 
+                <div class="analysis-snapshot-grid">
+                    <article class="analysis-snapshot-card">
+                        <span class="analysis-snapshot-label">Acquisition</span>
+                        <strong id="snapshot-cout-total" class="analysis-snapshot-value">--</strong>
+                        <p id="snapshot-prix-net" class="analysis-snapshot-meta">Coût total de l'opération</p>
+                    </article>
+                    <article class="analysis-snapshot-card">
+                        <span class="analysis-snapshot-label">Financement</span>
+                        <strong id="snapshot-mensualite" class="analysis-snapshot-value">--</strong>
+                        <p id="snapshot-financement" class="analysis-snapshot-meta">Mensualité et montant financé</p>
+                    </article>
+                    <article class="analysis-snapshot-card">
+                        <span class="analysis-snapshot-label">Fiscalité</span>
+                        <strong id="snapshot-regime" class="analysis-snapshot-value">--</strong>
+                        <p id="snapshot-tmi" class="analysis-snapshot-meta">Régime actuel et TMI</p>
+                    </article>
+                    <article class="analysis-snapshot-card">
+                        <span class="analysis-snapshot-label">Meilleur levier</span>
+                        <strong id="snapshot-best-option" class="analysis-snapshot-value">--</strong>
+                        <p id="snapshot-best-option-meta" class="analysis-snapshot-meta">Piste prioritaire du moment</p>
+                    </article>
+                </div>
+
                 <!-- Actions principales -->
                 <div class="verdict-actions">
                     <button type="button" class="verdict-action-btn verdict-action-pdf" onclick="document.getElementById('btn-preview-pdf').click()">
-                        <span class="vab-icon">&#128196;</span>
-                        <span class="vab-label">Rapport complet</span>
-                        <span class="vab-sub">Analyse détaillée · PDF prêt</span>
+                        <span class="vab-icon">01</span>
+                        <span class="vab-label">Aperçu du rapport</span>
+                        <span class="vab-sub">Relire l'analyse avant partage</span>
                     </button>
                     <button type="button" class="verdict-action-btn verdict-action-print" onclick="document.getElementById('btn-save-pdf').click()">
-                        <span class="vab-icon">&#8595;</span>
-                        <span class="vab-label">Exporter PDF</span>
-                        <span class="vab-sub">Impression ou enregistrement</span>
+                        <span class="vab-icon">02</span>
+                        <span class="vab-label">Exporter en PDF</span>
+                        <span class="vab-sub">Impression ou enregistrement local</span>
                     </button>
                     <button type="button" id="verdict-action-compare-btn" class="verdict-action-btn verdict-action-compare" onclick="window.openComparatorModal()">
-                        <span class="vab-icon">&#9878;</span>
-                        <span class="vab-label">Comparer les biens</span>
-                        <span class="vab-sub">Identifier la meilleure opportunité</span>
+                        <span class="vab-icon">03</span>
+                        <span class="vab-label">Comparer mes projets</span>
+                        <span class="vab-sub">Classer plusieurs opportunités</span>
                     </button>
                 </div>
 
@@ -367,6 +465,29 @@
                         <h3>Rentabilité Brute <span class="help-tip" data-tip="Loyers annuels ÷ Coût total × 100. Un premier aperçu rapide, mais qui ne tient pas compte des charges ni des impôts.">?</span></h3>
                         <div class="value" id="renta-brute">-- %</div>
                     </div>
+                </div>
+
+                <div class="results-section-heading results-section-heading--spaced">
+                    <span class="results-section-badge">Lecture décisionnelle</span>
+                    <span class="results-section-copy">Trois angles pour savoir quoi faire ensuite</span>
+                </div>
+
+                <div class="decision-board">
+                    <article class="decision-card decision-card--strength">
+                        <span class="decision-card-tag">Point fort</span>
+                        <h3 id="decision-strength-title">--</h3>
+                        <p id="decision-strength-copy">Lancez un calcul pour voir le point fort principal de l'opération.</p>
+                    </article>
+                    <article class="decision-card decision-card--risk">
+                        <span class="decision-card-tag">Point de vigilance</span>
+                        <h3 id="decision-risk-title">--</h3>
+                        <p id="decision-risk-copy">Le principal risque ressortira ici une fois l'analyse calculée.</p>
+                    </article>
+                    <article class="decision-card decision-card--leverage">
+                        <span class="decision-card-tag">Levier prioritaire</span>
+                        <h3 id="decision-leverage-title">--</h3>
+                        <p id="decision-leverage-copy">Le prochain levier à activer apparaîtra ici.</p>
+                    </article>
                 </div>
 
                 <!-- Synthèse verdict -->
@@ -733,14 +854,14 @@
         <div class="vierzon-shell">
             <div class="vierzon-hero-card">
                 <div class="vierzon-hero-head">
-                    <span class="vierzon-kicker">Objectif</span>
-                    <span class="vierzon-kicker-meta">Basé sur vos hypothèses de saisie</span>
+                    <span class="vierzon-kicker">Cadrage acquisition</span>
+                    <span class="vierzon-kicker-meta">Calé sur vos hypothèses actuelles</span>
                 </div>
-                <h3 class="vierzon-title">Mon objectif de rentabilité</h3>
-                <p class="vierzon-description">Définissez le cash-flow net-net mensuel que vous voulez absolument dégager, puis laissez l'app vous donner le bon prix ou le bon loyer cible.</p>
+                <h3 class="vierzon-title">Prix cible et loyer plancher</h3>
+                <p class="vierzon-description">Fixez un niveau de cash-flow net-net mensuel cible. L'application convertit ensuite cet objectif en prix d'acquisition maximal ou en loyer minimum à sécuriser.</p>
 
                 <div class="vierzon-cf-row vierzon-target-panel">
-                    <label class="vierzon-target-label">Je veux un Cash-Flow de <span class="help-tip" data-tip="Le montant net que vous voulez gagner chaque mois après avoir tout payé : crédit, charges et impôts.">?</span> :</label>
+                    <label class="vierzon-target-label">Objectif de cash-flow net-net <span class="help-tip" data-tip="Le montant net que vous voulez gagner chaque mois après avoir tout payé : crédit, charges et impôts.">?</span></label>
                     <div class="vierzon-target-input">
                         <input type="number" id="vierzon-target-cf" value="100" step="10" class="vierzon-target-field"> <strong>€ / mois</strong>
                     </div>
@@ -750,42 +871,42 @@
             <div class="grid-2-cols vierzon-grid">
                 <div class="card vierzon-scenario-card vierzon-scenario-card--a">
                     <div class="vierzon-scenario-topline">
-                        <span class="vierzon-scenario-badge">Scénario A</span>
-                        <span class="vierzon-scenario-helper">Je connais déjà le loyer</span>
+                        <span class="vierzon-scenario-badge">Option A</span>
+                        <span class="vierzon-scenario-helper">Vous partez du marché locatif</span>
                     </div>
-                    <h3 class="vierzon-scenario-title">Je connais le loyer</h3>
-                    <p class="vierzon-scenario-copy">Vous connaissez le marché locatif du secteur. Quel prix maximum pouvez-vous payer pour rester dans votre cible ?</p>
+                    <h3 class="vierzon-scenario-title">Je pars du loyer de marché</h3>
+                    <p class="vierzon-scenario-copy">Vous connaissez le loyer crédible du secteur. L'application vous donne le prix d'achat maximum à ne pas dépasser pour rester dans votre cible.</p>
 
                     <label class="vierzon-input-label"><span>Loyer estimé</span>
                         <div class="vierzon-field-inline"><input type="number" id="vierzon-loyer-estime" value="500" class="vierzon-inline-input"> €/mois</div>
                     </label>
 
                     <div class="vierzon-output-card">
-                        <div class="vierzon-output-label">Prix d'achat max (FAI) <span class="help-tip" data-tip="Le prix maximum que vous pouvez payer frais d'agence inclus pour atteindre votre objectif de cash-flow avec ce loyer.">?</span></div>
+                        <div class="vierzon-output-label">Prix d'achat maximal à ne pas dépasser <span class="help-tip" data-tip="Le prix maximum que vous pouvez payer frais d'agence inclus pour atteindre votre objectif de cash-flow avec ce loyer.">?</span></div>
                         <div id="vierzon-prix-max" class="vierzon-output-value">-- €</div>
                     </div>
                 </div>
 
                 <div class="card vierzon-scenario-card vierzon-scenario-card--b">
                     <div class="vierzon-scenario-topline">
-                        <span class="vierzon-scenario-badge">Scénario B</span>
-                        <span class="vierzon-scenario-helper">J'ai repéré une annonce</span>
+                        <span class="vierzon-scenario-badge">Option B</span>
+                        <span class="vierzon-scenario-helper">Vous partez d'un prix affiché</span>
                     </div>
-                    <h3 class="vierzon-scenario-title">J'ai repéré une annonce</h3>
-                    <p class="vierzon-scenario-copy">Vous avez déjà un prix de vente. Quel loyer minimum devez-vous exiger pour rester aligné avec votre objectif ?</p>
+                    <h3 class="vierzon-scenario-title">Je pars du prix affiché</h3>
+                    <p class="vierzon-scenario-copy">Vous avez déjà une annonce en tête. L'application vous indique le loyer minimum à sécuriser pour rester aligné avec votre objectif.</p>
 
                     <label class="vierzon-input-label"><span>Prix de l'annonce <span class="help-tip" data-tip="FAI = Frais d'Agence Inclus. C'est le prix affiché dans l'annonce, commission d'agence comprise.">?</span></span>
                         <div class="vierzon-field-inline"><input type="number" id="vierzon-prix-annonce" value="80000" class="vierzon-inline-input"> € FAI</div>
                     </label>
 
                     <div class="vierzon-output-card">
-                        <div class="vierzon-output-label">Loyer minimum à exiger <span class="help-tip" data-tip="Le loyer mensuel minimum que vous devez demander pour atteindre votre objectif de cash-flow avec ce prix d'achat.">?</span></div>
+                        <div class="vierzon-output-label">Loyer minimum à sécuriser <span class="help-tip" data-tip="Le loyer mensuel minimum que vous devez demander pour atteindre votre objectif de cash-flow avec ce prix d'achat.">?</span></div>
                         <div id="vierzon-loyer-min" class="vierzon-output-value">-- € /mois</div>
                     </div>
                 </div>
             </div>
 
-            <p class="vierzon-footnote">* Ces calculs utilisent l'apport, les taux, la durée et les impôts définis dans l'onglet Saisie.</p>
+            <p class="vierzon-footnote">Ces calculs réutilisent l'apport, le taux, la durée, les charges et le régime fiscal définis dans l'onglet Saisie.</p>
         </div>
     </div>
 

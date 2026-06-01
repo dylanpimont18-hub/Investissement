@@ -184,6 +184,130 @@ function getCurrentInputs() {
     return data;
 }
 
+const REGIME_LABELS = {
+    'micro-foncier': 'Micro-Foncier',
+    'reel': 'Foncier Réel',
+    'sci-is': 'SCI à l\'IS'
+};
+
+function formatRoundedCurrency(value) {
+    return `${Math.round(value).toLocaleString('fr-FR')} €`;
+}
+
+function formatRoundedMonthly(value) {
+    return `${Math.round(value).toLocaleString('fr-FR')} €/mois`;
+}
+
+function formatSignedMonthly(value) {
+    const rounded = Math.round(value);
+    return `${rounded >= 0 ? '+' : ''}${rounded.toLocaleString('fr-FR')} €/mois`;
+}
+
+function getRegimePerformance(prixNet, loyer, inputs, tmi) {
+    const regimes = Object.entries(REGIME_LABELS).map(([id, label]) => ({
+        id,
+        label,
+        cf: computeCF(prixNet, loyer, Object.assign({}, inputs, { regime: id }), tmi)
+    }));
+
+    const current = regimes.find(regime => regime.id === inputs['regime']) || regimes[0];
+    const best = regimes.reduce((winner, regime) => regime.cf > winner.cf ? regime : winner, regimes[0]);
+
+    return { regimes, current, best };
+}
+
+function updateAnalysisSurface({ prixNet, coutTotal, mensualiteTotale, montantFinance, tmi, regimePerformance, tips, cfNetNet, dscr, breakEvenYear, rentaNetNet, inputs }) {
+    const snapshotCoutTotal = document.getElementById('snapshot-cout-total');
+    if (!snapshotCoutTotal) return;
+
+    const topTip = tips.find(tip => tip.gainPerMonth && tip.gainPerMonth > 0);
+    const regimeDelta = Math.round(regimePerformance.best.cf - regimePerformance.current.cf);
+
+    snapshotCoutTotal.textContent = formatRoundedCurrency(coutTotal);
+    document.getElementById('snapshot-prix-net').textContent = `Prix net vendeur ${formatRoundedCurrency(prixNet)}`;
+
+    document.getElementById('snapshot-mensualite').textContent = formatRoundedMonthly(mensualiteTotale);
+    document.getElementById('snapshot-financement').textContent = `Financé ${formatRoundedCurrency(montantFinance)}`;
+
+    const snapshotRegime = document.getElementById('snapshot-regime');
+    const snapshotTmi = document.getElementById('snapshot-tmi');
+    if (regimeDelta > 0) {
+        snapshotRegime.textContent = regimePerformance.best.label;
+        snapshotTmi.textContent = `Actuel ${regimePerformance.current.label} · TMI ${tmi} %`;
+    } else {
+        snapshotRegime.textContent = regimePerformance.current.label;
+        snapshotTmi.textContent = `Régime cohérent · TMI ${tmi} %`;
+    }
+
+    const snapshotBestOption = document.getElementById('snapshot-best-option');
+    const snapshotBestOptionMeta = document.getElementById('snapshot-best-option-meta');
+    if (topTip) {
+        snapshotBestOption.textContent = topTip.title;
+        snapshotBestOptionMeta.textContent = topTip.gainPerMonth
+            ? `Gain estimé ${formatSignedMonthly(topTip.gainPerMonth)}`
+            : topTip.explanation;
+    } else if (regimeDelta > 0) {
+        snapshotBestOption.textContent = regimePerformance.best.label;
+        snapshotBestOptionMeta.textContent = `Amélioration potentielle ${formatSignedMonthly(regimeDelta)}`;
+    } else {
+        snapshotBestOption.textContent = 'Configuration cohérente';
+        snapshotBestOptionMeta.textContent = 'Aucun levier majeur supplémentaire n\'est détecté à ce stade.';
+    }
+
+    let strengthTitle = 'Base d\'analyse exploitable';
+    let strengthCopy = `Rentabilité nette-nette estimée à ${rentaNetNet.toFixed(1)} % avec un cadre d\'opération déjà structuré.`;
+
+    if (cfNetNet >= 100) {
+        strengthTitle = 'Exploitation autoporteuse';
+        strengthCopy = `Le cash-flow net-net reste à ${formatSignedMonthly(cfNetNet)} et le DSCR atteint ${dscr.toFixed(2)}.`;
+    } else if (dscr >= 1) {
+        strengthTitle = 'Dette globalement couverte';
+        strengthCopy = `Les loyers couvrent encore le financement avec un DSCR de ${dscr.toFixed(2)}.`;
+    } else if (topTip) {
+        strengthTitle = 'Levier identifié sans ambiguïté';
+        strengthCopy = `L'analyse fait ressortir une action prioritaire claire : ${topTip.title.toLowerCase()}.`;
+    }
+
+    let riskTitle = 'Risque principal contenu';
+    let riskCopy = 'Les hypothèses actuelles restent surveillables, mais doivent être confirmées sur le terrain.';
+
+    if (cfNetNet < 0) {
+        riskTitle = 'Effort de trésorerie mensuel';
+        riskCopy = `Avec ${formatSignedMonthly(cfNetNet)}, l'opération vous demande un complément de trésorerie chaque mois.`;
+    } else if (dscr < 1) {
+        riskTitle = 'Couverture bancaire fragile';
+        riskCopy = `Le DSCR de ${dscr.toFixed(2)} reste inférieur au seuil de confort bancaire.`;
+    } else if (breakEvenYear === null || breakEvenYear > 10) {
+        riskTitle = 'Retour sur effort lent';
+        riskCopy = breakEvenYear === null
+            ? 'Le cash-flow cumulé ne repasse pas positif dans la période projetée.'
+            : `Le cash-flow cumulé ne redevient positif qu\'à l\'an ${breakEvenYear}.`;
+    } else if ((inputs['vacance'] || 0) >= 8) {
+        riskTitle = 'Hypothèse locative sensible';
+        riskCopy = `La vacance retenue de ${inputs['vacance']} % pénalise fortement l'équilibre du dossier.`;
+    }
+
+    let leverageTitle = 'Configuration déjà cohérente';
+    let leverageCopy = 'Les paramètres actuels sont déjà alignés avec le meilleur équilibre détecté.';
+
+    if (topTip) {
+        leverageTitle = topTip.title;
+        leverageCopy = topTip.gainPerMonth && topTip.gainPerMonth > 0
+            ? `${topTip.shortAdvice || topTip.title}. ${topTip.explanation}`
+            : topTip.explanation;
+    } else if (regimeDelta > 0) {
+        leverageTitle = `Passer au ${regimePerformance.best.label}`;
+        leverageCopy = `Ce changement améliorerait le cash-flow d\'environ ${formatSignedMonthly(regimeDelta)} sans toucher au reste du montage.`;
+    }
+
+    document.getElementById('decision-strength-title').textContent = strengthTitle;
+    document.getElementById('decision-strength-copy').textContent = strengthCopy;
+    document.getElementById('decision-risk-title').textContent = riskTitle;
+    document.getElementById('decision-risk-copy').textContent = riskCopy;
+    document.getElementById('decision-leverage-title').textContent = leverageTitle;
+    document.getElementById('decision-leverage-copy').textContent = leverageCopy;
+}
+
 // --- DÉCLENCHEUR DE CALCUL (debounce 300 ms) ---
 function triggerCalculations() {
     clearTimeout(calcTimeout);
@@ -458,10 +582,12 @@ function calculateAndSave() {
     updateEvolutionChart(chartLabels, dataCapitalRestant, dataCFCumule, dataEnrichissement);
     updateRegimeComparison(prixNet, inputs, tmi, loyersEncaisses, chargesExploitationAnnuelles, coutAssuranceMensuel, firstYearInterets);
 
+    const regimePerformance = getRegimePerformance(prixNet, inputs['loyer'], inputs, tmi);
     const computedData = { prixNet, cfNetNet, firstYearImpots, firstYearInterets, loyersEncaisses, chargesExploitationAnnuelles, coutAssuranceMensuel, montantFinance };
     const tips = generateOptimizationTips(inputs, tmi, computedData);
     renderOptimizationSection(tips);
     updateScoreBanner(cfNetNet, rentaNette, tips);
+    updateAnalysisSurface({ prixNet, coutTotal, mensualiteTotale, montantFinance, tmi, regimePerformance, tips, cfNetNet, dscr, breakEvenYear, rentaNetNet, inputs });
     updateNegoTable(prixNet, inputs['prix'], inputs, tmi);
 
     // --- ÉQUITÉ AN 1 ---
