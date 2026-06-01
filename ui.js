@@ -113,6 +113,12 @@ export function updateScoreBanner(cfNetNet, rentaNette, tips) {
     document.getElementById('score-label').innerText = label;
     document.getElementById('score-stars').innerText = stars;
 
+    const statusChip = document.getElementById('verdict-status-chip');
+    if (statusChip) {
+        statusChip.textContent = label;
+        statusChip.className = 'verdict-insight-value verdict-status-chip ' + cls;
+    }
+
     const sign = cfNetNet >= 0 ? '+' : '';
     document.getElementById('score-detail').innerText =
         `CF ${sign}${Math.round(cfNetNet)} €/mois · Renta nette ${rentaNette.toFixed(1)} %`;
@@ -122,6 +128,14 @@ export function updateScoreBanner(cfNetNet, rentaNette, tips) {
 
     const emojiEl = document.getElementById('score-emoji');
     if (emojiEl) emojiEl.innerText = '';
+
+    const nextStepEl = document.getElementById('verdict-next-step');
+    const topTip = tips && tips.find(t => t.gainPerMonth && t.gainPerMonth > 0 && t.shortAdvice);
+    if (nextStepEl) {
+        nextStepEl.textContent = topTip
+            ? topTip.shortAdvice
+            : 'Passez en revue les leviers d’optimisation avant de trancher';
+    }
 
     _updateVerdictWhy(cfNetNet, rentaNette, tips, pts);
 }

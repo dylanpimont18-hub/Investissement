@@ -560,6 +560,8 @@ function calculateVierzonStrategy() {
     const inputs  = getCurrentInputs();
     const tmi     = calculateTMI(inputs.revenus, 2);
     const targetCF = parseFloat(document.getElementById('vierzon-target-cf').value) || 0;
+    const prixMaxEl = document.getElementById('vierzon-prix-max');
+    const loyerMinEl = document.getElementById('vierzon-loyer-min');
 
     // Scénario A : Je fixe le loyer, quel prix max ?
     const loyerEstime = parseFloat(document.getElementById('vierzon-loyer-estime').value) || 0;
@@ -572,10 +574,12 @@ function calculateVierzonStrategy() {
     }
 
     if (computeCF(1, loyerEstime, inputs, tmi) < targetCF) {
-        document.getElementById('vierzon-prix-max').innerText = "Impossible 🚫";
+        prixMaxEl.innerText = 'Impossible pour ce niveau de loyer';
+        prixMaxEl.classList.add('is-impossible');
     } else {
         let prixFaiMax = bestPrice + inputs['agence'];
-        document.getElementById('vierzon-prix-max').innerText = Math.round(prixFaiMax).toLocaleString('fr-FR') + ' €';
+        prixMaxEl.innerText = Math.round(prixFaiMax).toLocaleString('fr-FR') + ' €';
+        prixMaxEl.classList.remove('is-impossible');
     }
 
     // Scénario B : Je fixe le prix, quel loyer min ?
@@ -584,7 +588,8 @@ function calculateVierzonStrategy() {
 
     let minRent = 1; let maxRent = 10000; let bestRent = 10000;
     if (computeCF(prixNetVendeur, maxRent, inputs, tmi) < targetCF) {
-        document.getElementById('vierzon-loyer-min').innerText = 'Impossible 🚫';
+        loyerMinEl.innerText = 'Impossible avec ce prix';
+        loyerMinEl.classList.add('is-impossible');
     } else {
         for (let i = 0; i < 40; i++) {
             let midRent = (minRent + maxRent) / 2;
@@ -592,7 +597,8 @@ function calculateVierzonStrategy() {
             if (cf >= targetCF) { bestRent = midRent; maxRent = midRent; }
             else { minRent = midRent; }
         }
-        document.getElementById('vierzon-loyer-min').innerText = Math.round(bestRent).toLocaleString('fr-FR') + ' €';
+        loyerMinEl.innerText = Math.round(bestRent).toLocaleString('fr-FR') + ' €';
+        loyerMinEl.classList.remove('is-impossible');
     }
 }
 
@@ -871,8 +877,9 @@ function activateTab(target, options = {}) {
     syncAppShellMode();
 
     const pdfBar = document.getElementById('pdf-action-bar');
+    const showPdfBar = target === 'view-results' && window.innerWidth > 640;
     if (target === 'view-results') {
-        pdfBar.style.display = 'flex';
+        pdfBar.style.display = showPdfBar ? 'flex' : 'none';
         calculateAndSave();
     } else if (target === 'view-vierzon') {
         pdfBar.style.display = 'none';
@@ -1580,6 +1587,14 @@ function syncAppShellMode() {
         delete document.body.dataset.activeView;
     }
 }
+
+window.addEventListener('resize', () => {
+    const activeView = document.querySelector('.view-section.active')?.id;
+    const pdfBar = document.getElementById('pdf-action-bar');
+    if (pdfBar) {
+        pdfBar.style.display = activeView === 'view-results' && window.innerWidth > 640 ? 'flex' : 'none';
+    }
+});
 
 function setInstallBannerVisible(isVisible) {
     const banner = document.getElementById('install-banner');
