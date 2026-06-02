@@ -1118,3 +1118,166 @@ button[type="submit"].btn-primary {
   font-size: 13px;
   color: var(--text-secondary);
 }
+
+/* ═══════════════════════════════════════
+   CANVAS / CHARTS
+═══════════════════════════════════════ */
+canvas {
+  max-width: 100%;
+}
+
+#cashflowChart {
+  max-height: 220px;
+}
+
+#evolutionChart {
+  max-height: 260px;
+}
+
+/* ═══════════════════════════════════════
+   TABLEAUX
+═══════════════════════════════════════ */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+thead th {
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+tbody tr {
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background 0.1s;
+}
+tbody tr:hover { background: var(--bg-surface); }
+
+tbody td {
+  padding: var(--space-2) var(--space-3);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+tbody td.positive { color: var(--positive); font-weight: 600; }
+tbody td.negative { color: var(--negative); font-weight: 600; }
+tbody td.accent   { color: var(--accent);   font-weight: 600; }
+
+/* Scrollbar horizontale discrète */
+[style*="overflow-x: auto"] {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+[style*="overflow-x: auto"]::-webkit-scrollbar { height: 4px; }
+[style*="overflow-x: auto"]::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: var(--radius-full);
+}
+
+/* ═══════════════════════════════════════
+   COLLAPSIBLES (details/summary)
+═══════════════════════════════════════ */
+.expert-collapsible,
+details {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-top: var(--space-4);
+  overflow: hidden;
+}
+
+.expert-collapsible summary,
+details summary {
+  padding: var(--space-3) var(--space-4);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: color 0.15s, background 0.15s;
+}
+
+.expert-collapsible summary:hover,
+details summary:hover {
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+}
+
+.expert-collapsible summary::after,
+details summary::after {
+  content: '›';
+  font-size: 18px;
+  color: var(--text-muted);
+  transition: transform 0.2s;
+  transform: rotate(90deg);
+}
+
+.expert-collapsible[open] summary::after,
+details[open] summary::after {
+  transform: rotate(270deg);
+}
+
+.expert-collapsible > div,
+details > div {
+  padding: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* Méthodologie — blocs définition */
+#section-methodologie > div > div:not(:first-child) {
+  margin-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-4);
+}
+
+#section-methodologie > div > div > div {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-3);
+}
+
+/* ═══════════════════════════════════════
+   COMPARAISON DES RÉGIMES
+═══════════════════════════════════════ */
+#regime-compare-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+/* Optimization tips */
+#optimization-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4) var(--space-5);
+  margin-top: var(--space-4);
+}
+
+#optimization-card h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+#optimization-card > p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-4);
+}
