@@ -795,12 +795,9 @@ button[type="submit"].btn-primary {
 .score-banner.warning::before  { background: var(--warning); }
 
 .score-banner > div:first-child {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-bottom: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
 }
 
 #score-label {
@@ -1502,14 +1499,14 @@ details > div {
   padding: var(--space-4) var(--space-5);
 }
 
-.feasibility-option > div:first-child {
+.feasibility-option-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-3);
 }
 
-.feasibility-option > div:first-child > span:first-child {
+.feasibility-option-header > span:first-child {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 1px;
@@ -1519,6 +1516,11 @@ details > div {
   border: 1px solid var(--accent);
   border-radius: var(--radius-full);
   padding: 2px 10px;
+}
+
+.feasibility-option-header > span:last-child {
+  font-size: 11px;
+  color: var(--text-muted);
 }
 
 .feasibility-option h3 {
@@ -1646,6 +1648,78 @@ section[aria-label="Piloter cette analyse"] {
 [aria-label="Raccourcis de lecture"] button:hover {
   border-color: var(--accent);
   color: var(--accent);
+}
+
+/* ═══════════════════════════════════════
+   CORRECTIFS STRUCTURE HTML
+═══════════════════════════════════════ */
+
+/* Conteneur principal résultats */
+.results-content {
+  display: flex;
+  flex-direction: column;
+}
+
+/* En-têtes de section (div avec 2 spans titre/sous-titre) */
+.section-header {
+  margin-bottom: var(--space-3);
+  margin-top: var(--space-5);
+}
+.section-header > span:first-child {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.section-header > span:last-child {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* En-tête résultats (Verdict instantané / Lecture mobile) */
+.results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+.results-header > span:first-child {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.results-header > span:last-child {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  padding: 2px 10px;
+}
+
+/* Items verdict insights (grid 2 colonnes) */
+.verdict-insights > div {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+}
+.verdict-insights > div > span:first-child {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: var(--space-1);
+}
+
+/* Lien "Comprendre les calculs" */
+#export-area > div > div:has(> a) {
+  margin: var(--space-4) 0;
 }
 
 /* ═══════════════════════════════════════
