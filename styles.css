@@ -765,3 +765,205 @@ button[type="submit"].btn-primary {
   border-color: var(--accent);
   color: var(--accent);
 }
+
+/* ═══════════════════════════════════════
+   SCORE BANNER
+═══════════════════════════════════════ */
+.score-banner {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: var(--space-4);
+}
+
+.score-banner::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--positive);
+  transition: background 0.3s;
+}
+.score-banner.negative::before { background: var(--negative); }
+.score-banner.warning::before  { background: var(--warning); }
+
+.score-banner > div:first-child {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: var(--space-2);
+}
+
+#score-label {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--positive);
+  display: block;
+}
+.score-banner.negative #score-label { color: var(--negative); }
+.score-banner.warning  #score-label { color: var(--warning); }
+
+#verdict-phrase {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: var(--space-1) 0 var(--space-3);
+  line-height: 1.5;
+}
+
+#score-detail {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+#score-emoji { font-size: 20px; }
+#score-stars { font-size: 16px; color: var(--warning); }
+
+/* ═══════════════════════════════════════
+   VERDICT INSIGHTS (statut + action)
+═══════════════════════════════════════ */
+.verdict-insights {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.verdict-insight-item {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+}
+
+.verdict-insight-item > span:first-child {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: var(--space-1);
+}
+
+.verdict-insight-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.verdict-status-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-full);
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--positive-muted);
+  color: var(--positive);
+  border: 1px solid rgba(16,185,129,0.3);
+}
+
+/* ═══════════════════════════════════════
+   SNAPSHOT GRID (4 KPI rapides)
+═══════════════════════════════════════ */
+.snapshot-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.snapshot-grid article {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+}
+
+.snapshot-grid article > span:first-child {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: var(--space-1);
+}
+
+.snapshot-grid article strong {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.snapshot-grid article p {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ═══════════════════════════════════════
+   VERDICT ACTIONS (boutons 01/02/03)
+═══════════════════════════════════════ */
+.verdict-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+}
+
+.verdict-actions button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  text-align: left;
+}
+
+.verdict-actions button:hover {
+  border-color: var(--accent);
+  background: var(--accent-muted);
+}
+
+.verdict-actions button > span:first-child {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 24px;
+  font-variant-numeric: tabular-nums;
+}
+
+.verdict-actions button > span:nth-child(2) {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.verdict-actions button > span:last-child {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ═══════════════════════════════════════
+   VALEURS COLORÉES (CF net, rentabilité)
+═══════════════════════════════════════ */
+.value {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.value.positive { color: var(--positive); }
+.value.negative { color: var(--negative); }
