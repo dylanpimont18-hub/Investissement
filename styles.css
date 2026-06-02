@@ -967,3 +967,154 @@ button[type="submit"].btn-primary {
 }
 .value.positive { color: var(--positive); }
 .value.negative { color: var(--negative); }
+
+/* ═══════════════════════════════════════
+   KPI GRID (4 blocs CF/Renta)
+═══════════════════════════════════════ */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.kpi-grid > div {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+}
+
+.kpi-grid h3 {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: var(--space-1);
+}
+
+.kpi-grid .value {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.kpi-grid p {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* ═══════════════════════════════════════
+   METRIC GRID (CoC, GRM, DSCR…)
+═══════════════════════════════════════ */
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.metric-grid > div {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+}
+
+.metric-grid h3 {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: var(--space-1);
+}
+
+.metric-grid .value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.metric-grid p {
+  font-size: 10px;
+  color: var(--text-disabled);
+  margin-top: 2px;
+}
+
+/* ═══════════════════════════════════════
+   DECISION CARDS (force/risque/levier)
+═══════════════════════════════════════ */
+.decision-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.decision-cards article {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+  border-left: 3px solid var(--border);
+}
+
+.decision-cards article:first-child { border-left-color: var(--positive); }
+.decision-cards article:nth-child(2) { border-left-color: var(--warning); }
+.decision-cards article:last-child   { border-left-color: var(--accent); }
+
+.decision-cards article > span:first-child {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: var(--space-1);
+}
+
+.decision-cards article h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-1);
+}
+
+.decision-cards article p {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* ═══════════════════════════════════════
+   RÉSUMÉ ENVELOPPE (liste chiffres)
+═══════════════════════════════════════ */
+.details-envelope ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.details-envelope li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 13px;
+}
+
+.details-envelope li span { color: var(--text-secondary); }
+.details-envelope li strong { color: var(--text-primary); font-weight: 600; }
+
+/* Alerte micro-foncier */
+#micro-foncier-alert {
+  background: var(--warning-muted);
+  border: 1px solid var(--warning);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
