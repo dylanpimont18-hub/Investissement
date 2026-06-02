@@ -1133,7 +1133,7 @@ function applyTheme() {
     } else if (saved === 'light') {
         isDark = false;
     } else {
-        isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        isDark = true; // dark-first design — light only on explicit toggle
     }
 
     html.setAttribute('data-theme', isDark ? 'dark' : 'light');
