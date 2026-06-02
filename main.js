@@ -4,12 +4,11 @@ import {
     updateColor, updateChart, updateEvolutionChart,
     updateScoreBanner, updateRegimeComparison,
     generateOptimizationTips, renderOptimizationSection,
-    updateNegoTable, showToast, validateInputs
+    updateNegoTable, showToast, validateInputs, renderInputRecap
 } from './ui.js';
 import { buildPDFDOM, buildPrintDocument, buildSharePDFFile, cleanupPDFDOM } from './pdf.js';
 
 // --- ÉTAT GLOBAL ---
-let uploadedPhotos = [];
 let savedProjects = (() => { try { return JSON.parse(localStorage.getItem('simuImmoProjects')) || []; } catch(e) { return []; } })();
 let calcTimeout = null;
 let projectionData = [];
@@ -44,7 +43,7 @@ function migrateProjects() {
             p._id = (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
             p._createdAt = new Date().toISOString();
             p._updatedAt = new Date().toISOString();
-            p._syncedAt = null;  // null = non synchronisé avec le cloud
+            p._syncedAt = null;
             p._isLocal = true;
             changed = true;
         }
@@ -56,7 +55,7 @@ function migrateProjects() {
 // --- LECTURE DES INPUTS ---
 function getCurrentInputs() {
     const data = {};
-    document.querySelectorAll('input:not(#project-name):not([type="file"]), select, textarea').forEach(el => {
+    document.querySelectorAll('input:not(#project-name), select, textarea').forEach(el => {
         if (el.id) data[el.id] = (el.type === 'number' || el.type === 'range') ? parseFloat(el.value) || 0 : el.value;
     });
     return data;
@@ -195,10 +194,47 @@ function triggerCalculations() {
     }, 300);
 }
 
-// --- ANALYSE & SAUVEGARDE (Onglet 1 et 2) ---
+function buildProjectNameSuggestion(inputs) {
+    const price = Math.round(inputs['prix'] || 0);
+    const rent = Math.round(inputs['loyer'] || 0);
+    const parts = [];
+
+    if (price > 0) parts.push(`${price.toLocaleString('fr-FR')} €`);
+    if (rent > 0) parts.push(`${rent.toLocaleString('fr-FR')} €/mois`);
+
+    return parts.length ? `Projet ${parts.join(' · ')}` : 'Nom du projet (ex: T2 Centre)';
+}
+
+function syncProjectSaveUi(inputs = getCurrentInputs()) {
+    const projectNameInput = document.getElementById('project-name');
+    if (projectNameInput) {
+        projectNameInput.placeholder = buildProjectNameSuggestion(inputs);
+    }
+
+    const count = savedProjects.length;
+    const resultsProjectsCount = document.getElementById('results-projects-count');
+    const resultsProjectsHelper = document.getElementById('results-projects-helper');
+
+    if (resultsProjectsCount) {
+        resultsProjectsCount.textContent = count.toLocaleString('fr-FR');
+    }
+
+    if (resultsProjectsHelper) {
+        if (count === 0) {
+            resultsProjectsHelper.textContent = 'Sauvegardez cette analyse pour la retrouver et la comparer plus tard.';
+        } else if (count === 1) {
+            resultsProjectsHelper.textContent = '1 projet sauvegardé. Ajoutez-en un autre pour activer la comparaison.';
+        } else {
+            resultsProjectsHelper.textContent = `${count.toLocaleString('fr-FR')} projets locaux prêts à être comparés.`;
+        }
+    }
+}
+
+// --- ANALYSE & SAUVEGARDE ---
 function calculateAndSave() {
     const inputs = getCurrentInputs();
     localStorage.setItem('simuImmoDraft', JSON.stringify(inputs));
+    syncProjectSaveUi(inputs);
 
     const tmi = calculateTMI(inputs.revenus, 2);
     document.getElementById('tmi-display').innerText = tmi + ' %';
@@ -209,11 +245,15 @@ function calculateAndSave() {
         tmiBadge.style.display = '';
     }
 
+    renderInputRecap(inputs, tmi);
     validateInputs(inputs);
 
+    const allNotes = [inputs['note-step-1'], inputs['note-step-2'], inputs['note-step-3'], inputs['note-step-4']]
+        .filter(n => n && n.trim() !== '')
+        .join('\n\n');
     const commSection = document.getElementById('comments-export-section');
-    if (inputs['commentaires-input'] && inputs['commentaires-input'].trim() !== '') {
-        document.getElementById('commentaires-display').innerText = inputs['commentaires-input'];
+    if (allNotes) {
+        document.getElementById('commentaires-display').innerText = allNotes;
         commSection.style.display = 'block';
     } else {
         commSection.style.display = 'none';
@@ -252,7 +292,7 @@ function calculateAndSave() {
     const dataCapitalRestant = [];
     const dataCFCumule      = [];
     const dataEnrichissement = [];
-    const deficitMap = new Map(); // yearCreated -> amount (cap 10 ans)
+    const deficitMap = new Map();
     projectionData = [];
 
     for (let annee = 1; annee <= 25; annee++) {
@@ -274,12 +314,10 @@ function calculateAndSave() {
         if (capitalRestant < 0) capitalRestant = 0;
         const totalFinancementAnnee = capitalAmortiAnnee + interetsAnnee + assuranceAnnee;
 
-        // Inflation : loyers et charges augmentent chaque année
         const facteurInflation = Math.pow(1 + inflationRate, annee - 1);
         const loyersEncaissesCetteAnnee = loyersEncaisses * facteurInflation;
         const chargesExploitationCetteAnnee = chargesExploitationAnnuelles * facteurInflation;
 
-        // TMI recalculé chaque année en incluant le revenu locatif net imposable
         let revenuLocatifImposable = 0;
         if (inputs['regime'] === 'micro-foncier') {
             revenuLocatifImposable = loyersEncaissesCetteAnnee * 0.7;
@@ -299,7 +337,6 @@ function calculateAndSave() {
 
             let revenusNets = loyersEncaissesCetteAnnee - chargesAnnuees - interetsAnnee;
 
-            // Expirer les déficits de plus de 10 ans
             for (const yr of [...deficitMap.keys()]) {
                 if (annee - yr > 10) deficitMap.delete(yr);
             }
@@ -418,7 +455,6 @@ function calculateAndSave() {
     updateColor('cf-netnet', cfNetNet);
     animateValue(document.getElementById('cf-netnet'), cfNetNet, ' €', 600);
 
-    // --- NOUVELLES MÉTRIQUES ---
     const apport = inputs['apport'];
     const cfAnnuelNetNet = cfNetNet * 12;
     const cocEl = document.getElementById('metric-coc');
@@ -468,7 +504,6 @@ function calculateAndSave() {
     updateAnalysisSurface({ prixNet, coutTotal, mensualiteTotale, montantFinance, tmi, regimePerformance, tips, cfNetNet, dscr, breakEvenYear, rentaNetNet, inputs });
     updateNegoTable(prixNet, inputs['prix'], inputs, tmi);
 
-    // --- ÉQUITÉ AN 1 ---
     const equityAn1 = (inputs['apport'] || 0) + (montantFinance - (dataCapitalRestant[0] || 0));
     const equityEl = document.getElementById('metric-equity');
     if (equityEl) {
@@ -476,11 +511,9 @@ function calculateAndSave() {
         equityEl.className = 'value ' + (equityAn1 > 0 ? 'positive' : 'negative');
     }
 
-    // --- ALERTE MICRO-FONCIER ---
     const alertMicro = document.getElementById('micro-foncier-alert');
     if (alertMicro) alertMicro.style.display = (inputs['regime'] === 'micro-foncier' && loyersEncaisses > 15000) ? 'block' : 'none';
 
-    // --- ANALYSE DE SENSIBILITÉ ---
     const sensitivityScenarios = [
         { label: 'Scénario de base', loyer: inputs['loyer'], overrides: {} },
         { label: 'Taux + 0,5 %',    loyer: inputs['loyer'], overrides: { 'taux-input': (inputs['taux-input'] || 0) + 0.5 } },
@@ -506,7 +539,6 @@ function calculateAndSave() {
         }).join('');
     }
 
-    // --- PROJECTION POST-CRÉDIT ---
     const duree = inputs['duree'] || 20;
     const postCreditSection = document.getElementById('post-credit-section');
     const postCreditContent = document.getElementById('post-credit-content');
@@ -514,7 +546,6 @@ function calculateAndSave() {
         const facteurPost = Math.pow(1 + inflationRate, duree - 1);
         const loyersPost = loyersEncaisses * facteurPost;
         const chargesPost = chargesExploitationAnnuelles * facteurPost;
-        // TMI recalculé en incluant le revenu locatif net imposable post-crédit
         let revLocatifImposablePost = 0;
         if (inputs['regime'] === 'micro-foncier') {
             revLocatifImposablePost = loyersPost * 0.7;
@@ -559,7 +590,7 @@ function calculateAndSave() {
     }
 }
 
-// --- STRATÉGIE VIERZON (Onglet 3) ---
+// --- STRATÉGIE VIERZON ---
 function calculateVierzonStrategy() {
     const inputs  = getCurrentInputs();
     const tmi     = calculateTMI(inputs.revenus, 2);
@@ -567,7 +598,6 @@ function calculateVierzonStrategy() {
     const prixMaxEl = document.getElementById('vierzon-prix-max');
     const loyerMinEl = document.getElementById('vierzon-loyer-min');
 
-    // Scénario A : Je fixe le loyer, quel prix max ?
     const loyerEstime = parseFloat(document.getElementById('vierzon-loyer-estime').value) || 0;
     let minPrice = 1; let maxPrice = 1000000; let bestPrice = 0;
     for (let i = 0; i < 40; i++) {
@@ -586,7 +616,6 @@ function calculateVierzonStrategy() {
         prixMaxEl.classList.remove('is-impossible');
     }
 
-    // Scénario B : Je fixe le prix, quel loyer min ?
     const prixAnnonceFai = parseFloat(document.getElementById('vierzon-prix-annonce').value) || 0;
     const prixNetVendeur = prixAnnonceFai - inputs['agence'];
 
@@ -612,12 +641,14 @@ function renderProjectsList() {
     listEl.innerHTML = '';
     const compareBtn = document.getElementById('btn-compare-projects');
     if (compareBtn) compareBtn.style.display = savedProjects.length >= 2 ? 'block' : 'none';
+    syncProjectSaveUi();
 
     const verdictCompareBtn = document.getElementById('verdict-action-compare-btn');
     if (verdictCompareBtn) {
         const canCompare = savedProjects.length >= 2;
-        verdictCompareBtn.style.opacity = canCompare ? '' : '0.5';
-        verdictCompareBtn.style.pointerEvents = canCompare ? '' : 'none';
+        verdictCompareBtn.style.opacity = canCompare ? '1' : '0.5';
+        verdictCompareBtn.style.pointerEvents = canCompare ? 'auto' : 'none';
+        verdictCompareBtn.setAttribute('aria-disabled', canCompare ? 'false' : 'true');
         verdictCompareBtn.title = canCompare ? '' : 'Sauvegardez au moins 2 projets pour comparer';
     }
 
@@ -686,49 +717,6 @@ function deleteProject(index) {
     }
 }
 
-// --- GESTION DES PHOTOS ---
-function dataURLtoBlob(dataURL) {
-    const arr  = dataURL.split(',');
-    const mime = arr[0].match(/:(.*?);/)[1];
-    const bstr = atob(arr[1]);
-    let n = bstr.length;
-    const u8arr = new Uint8Array(n);
-    while (n--) u8arr[n] = bstr.charCodeAt(n);
-    return new Blob([u8arr], { type: mime });
-}
-
-window.removePhoto = function(index) {
-    uploadedPhotos[index] = null;
-    const previewEl = document.getElementById(`photo-item-${index}`);
-    const exportEl  = document.getElementById(`photo-export-item-${index}`);
-    if (previewEl) previewEl.remove();
-    if (exportEl)  exportEl.remove();
-    if (uploadedPhotos.every(p => p === null)) {
-        document.getElementById('photos-export-section').style.display = 'none';
-        uploadedPhotos = [];
-    }
-};
-
-window.savePhotoToGallery = async function(index) {
-    const src = uploadedPhotos[index];
-    if (!src) return;
-    const fileName = `investpro-photo-${Date.now()}.jpg`;
-    try {
-        const blob = dataURLtoBlob(src);
-        const file = new File([blob], fileName, { type: blob.type });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({ files: [file], title: 'Photo – Investisseur Pro' });
-            return;
-        }
-    } catch (e) { /* share annulé ou non supporté */ }
-    const a = document.createElement('a');
-    a.href = src;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-};
-
 // --- MODALES ---
 window.openRegimeModal = function() {
     document.getElementById('modal-regimes').classList.add('open');
@@ -777,6 +765,21 @@ window.closeComparatorModal = function(overlay, event) {
     document.body.style.overflow = '';
 };
 
+window.jumpToResultsSection = function(sectionId) {
+    const section = document.getElementById(sectionId);
+    if (!section) return;
+    if (section.tagName === 'DETAILS') section.open = true;
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
+window.goToInputsView = function(step = 1) {
+    activateTab('view-inputs');
+    const parsedStep = Number(step);
+    if (Number.isInteger(parsedStep) && parsedStep >= 1 && parsedStep <= 4) {
+        goToStep(parsedStep, { scroll: false });
+    }
+};
+
 // --- EVENT LISTENERS ---
 
 function activateTab(target, options = {}) {
@@ -814,12 +817,6 @@ function activateTab(target, options = {}) {
 function getHashViewTarget() {
     const hashTarget = window.location.hash.replace('#', '');
     return VIEW_TARGETS.has(hashTarget) ? hashTarget : null;
-}
-
-function clearViewHash() {
-    if (getHashViewTarget()) {
-        history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
-    }
 }
 
 // Onglets
@@ -863,7 +860,7 @@ document.getElementById('btn-simulate').addEventListener('click', () => {
     document.querySelector('[data-target="view-results"]').click();
 });
 
-// Bouton Simulation rapide (mode Estimation)
+// Bouton Simulation rapide
 document.getElementById('btn-simulate-quick')?.addEventListener('click', () => {
     calculateAndSave();
     document.querySelector('[data-target="view-results"]').click();
@@ -888,44 +885,6 @@ document.getElementById('toggle-amount').addEventListener('click', () => {
     document.getElementById(id).addEventListener('input', calculateVierzonStrategy);
 });
 
-// Photo input — handler partagé galerie + caméra
-function handlePhotoFiles(event) {
-    const files       = event.target.files;
-    const previewGrid = document.getElementById('photo-gallery-preview');
-    const exportGrid  = document.getElementById('photo-gallery');
-    const exportSection = document.getElementById('photos-export-section');
-
-    if (files.length > 0) exportSection.style.display = 'block';
-
-    for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        if (!file.type.startsWith('image/')) continue;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const base64Src = e.target.result;
-            uploadedPhotos.push(base64Src);
-            const index = uploadedPhotos.length - 1;
-            const previewHTML = `
-                <div class="photo-item" id="photo-item-${index}">
-                    <img src="${base64Src}">
-                    <button class="btn-remove" onclick="removePhoto(${index})">✖</button>
-                    <button class="btn-save-photo" onclick="savePhotoToGallery(${index})" title="Enregistrer dans la galerie">💾</button>
-                </div>`;
-            const exportHTML = `
-                <div class="photo-item" id="photo-export-item-${index}">
-                    <img src="${base64Src}">
-                </div>`;
-            previewGrid.insertAdjacentHTML('beforeend', previewHTML);
-            exportGrid.insertAdjacentHTML('beforeend', exportHTML);
-        };
-        reader.readAsDataURL(file);
-    }
-    event.target.value = '';
-}
-
-document.getElementById('photo-input')?.addEventListener('change', handlePhotoFiles);
-document.getElementById('photo-input-camera')?.addEventListener('change', handlePhotoFiles);
-
 // Sauvegarde de projet
 document.getElementById('btn-save-project').addEventListener('click', () => {
     const projectName = document.getElementById('project-name').value.trim();
@@ -940,6 +899,8 @@ document.getElementById('btn-save-project').addEventListener('click', () => {
     savedProjects.push(currentData);
     localStorage.setItem('simuImmoProjects', JSON.stringify(savedProjects));
     document.getElementById('project-name').value = '';
+    const projectsSection = document.getElementById('projects-section');
+    if (projectsSection) projectsSection.open = true;
     renderProjectsList();
     showToast(`Projet "${projectName}" sauvegardé.`, 'success');
 });
@@ -978,14 +939,12 @@ document.getElementById('btn-run-compare').addEventListener('click', function() 
     const nameA = savedProjects[idxA]._projectName;
     const nameB = savedProjects[idxB]._projectName;
 
-    // Compter les critères gagnants pour chaque projet
     let winsA = 0, winsB = 0;
     const comparableRows = rows.filter(r => r.hib !== null && r.rawA !== null && r.rawB !== null && r.rawA !== r.rawB);
     comparableRows.forEach(r => {
         if (r.hib ? r.rawA > r.rawB : r.rawA < r.rawB) winsA++;
         else winsB++;
     });
-    const total = comparableRows.length;
 
     const isTie = winsA === winsB;
     const winnerIsA = winsA > winsB;
@@ -1038,7 +997,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 // Tous les inputs du formulaire déclenchent triggerCalculations
-document.querySelectorAll('input:not(#project-name):not(#photo-input), select, textarea:not(#commentaires-input)').forEach(el => {
+document.querySelectorAll('input:not(#project-name), select, textarea').forEach(el => {
     el.addEventListener('input', triggerCalculations);
 });
 
@@ -1046,22 +1005,18 @@ document.querySelectorAll('input:not(#project-name):not(#photo-input), select, t
 let _previewStyleEl = null;
 
 function openPdfPreview() {
-    const { mount, container, styleEl } = buildPDFDOM(uploadedPhotos);
+    const { mount, container, styleEl } = buildPDFDOM([]);
 
-    // Cloner le style pour le garder actif dans la modale
     if (_previewStyleEl) _previewStyleEl.remove();
     _previewStyleEl = styleEl.cloneNode(true);
     _previewStyleEl.id = 'pdf-preview-temp-style';
     document.head.appendChild(_previewStyleEl);
 
-    // Déplacer le container dans la zone de scroll de la modale
     container.style.cssText = 'width:100%;max-width:680px;background:white;';
     const scrollEl = document.getElementById('pdf-preview-scroll');
     scrollEl.innerHTML = '';
     scrollEl.appendChild(container);
     mount.remove();
-
-    // Nettoyer uniquement le styleEl original (container est réutilisé dans la modale)
     styleEl.remove();
 
     document.getElementById('modal-pdf-preview').style.display = 'flex';
@@ -1083,14 +1038,13 @@ function openPrintFlow() {
     }
 
     try {
-        const { documentHTML } = buildPrintDocument(uploadedPhotos);
+        const { documentHTML } = buildPrintDocument([]);
         printWindow.document.open();
         printWindow.document.write(documentHTML);
         printWindow.document.close();
         showToast('La fenêtre d\'impression a été ouverte.', 'success');
     } catch (err) {
         printWindow.close();
-        console.error('Erreur impression :', err);
         showToast('L\'ouverture de la fenêtre d\'impression a échoué.', 'error');
     }
 }
@@ -1113,7 +1067,7 @@ async function sharePdfFromMobile() {
     }
 
     try {
-        const file = await buildSharePDFFile(uploadedPhotos);
+        const file = await buildSharePDFFile([]);
         await navigator.share({
             files: [file],
             title: file.name.replace(/\.pdf$/i, ''),
@@ -1121,7 +1075,6 @@ async function sharePdfFromMobile() {
         });
     } catch (err) {
         if (err && err.name === 'AbortError') return;
-        console.error('Erreur partage PDF :', err);
         showToast('Le partage du PDF a échoué.', 'error');
     }
 }
@@ -1145,14 +1098,13 @@ document.getElementById('btn-preview-share').addEventListener('click', async fun
     btn.disabled = false;
 });
 
-// Fermeture modale preview via Échap
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && document.getElementById('modal-pdf-preview').style.display !== 'none') {
         closePdfPreview();
     }
 });
 
-// --- BOUTONS PDF (barre d'action flottante) ---
+// --- BOUTONS PDF ---
 document.getElementById('btn-save-pdf').addEventListener('click', function() {
     openPrintFlow();
 });
@@ -1169,73 +1121,35 @@ document.getElementById('btn-share-pdf').addEventListener('click', async functio
     document.getElementById('btn-preview-share').style.display = 'inline-flex';
 })();
 
-// --- EXPORT CSV ---
-document.getElementById('btn-export-csv').addEventListener('click', function() {
-    if (!projectionData.length) { showToast('Lancez d\'abord une simulation.', 'error'); return; }
-    const bom = '\ufeff';
-    const header = ['Année', 'Capital Amorti (€)', 'Capital Restant (€)', 'Intérêts (€)', 'Impôts (€)', 'Cash-Flow Net (€)'].join(';');
-    const rows = projectionData.map(r => [
-        `An ${r.annee}`,
-        Math.round(r.capitalAmortiAnnee),
-        Math.round(r.capitalRestant),
-        Math.round(r.interetsAnnee),
-        Math.round(r.impotsAnnee),
-        Math.round(r.cfNetNetAnnee)
-    ].join(';'));
-    const csv = bom + header + '\n' + rows.join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'projection-investissement.csv';
-    document.body.appendChild(a); a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    showToast('CSV exporté avec succès.', 'success');
-});
-
 // --- THÈME DARK/LIGHT ---
-function syncThemeColor() {
-    const metaTheme = document.querySelector('meta[name="theme-color"]');
-    if (!metaTheme) return;
+function applyTheme() {
     const html = document.documentElement;
-    const isDark = html.classList.contains('theme-dark') ||
-        (!html.classList.contains('theme-light') && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    metaTheme.setAttribute('content', isDark ? '#0D1117' : '#F6F8FA');
-}
-
-function initTheme() {
     const saved = localStorage.getItem('simuImmoTheme');
-    const btn = document.getElementById('btn-theme-toggle');
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+
+    let isDark;
     if (saved === 'dark') {
-        document.documentElement.classList.add('theme-dark');
-        if (btn) btn.textContent = '☀️';
+        isDark = true;
     } else if (saved === 'light') {
-        document.documentElement.classList.add('theme-light');
-        if (btn) btn.textContent = '🌙';
+        isDark = false;
     } else {
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        if (btn) btn.textContent = prefersDark ? '☀️' : '🌙';
+        isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     }
-    syncThemeColor();
+
+    html.setAttribute('data-theme', isDark ? 'dark' : 'light');
+    const btn = document.getElementById('btn-theme-toggle');
+    if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+    if (metaTheme) metaTheme.setAttribute('content', isDark ? '#080C14' : '#F8FAFC');
 }
 
 document.getElementById('btn-theme-toggle').addEventListener('click', function() {
     const html = document.documentElement;
-    const isDark = html.classList.contains('theme-dark') ||
-        (!html.classList.contains('theme-light') && window.matchMedia('(prefers-color-scheme: dark)').matches);
-
-    if (isDark) {
-        html.classList.remove('theme-dark');
-        html.classList.add('theme-light');
-        localStorage.setItem('simuImmoTheme', 'light');
-        this.textContent = '🌙';
-    } else {
-        html.classList.remove('theme-light');
-        html.classList.add('theme-dark');
-        localStorage.setItem('simuImmoTheme', 'dark');
-        this.textContent = '☀️';
-    }
-    syncThemeColor();
+    const isDark = html.getAttribute('data-theme') !== 'light';
+    html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    localStorage.setItem('simuImmoTheme', isDark ? 'light' : 'dark');
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme) metaTheme.setAttribute('content', isDark ? '#F8FAFC' : '#080C14');
+    this.textContent = isDark ? '🌙' : '☀️';
 });
 
 // --- BARRE DE PROGRESSION FORMULAIRE ---
@@ -1332,55 +1246,6 @@ function goToStep(n, options = {}) {
     }
 }
 
-// --- ACCUEIL ---
-function showAccueil() {
-    document.getElementById('view-accueil').style.display = '';
-    document.querySelector('.tabs-nav').style.display = 'none';
-    document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
-    const pdfBar = document.getElementById('pdf-action-bar');
-    if (pdfBar) pdfBar.style.display = 'none';
-    const btnAccueil = document.getElementById('btn-accueil');
-    if (btnAccueil) btnAccueil.style.display = 'none';
-    clearViewHash();
-    syncAppShellMode();
-}
-
-function hideAccueil(target = 'view-inputs', options = {}) {
-    const { updateHash = true, scroll = true } = options;
-    document.getElementById('view-accueil').style.display = 'none';
-    document.querySelector('.tabs-nav').style.display = '';
-    const btnAccueil = document.getElementById('btn-accueil');
-    if (btnAccueil) btnAccueil.style.display = '';
-    activateTab(target, { updateHash, scroll });
-}
-
-function startWizard(mode) {
-    setWizardMode(mode);
-    goToStep(1);
-    hideAccueil('view-inputs');
-}
-
-document.getElementById('btn-start-rapide').addEventListener('click', () => startWizard('rapide'));
-document.getElementById('btn-start-complet').addEventListener('click', () => startWizard('complet'));
-document.getElementById('btn-reprendre').addEventListener('click', () => {
-    const savedMode = sessionStorage.getItem('simuImmoWizardMode') || 'complet';
-    setWizardMode(savedMode);
-    goToStep(1);
-    hideAccueil('view-inputs');
-});
-document.getElementById('btn-accueil').addEventListener('click', showAccueil);
-
-window.addEventListener('hashchange', () => {
-    const target = getHashViewTarget();
-    if (!target) return;
-    const accueilVisible = document.getElementById('view-accueil').style.display !== 'none';
-    if (accueilVisible) {
-        hideAccueil(target, { updateHash: false, scroll: false });
-    } else {
-        activateTab(target, { updateHash: false, scroll: false });
-    }
-});
-
 function initExpertCollapse() {
     const btn = document.getElementById('btn-expand-expert');
     if (!btn) return;
@@ -1430,7 +1295,7 @@ function initWizard() {
 function initApp() {
     migrateProjects();
     renderProjectsList();
-    initTheme();
+    applyTheme();
     syncAppShellMode();
     const savedDraft = localStorage.getItem('simuImmoDraft');
     if (savedDraft) {
@@ -1445,8 +1310,6 @@ function initApp() {
                 }
             }
             if (data['regime']) document.getElementById('regime').value = data['regime'];
-            const btnReprendre = document.getElementById('btn-reprendre');
-            if (btnReprendre) btnReprendre.style.display = '';
         } catch (e) {}
     }
     updateFormProgress();
@@ -1455,23 +1318,20 @@ function initApp() {
     applyLaunchRoute();
 }
 
-// Déclencher la barre de progression à chaque saisie
 document.querySelectorAll('#calc-form input, #calc-form select').forEach(el => {
     el.addEventListener('change', updateFormProgress);
 });
 
-// --- LOT 9 : PWA ---
-
+// --- PWA ---
 function isStandaloneMode() {
     return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 }
 
 function syncAppShellMode() {
-    const accueilVisible = document.getElementById('view-accueil').style.display !== 'none';
     const activeView = document.querySelector('.view-section.active')?.id || '';
     document.body.classList.toggle('is-standalone', isStandaloneMode());
-    document.body.classList.toggle('is-app-view', !accueilVisible);
-    document.body.classList.toggle('is-inputs-view', activeView === 'view-inputs' && !accueilVisible);
+    document.body.classList.toggle('is-app-view', true);
+    document.body.classList.toggle('is-inputs-view', activeView === 'view-inputs');
     if (activeView) {
         document.body.dataset.activeView = activeView;
     } else {
@@ -1490,7 +1350,6 @@ window.addEventListener('resize', () => {
 function setInstallBannerVisible(isVisible) {
     const banner = document.getElementById('install-banner');
     if (!banner) return;
-
     const shouldShow = Boolean(isVisible && !sessionStorage.getItem('installBannerDismissed') && !isStandaloneMode());
     banner.style.display = shouldShow ? 'flex' : 'none';
     document.body.classList.toggle('has-install-banner', shouldShow);
@@ -1498,27 +1357,18 @@ function setInstallBannerVisible(isVisible) {
 
 function applyLaunchRoute() {
     const hashTarget = getHashViewTarget();
-    const launchedFromApp = isStandaloneMode() || new URLSearchParams(window.location.search).get('source') === 'pwa';
-
-    if (hashTarget || launchedFromApp) {
-        const savedMode = sessionStorage.getItem('simuImmoWizardMode') || 'rapide';
-        setWizardMode(savedMode);
-        goToStep(1, { scroll: false });
-        hideAccueil(hashTarget || 'view-inputs', { updateHash: Boolean(hashTarget), scroll: false });
-        return;
-    }
-
-    showAccueil();
+    const savedMode = sessionStorage.getItem('simuImmoWizardMode') || 'rapide';
+    setWizardMode(savedMode);
+    goToStep(1, { scroll: false });
+    activateTab(hashTarget || 'view-inputs', { updateHash: Boolean(hashTarget), scroll: false });
 }
 
-// Enregistrement du Service Worker
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(err => {
         console.warn('Service Worker registration failed:', err);
     });
 }
 
-// Bannière d'installation PWA
 let _deferredInstallPrompt = null;
 
 window.addEventListener('beforeinstallprompt', (e) => {
@@ -1555,9 +1405,7 @@ window.addEventListener('appinstalled', () => {
 const standaloneMediaQuery = window.matchMedia('(display-mode: standalone)');
 const handleStandaloneModeChange = () => {
     syncAppShellMode();
-    if (isStandaloneMode()) {
-        setInstallBannerVisible(false);
-    }
+    if (isStandaloneMode()) setInstallBannerVisible(false);
 };
 if (standaloneMediaQuery.addEventListener) {
     standaloneMediaQuery.addEventListener('change', handleStandaloneModeChange);
@@ -1572,9 +1420,7 @@ function setOfflineBanner(isOffline) {
     banner.style.display = isOffline ? 'block' : 'none';
 }
 
-// Initialisation au chargement
 setOfflineBanner(!navigator.onLine);
-
 window.addEventListener('offline', () => setOfflineBanner(true));
 window.addEventListener('online',  () => setOfflineBanner(false));
 
