@@ -1281,3 +1281,176 @@ details > div {
   color: var(--text-secondary);
   margin-bottom: var(--space-4);
 }
+
+/* ═══════════════════════════════════════
+   MODAL OVERLAY & CONTENU
+═══════════════════════════════════════ */
+[role="dialog"] {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+}
+
+[role="dialog"][style*="flex"] {
+  display: flex !important;
+}
+
+[role="dialog"] > div {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+
+/* Header modal */
+[role="dialog"] > div > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--bg-surface);
+  z-index: 1;
+}
+
+[role="dialog"] h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+[role="dialog"] > div > div:first-child > button {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+[role="dialog"] > div > div:first-child > button:hover {
+  border-color: var(--negative);
+  color: var(--negative);
+}
+
+/* Corps modal */
+[role="dialog"] > div > div:last-child {
+  padding: var(--space-5);
+}
+
+/* Modal PDF preview */
+#modal-pdf-preview > div {
+  max-width: 700px;
+  height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#pdf-preview-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+  background: var(--bg-base);
+}
+
+/* ═══════════════════════════════════════
+   TOASTS
+═══════════════════════════════════════ */
+#toast-container {
+  position: fixed;
+  bottom: var(--space-6);
+  right: var(--space-4);
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+  font-size: 13px;
+  color: var(--text-secondary);
+  box-shadow: var(--shadow-md);
+  animation: slideIn 0.2s ease;
+  min-width: 240px;
+  max-width: 340px;
+}
+
+.toast.success { border-left: 3px solid var(--positive); }
+.toast.error   { border-left: 3px solid var(--negative); }
+.toast.info    { border-left: 3px solid var(--accent); }
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ═══════════════════════════════════════
+   PDF ACTION BAR
+═══════════════════════════════════════ */
+#pdf-action-bar {
+  position: fixed;
+  bottom: var(--space-4);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: var(--space-2);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  padding: var(--space-2) var(--space-3);
+  box-shadow: var(--shadow-lg);
+  z-index: 500;
+}
+
+#pdf-action-bar button {
+  padding: 8px var(--space-4);
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s;
+}
+
+#btn-preview-pdf {
+  background: var(--bg-base);
+  color: var(--text-secondary);
+  border: 1px solid var(--border) !important;
+}
+#btn-preview-pdf:hover { color: var(--text-primary); }
+
+#btn-save-pdf {
+  background: var(--accent);
+  color: white;
+}
+#btn-save-pdf:hover { filter: brightness(1.1); }
+
+#btn-share-pdf {
+  background: var(--bg-base);
+  color: var(--text-secondary);
+  border: 1px solid var(--border) !important;
+}
