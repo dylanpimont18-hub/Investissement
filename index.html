@@ -44,10 +44,6 @@
     <div class="header-actions">
         <button class="btn-accueil" id="btn-accueil" title="Accueil" style="display:none;">⌂</button>
         <button class="btn-theme-toggle" id="btn-theme-toggle" title="Basculer thème clair/sombre">☀️</button>
-        <button class="btn-pricing-header" id="btn-pricing-header" onclick="window.openPricingModal()" title="Découvrir Pro+">Voir Pro+</button>
-        <button class="account-btn" id="btn-account" onclick="window.openAccountModal()" title="Mon espace Pro+">
-            <span class="account-btn-label" id="account-btn-label">Pro+</span>
-        </button>
     </div>
 </div>
 
@@ -138,23 +134,6 @@
         <p class="accueil-disclaimer">Simulation indicative • outil d'aide à la décision • ne remplace pas un conseil personnalisé</p>
     </section>
 
-    <section class="accueil-benefits-grid">
-        <article class="accueil-benefit-card">
-            <span class="accueil-benefit-label">Décision</span>
-            <h3>Une hiérarchie pensée pour trancher vite</h3>
-            <p>Verdict, prochaine action et détails experts repliables au même endroit.</p>
-        </article>
-        <article class="accueil-benefit-card">
-            <span class="accueil-benefit-label">Négociation</span>
-            <h3>Des leviers actionnables, pas seulement des ratios</h3>
-            <p>Le simulateur explicite ce qui améliore réellement le cash-flow ou la fiscalité.</p>
-        </article>
-        <article class="accueil-benefit-card">
-            <span class="accueil-benefit-label">Mobilité</span>
-            <h3>Utilisable en visite, au bureau et hors ligne</h3>
-            <p>Les données restent locales et l'app garde un flux mobile propre jusqu'au PDF.</p>
-        </article>
-    </section>
 </div>
 
     <div id="view-inputs" class="view-section active">
@@ -341,19 +320,10 @@
             <p class="photo-help" style="margin-bottom: 10px; text-align: left;">Sauvegardez vos visites pour les comparer plus tard.</p>
             <div class="projects-save-row">
                 <input type="text" id="project-name" placeholder="Nom du projet (ex: T2 Centre)" style="flex: 1; text-align: left;">
-                <button type="button" id="btn-save-project" class="btn-primary" style="padding: 10px; white-space: nowrap;">Sauvegarder<span class="pro-badge">Pro+</span></button>
+                <button type="button" id="btn-save-project" class="btn-primary" style="padding: 10px; white-space: nowrap;">Sauvegarder</button>
             </div>
             <ul id="projects-list" class="projects-list"></ul>
-            <div class="projects-limit-bar" id="projects-limit-bar" style="display:none;">
-                <span>Sauvegardés : <span class="limit-count" id="projects-limit-count">0 / 3</span></span>
-                <button type="button" class="limit-upgrade" onclick="window.openAccountModal()">Illimité avec Pro+ →</button>
-            </div>
-            <button type="button" id="btn-compare-projects" class="btn-secondary" style="width: 100%; margin-top: 10px; display: none;">Comparer les projets<span class="pro-badge">Pro+</span></button>
-            <div class="cloud-sync-strip">
-                <span class="cloud-sync-icon">☁</span>
-                <span class="cloud-sync-text">Sync multi-appareils — <em>Prochainement dans Pro+</em></span>
-                <button type="button" class="cloud-sync-cta" onclick="window.openPricingModal()">En savoir plus →</button>
-            </div>
+            <button type="button" id="btn-compare-projects" class="btn-secondary" style="width: 100%; margin-top: 10px; display: none;">Comparer les projets</button>
         </div>
     </details>
 
@@ -1059,33 +1029,10 @@
 <div id="tooltip-bubble" class="tooltip-bubble"></div>
 <div id="toast-container" aria-live="polite" aria-atomic="false"></div>
 
-<!-- Modal gate PDF premium -->
-<div id="modal-pdf-gate" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="modal-pdf-gate-title" onclick="if(event.target===this)window.closePdfGateModal()">
-    <div class="modal-content pdf-gate-modal">
-        <div class="modal-header">
-            <h2 id="modal-pdf-gate-title">Rapport Pro+ disponible</h2>
-            <button type="button" class="modal-close" onclick="window.closePdfGateModal()" title="Fermer">✕</button>
-        </div>
-        <div class="modal-body">
-            <p class="pdf-gate-intro">Le rapport Pro+ inclut des fonctionnalités supplémentaires :</p>
-            <ul class="pdf-gate-features">
-                <li><span class="pdf-gate-star">★</span> Résumé exécutif enrichi avec analyse personnalisée</li>
-                <li><span class="pdf-gate-star">★</span> Branding personnalisé avec votre nom ou société</li>
-                <li><span class="pdf-gate-star">★</span> Annexe méthodologie complète</li>
-            </ul>
-            <div class="pdf-gate-actions">
-                <button type="button" class="btn-primary" onclick="window.closePdfGateModal(); window.openAccountModal();">Rejoindre Pro+</button>
-                <button type="button" class="btn-secondary" id="btn-pdf-gate-continue">Continuer quand même</button>
-                <button type="button" class="btn-ghost" onclick="window.closePdfGateModal(); window.openPricingModal();">En savoir plus sur Pro+</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- Barre PDF flottante (au-dessus des onglets, visible sur l'onglet Analyse) -->
 <div id="pdf-action-bar" style="display:none;">
     <button id="btn-preview-pdf" class="btn-pdf-action btn-pdf-preview">🔍 Aperçu</button>
-    <button id="btn-save-pdf" class="btn-pdf-action btn-pdf-save">🖨️ Imprimer / PDF<span class="pro-badge">Pro+</span></button>
+    <button id="btn-save-pdf" class="btn-pdf-action btn-pdf-save">🖨️ Imprimer / PDF</button>
     <button id="btn-share-pdf" class="btn-pdf-action btn-pdf-share" style="display:none;">📤</button>
 </div>
 
@@ -1198,102 +1145,6 @@
     </div>
 </div>
 
-<!-- Modal Pricing Pro+ -->
-<div id="modal-pricing" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="modal-pricing-title" onclick="if(event.target===this)window.closePricingModal()">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2 id="modal-pricing-title">Passez à Pro+</h2>
-            <button type="button" class="modal-close" onclick="window.closePricingModal()" title="Fermer">✕</button>
-        </div>
-        <div class="modal-body">
-            <p class="pricing-subtitle">Choisissez la formule adaptée à votre usage</p>
-            <div class="pricing-plans-grid">
-                <div class="pricing-plan-card">
-                    <div class="pricing-plan-title">Gratuit</div>
-                    <ul class="pricing-plan-features">
-                        <li>✓ Simulation complète et analyse</li>
-                        <li>✓ 3 projets sauvegardés</li>
-                        <li>✓ 3 exports PDF</li>
-                        <li>✓ Outil de faisabilité</li>
-                        <li>✓ Comparaison de 2 projets</li>
-                        <li style="color:var(--text-secondary);opacity:0.5;">✗ Sync cloud</li>
-                        <li style="color:var(--text-secondary);opacity:0.5;">✗ Projets illimités</li>
-                        <li style="color:var(--text-secondary);opacity:0.5;">✗ PDF illimités</li>
-                    </ul>
-                </div>
-                <div class="pricing-plan-card featured">
-                    <div id="pricing-plan-label" class="pricing-plan-label">9,99 EUR / mois</div>
-                    <div class="pricing-plan-title">Pro+</div>
-                    <div id="pricing-plan-price" class="pricing-plan-price" data-billing-price>9,99 EUR / mois</div>
-                    <p id="pricing-plan-meta" class="pricing-plan-meta">Checkout Stripe et portail client a brancher.</p>
-                    <ul class="pricing-plan-features">
-                        <li>✓ Simulation complète et analyse</li>
-                        <li>★ Projets illimités</li>
-                        <li>★ Exports PDF illimités</li>
-                        <li>★ Outil de faisabilité avancé</li>
-                        <li>★ Comparaison multi-projets</li>
-                        <li>★ Sauvegarde cloud multi-appareils</li>
-                        <li>★ Rapport PDF professionnel</li>
-                        <li>★ Historique des analyses</li>
-                    </ul>
-                </div>
-            </div>
-            <div class="pricing-actions">
-                <button type="button" id="pricing-primary-cta" class="btn-primary" onclick="window.startPremiumCheckout()">Activer Pro+ - 9,99 EUR / mois</button>
-                <button type="button" id="pricing-portal-cta" class="btn-secondary" onclick="window.openBillingPortal()" style="display:none;">Gerer mon abonnement</button>
-                <button type="button" class="btn-ghost" onclick="window.closePricingModal()">Continuer en version gratuite</button>
-                <p id="pricing-helper-text" class="pricing-helper-text">Sans configuration Stripe, le CTA revient sur la liste d'attente par email.</p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Compte & Pro+ -->
-<div id="modal-compte" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="modal-compte-title" onclick="if(event.target===this)window.closeAccountModal()">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2 id="modal-compte-title">Investisseur Pro+</h2>
-            <button type="button" class="modal-close" onclick="window.closeAccountModal()" title="Fermer">✕</button>
-        </div>
-        <div class="modal-body">
-            <!-- Zone état compte — rendue dynamiquement par openAccountModal() -->
-            <div id="account-status-zone" class="account-status-zone"></div>
-
-            <!-- Plans -->
-            <div class="account-plans-row">
-                <div class="account-plan-card account-plan-free">
-                    <div class="account-plan-badge account-plan-badge-active">Actif</div>
-                    <div class="account-plan-title">Gratuit</div>
-                    <ul class="account-plan-features">
-                        <li>✓ Simulation complète et analyse de rentabilité</li>
-                        <li>✓ Jusqu'à 3 projets sauvegardés sur cet appareil</li>
-                        <li>✓ Export et impression PDF</li>
-                        <li>✓ Outil de faisabilité (prix cible / loyer minimum)</li>
-                        <li>✓ Comparaison de 2 projets</li>
-                    </ul>
-                </div>
-                <div class="account-plan-card account-plan-premium">
-                    <div id="account-plan-premium-badge" class="account-plan-badge">Prochainement</div>
-                    <div class="account-plan-title">Pro+</div>
-                    <div class="pricing-plan-price" data-billing-price>9,99 EUR / mois</div>
-                    <ul class="account-plan-features">
-                        <li>★ Projets illimités</li>
-                        <li>★ Sauvegarde cloud — accès depuis tous vos appareils</li>
-                        <li>★ Rapport PDF professionnel avec branding</li>
-                        <li>★ Comparaison avancée multi-projets</li>
-                        <li>★ Historique des versions de chaque analyse</li>
-                    </ul>
-                    <button id="account-waitlist-btn" type="button" class="btn-primary account-waitlist-btn" onclick="window.openWaitlistForm()">
-                        Rejoindre la liste d'attente →
-                    </button>
-                </div>
-            </div>
-            <p class="account-plan-notice">Vos projets restent toujours sur cet appareil. Aucun risque de perte.</p>
-        </div>
-    </div>
-</div>
-
-<script src="billing.config.js"></script>
 <script type="module" src="main.js"></script>
 </body>
 </html>

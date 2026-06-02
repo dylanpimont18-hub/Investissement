@@ -360,23 +360,6 @@ html.theme-dark .card.kpi-hero, html:not(.theme-light):not(.theme-dark) .card.kp
         width: 34px;
         height: 34px;
     }
-    body.is-app-view .btn-pricing-header,
-    body.is-app-view .account-btn {
-        height: 34px;
-        padding: 0 10px;
-        border-radius: 12px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.72rem;
-        line-height: 1;
-        min-width: 0;
-        flex: 0 0 auto;
-    }
-    body.is-app-view .btn-pricing-header {
-        order: initial;
-        flex-basis: auto;
-    }
     .header h1 { font-size: 1.05rem; }
     #pdf-btns button { font-size: 0.78rem; padding: 8px 10px; }
 
@@ -1191,45 +1174,12 @@ details.accordion[open] summary::after { transform: rotate(90deg); }
     margin: 0;
 }
 
-/* === COMPTE & PRO+ (Lots 7+8) === */
+/* === HEADER ACTIONS === */
 .header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; margin-left: auto; }
-.account-btn { background: var(--bg-color); border: 1.5px solid var(--border-color); border-radius: 16px; padding: 5px 11px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; color: var(--text-secondary); transition: border-color 0.2s, color 0.2s; flex-shrink: 0; letter-spacing: 0.04em; }
-.account-btn:hover { border-color: var(--gold-color); color: var(--gold-color); }
-
-.btn-pricing-header {
-    background: linear-gradient(135deg, var(--gold-color, #C9A84C), #b8960f);
-    color: #fff;
-    border: none;
-    border-radius: 14px;
-    padding: 5px 12px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    cursor: pointer;
-    letter-spacing: 0.04em;
-    transition: opacity 0.2s;
-    flex-shrink: 0;
-}
-.btn-pricing-header:hover { opacity: 0.85; }
-body.is-premium .btn-pricing-header { display: none; }
-
-.premium-badge { display: inline-flex; align-items: center; padding: 1px 6px; background: linear-gradient(135deg, #C9A84C, #E8C96B); color: #fff; font-size: 0.65rem; font-weight: 700; border-radius: 10px; letter-spacing: 0.03em; vertical-align: middle; margin-left: 4px; }
-
-.projects-limit-bar { display: flex; align-items: center; justify-content: space-between; padding: 6px 0 4px; font-size: 0.8rem; color: var(--text-secondary); }
-.projects-limit-bar .limit-count { font-weight: 700; color: var(--text-color); }
-.projects-limit-bar .limit-count.limit-full { color: var(--danger-color); }
-.projects-limit-bar .limit-upgrade { background: none; border: none; padding: 0; font-size: 0.78rem; font-weight: 600; color: var(--gold-color); cursor: pointer; }
-.projects-limit-bar .limit-upgrade:hover { text-decoration: underline; }
-
-.cloud-sync-strip { display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 10px; margin-top: 10px; font-size: 0.81rem; color: var(--text-secondary); }
-.cloud-sync-icon { font-size: 1rem; flex-shrink: 0; opacity: 0.6; }
-.cloud-sync-text { flex: 1; }
-.cloud-sync-cta { background: none; border: 1px solid var(--border-color); border-radius: 8px; padding: 4px 10px; font-size: 0.76rem; font-weight: 600; cursor: pointer; color: var(--primary-color); white-space: nowrap; transition: background 0.2s, color 0.2s; }
-.cloud-sync-cta:hover { background: var(--primary-color); color: #fff; border-color: var(--primary-color); }
 
 @media (max-width: 720px) {
     .header-brand { flex-basis: 100%; }
     .header-actions { width: 100%; justify-content: space-between; }
-    .btn-pricing-header { flex: 1 1 auto; text-align: center; }
     #pdf-action-bar {
         left: 12px;
         right: 12px;
@@ -1247,230 +1197,6 @@ body.is-premium .btn-pricing-header { display: none; }
 
 @media (max-width: 430px) {
     .header-actions { justify-content: flex-start; }
-    .btn-pricing-header { flex-basis: 100%; order: 4; }
-}
-
-.account-plan-card { border: 1px solid var(--border-color); border-radius: 12px; padding: 18px 20px; margin-bottom: 14px; position: relative; }
-.account-plan-free { border-color: var(--border-color); }
-.account-plan-premium { border-color: var(--gold-color); background: linear-gradient(135deg, var(--card-bg) 0%, rgba(201,168,76,0.06) 100%); }
-.account-plan-badge { position: absolute; top: -10px; right: 16px; background: var(--gold-color); color: #fff; font-size: 0.67rem; font-weight: 700; padding: 2px 10px; border-radius: 10px; letter-spacing: 0.05em; }
-.account-plan-title { font-weight: 700; font-size: 0.98rem; margin-bottom: 12px; font-family: var(--font-display); }
-.account-plan-features { list-style: none; display: flex; flex-direction: column; gap: 7px; }
-.account-plan-features li { font-size: 0.87rem; color: var(--text-secondary); }
-.account-plan-premium .account-plan-features li { color: var(--text-color); }
-.account-waitlist-btn { width: 100%; margin-top: 16px; padding: 12px; border-radius: 10px; font-size: 0.9rem; display: block; text-align: center; cursor: pointer; }
-.account-plan-notice { font-size: 0.77rem; color: var(--text-secondary); text-align: center; margin-top: 10px; line-height: 1.55; }
-.account-plan-premium .pricing-plan-price { margin-bottom: 12px; }
-
-/* Plans côte à côte dans la modale compte */
-.account-plans-row {
-    display: flex;
-    gap: 12px;
-    margin-top: 16px;
-}
-.account-plans-row .account-plan-card {
-    flex: 1;
-    margin-bottom: 0;
-}
-
-/* Badge "Actif" sur carte gratuite */
-.account-plan-badge-active {
-    background: var(--success-color) !important;
-}
-
-/* Zone état compte */
-.account-status-zone {
-    background: var(--bg-color);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 14px 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-.account-status-zone-premium {
-    border-color: var(--gold-color);
-    background: linear-gradient(135deg, var(--card-bg) 0%, rgba(201,168,76,0.06) 100%);
-}
-.account-status-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.88rem;
-    color: var(--text-secondary);
-}
-.account-status-row strong { color: var(--text-color); }
-.account-status-icon { font-size: 1rem; flex-shrink: 0; }
-.account-status-bar-wrap {
-    height: 6px;
-    background: var(--border-color);
-    border-radius: 999px;
-    overflow: hidden;
-    margin: 0 0 4px;
-}
-.account-status-bar {
-    height: 100%;
-    background: var(--primary-color);
-    border-radius: 999px;
-    transition: width 0.3s ease;
-}
-.account-status-bar-full { background: var(--danger-color); }
-
-/* Modale gate PDF */
-.pdf-gate-modal { max-width: 420px; }
-.pdf-gate-intro {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    margin-bottom: 12px;
-}
-.pdf-gate-features {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 20px;
-}
-.pdf-gate-features li {
-    font-size: 0.88rem;
-    color: var(--text-color);
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-}
-.pdf-gate-star {
-    color: var(--gold-color);
-    font-weight: 800;
-    flex-shrink: 0;
-}
-.pdf-gate-actions {
-    display: flex;
-    gap: 10px;
-}
-.pdf-gate-actions .btn-primary,
-.pdf-gate-actions .btn-secondary,
-.pdf-gate-actions .btn-ghost {
-    flex: 1;
-}
-
-@media (max-width: 520px) {
-    .account-plans-row { flex-direction: column; }
-    .pdf-gate-actions { flex-direction: column; }
-}
-
-/* === LOT 8 — Pro Badge & Pricing Modal === */
-.pro-badge {
-    display: inline-block;
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    color: #fff;
-    background: var(--gold-color, #C9A84C);
-    border-radius: 8px;
-    padding: 1px 6px;
-    margin-left: 5px;
-    vertical-align: middle;
-    line-height: 1.6;
-    pointer-events: none;
-    user-select: none;
-}
-body.is-premium .pro-badge { display: none; }
-
-#modal-pricing .modal-content {
-    max-width: 640px;
-}
-#modal-pricing .pricing-subtitle {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    text-align: center;
-    margin: 0 0 20px;
-}
-#modal-pricing .pricing-plans-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-    margin-bottom: 20px;
-}
-#modal-pricing .pricing-plan-card {
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 16px 18px;
-    position: relative;
-}
-#modal-pricing .pricing-plan-card.featured {
-    border-color: var(--gold-color, #C9A84C);
-    background: linear-gradient(135deg, var(--card-bg) 0%, rgba(201,168,76,0.06) 100%); /* keep in sync with --gold-color */
-}
-#modal-pricing .pricing-plan-label {
-    position: absolute;
-    top: -10px;
-    right: 14px;
-    background: var(--gold-color, #C9A84C);
-    color: #fff;
-    font-size: 0.65rem;
-    font-weight: 700;
-    padding: 2px 9px;
-    border-radius: 9px;
-    letter-spacing: 0.05em;
-}
-#modal-pricing .pricing-plan-title {
-    font-size: 1rem;
-    font-weight: 700;
-    font-family: var(--font-display);
-    margin-bottom: 12px;
-}
-#modal-pricing .pricing-plan-price,
-.account-plan-premium .pricing-plan-price {
-    font-size: 1.35rem;
-    font-weight: 700;
-    color: var(--text-color);
-    letter-spacing: -0.02em;
-}
-#modal-pricing .pricing-plan-meta {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    margin: 6px 0 14px;
-    line-height: 1.5;
-}
-#modal-pricing .pricing-plan-features {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-    margin: 0;
-    padding: 0;
-}
-#modal-pricing .pricing-plan-features li {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-}
-#modal-pricing .pricing-plan-card.featured .pricing-plan-features li {
-    color: var(--text-color);
-}
-#modal-pricing .pricing-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    align-items: stretch;
-    margin-top: 4px;
-}
-#modal-pricing .pricing-actions .btn-primary {
-    width: 100%;
-    text-align: center;
-    text-decoration: none;
-}
-#modal-pricing .pricing-actions .btn-primary:disabled {
-    opacity: 0.6;
-    cursor: default;
-}
-#modal-pricing .pricing-helper-text {
-    font-size: 0.78rem;
-    color: var(--text-secondary);
-    text-align: center;
-    line-height: 1.55;
-}
-
-@media (max-width: 500px) {
-    #modal-pricing .pricing-plans-grid { grid-template-columns: 1fr; }
 }
 
 /* === ÉCRAN D'ACCUEIL === */
@@ -2091,7 +1817,6 @@ body.is-standalone #install-banner { display: none !important; }
     }
     .projects-save-row { flex-direction: column; }
     .regime-picker-row select { width: 100% !important; }
-    .cloud-sync-strip { flex-wrap: wrap; }
     #install-banner {
         left: 10px;
         right: 10px;
@@ -2261,26 +1986,6 @@ html:not(.theme-light):not(.theme-dark) .header {
     font-size: 0.76rem;
     font-weight: 600;
     line-height: 1.2;
-}
-
-.account-btn {
-    background: var(--bg-accent);
-    border-radius: 16px;
-    padding: 6px 12px;
-    font-weight: 800;
-    letter-spacing: 0.06em;
-}
-
-.account-btn:hover {
-    background: rgba(185,137,45,0.08);
-}
-
-.btn-pricing-header {
-    border-radius: 16px;
-    padding: 6px 14px;
-    font-weight: 800;
-    letter-spacing: 0.06em;
-    background: linear-gradient(135deg, var(--gold-color), #946614);
 }
 
 .btn-theme-toggle,
@@ -2959,10 +2664,6 @@ html:not(.theme-light):not(.theme-dark) .tab-btn.active {
     .header-actions {
         width: 100%;
         justify-content: flex-start;
-    }
-
-    .btn-pricing-header {
-        flex: 1 1 auto;
     }
 
     .analysis-snapshot-grid,
