@@ -15,10 +15,9 @@ export function updateColor(id, value) {
 }
 
 function getThemeTextColor() {
-    const isDark = document.documentElement.classList.contains('theme-dark') ||
-        (!document.documentElement.classList.contains('theme-light') &&
-         window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    return isDark ? '#E6EDF3' : '#1C2128';
+    const theme = document.documentElement.getAttribute('data-theme');
+    const isDark = theme === 'dark' || (!theme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    return isDark ? '#E2E8F0' : '#0F172A';
 }
 
 export function updateChart(credit, charges, impots, cf) {
@@ -536,6 +535,127 @@ export function validateInputs(inputs) {
 
 // === HAPTIQUE ===
 function haptic() { if (navigator.vibrate) navigator.vibrate(10); }
+
+// === RÉCAP PARAMÈTRES SAISIS ===
+
+const RECAP_GROUPS = [
+    {
+        title: 'Le Bien',
+        noteId: 'note-step-1',
+        fields: [
+            { id: 'prix',       label: 'Prix affiché',  fmt: 'eur',  always: true },
+            { id: 'loyer',      label: 'Loyer',         fmt: 'eur',  always: true },
+            { id: 'nego',       label: 'Négociation',   fmt: 'eur',  always: false },
+            { id: 'type-bien',  label: 'Type de bien',  fmt: 'text', always: false, defaultVal: 'ancien' },
+            { id: 'notaire',    label: 'Frais notaire', fmt: 'pct',  always: false, defaultVal: 8 },
+            { id: 'travaux',    label: 'Travaux',       fmt: 'eur',  always: false },
+            { id: 'meubles',    label: 'Mobilier',      fmt: 'eur',  always: false },
+        ]
+    },
+    {
+        title: 'Financement',
+        noteId: 'note-step-2',
+        fields: [
+            { id: 'apport',          label: 'Apport',          fmt: 'eur',  always: false },
+            { id: 'taux-input',      label: 'Taux',            fmt: 'pct',  always: true },
+            { id: 'duree',           label: 'Durée',           fmt: 'ans',  always: true },
+            { id: 'assurance',       label: 'Assurance empr.', fmt: 'pct',  always: false },
+            { id: 'agence',          label: 'Frais agence',    fmt: 'eur',  always: false },
+            { id: 'frais-bancaires', label: 'Frais bancaires', fmt: 'eur',  always: false },
+        ]
+    },
+    {
+        title: 'Exploitation',
+        noteId: 'note-step-3',
+        fields: [
+            { id: 'vacance',  label: 'Vacance',    fmt: 'pct', always: true },
+            { id: 'copro',    label: 'Copro/mois', fmt: 'eur', always: false },
+            { id: 'fonciere', label: 'Tax. foncière', fmt: 'eur', always: false },
+            { id: 'pno',      label: 'Ass. PNO',   fmt: 'eur', always: false },
+            { id: 'gestion',  label: 'Gestion',    fmt: 'pct', always: false },
+        ]
+    },
+    {
+        title: 'Fiscalité',
+        noteId: 'note-step-4',
+        fields: [
+            { id: 'revenus',              label: 'Revenus foyer',  fmt: 'eur',  always: true },
+            { id: '_tmi',                 label: 'TMI',            fmt: 'pct',  always: true },
+            { id: 'regime',               label: 'Régime',         fmt: 'text', always: true },
+            { id: 'inflation',            label: 'Inflation',      fmt: 'pct',  always: false },
+            { id: 'prix-revente-estime',  label: 'Prix revente',   fmt: 'eur',  always: false },
+            { id: 'appreciation',         label: 'Évol. prix/an',  fmt: 'pct',  always: false },
+            { id: 'frais-revente',        label: 'Frais revente',  fmt: 'pct',  always: false },
+            { id: 'taux-pv',              label: 'Taux fiscal IS', fmt: 'pct',  always: false },
+        ]
+    }
+];
+
+const REGIME_LABELS_RECAP = { 'micro-foncier': 'Micro-Foncier', 'reel': 'Foncier Réel', 'sci-is': 'SCI à l\'IS' };
+const TYPE_BIEN_LABELS = { 'ancien': 'Ancien', 'neuf': 'Neuf' };
+
+function _fmtRecap(value, fmt) {
+    if (value === undefined || value === null || value === '') return '';
+    if (fmt === 'eur')  return Number(value).toLocaleString('fr-FR') + ' €';
+    if (fmt === 'pct')  return Number(value).toLocaleString('fr-FR') + ' %';
+    if (fmt === 'ans')  return value + ' ans';
+    if (fmt === 'text') {
+        if (REGIME_LABELS_RECAP[value]) return REGIME_LABELS_RECAP[value];
+        if (TYPE_BIEN_LABELS[value])    return TYPE_BIEN_LABELS[value];
+        return value;
+    }
+    return value;
+}
+
+function _shouldShowField(field, value) {
+    if (field.always) return true;
+    if (value === undefined || value === null || value === '') return false;
+    if (field.defaultVal !== undefined && value == field.defaultVal) return false;
+    if (typeof value === 'number' && value === 0) return false;
+    if (typeof value === 'string' && value.trim() === '') return false;
+    return true;
+}
+
+export function renderInputRecap(inputs, tmi) {
+    const grid = document.getElementById('input-recap-grid');
+    const section = document.getElementById('input-recap');
+    if (!grid || !section) return;
+
+    const augmented = Object.assign({}, inputs, { _tmi: tmi });
+    let html = '';
+
+    for (const group of RECAP_GROUPS) {
+        const rows = group.fields
+            .filter(f => _shouldShowField(f, augmented[f.id]))
+            .map(f => {
+                const label = f.label;
+                const val   = _fmtRecap(augmented[f.id], f.fmt);
+                return `<div class="recap-row"><span class="recap-key">${label}</span><span class="recap-val">${val}</span></div>`;
+            });
+
+        if (rows.length === 0) continue;
+
+        const note = augmented[group.noteId] ? augmented[group.noteId].trim() : '';
+        const noteHtml = note ? `<div class="recap-note">${note.replace(/</g, '&lt;')}</div>` : '';
+        html += `<div class="recap-group"><h4 class="recap-group-title">${group.title}</h4>${rows.join('')}${noteHtml}</div>`;
+    }
+
+    grid.innerHTML = html;
+    section.style.display = html ? 'block' : 'none';
+}
+
+// === LISTENERS BOUTONS NOTE ===
+document.querySelectorAll('.step-note-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const targetId = btn.dataset.target;
+        const area = document.getElementById(targetId);
+        if (!area) return;
+        const isOpen = area.style.display !== 'none';
+        area.style.display = isOpen ? 'none' : 'block';
+        btn.classList.toggle('is-open', !isOpen);
+        if (!isOpen) area.focus();
+    });
+});
 
 // === BOTTOM SHEET — INFOBULLES ===
 (function() {
