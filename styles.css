@@ -646,3 +646,122 @@ input[type="range"]::-moz-range-thumb {
 #regime ~ button {
   margin-top: var(--space-2);
 }
+
+/* ═══════════════════════════════════════
+   BOUTONS
+═══════════════════════════════════════ */
+
+/* Base */
+.btn-primary,
+.btn-secondary,
+.btn-ghost,
+button[type="button"].btn-primary,
+button[type="submit"].btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 10px var(--space-5);
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+  transition: filter 0.15s, border-color 0.15s, background 0.15s;
+  white-space: nowrap;
+  font-family: var(--font-base);
+  text-decoration: none;
+}
+
+/* Primary */
+.btn-primary {
+  background: var(--accent);
+  color: white;
+}
+.btn-primary:hover { filter: brightness(1.1); }
+.btn-primary:active { filter: brightness(0.95); }
+
+/* Secondary */
+.btn-secondary {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Ghost */
+.btn-ghost {
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+}
+.btn-ghost:hover { color: var(--text-secondary); }
+
+/* Icon button (header) */
+.btn-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-icon:hover {
+  background: var(--bg-elevated);
+  border-color: var(--accent);
+}
+
+/* Small */
+.btn-small {
+  padding: 6px var(--space-3);
+  font-size: 12px;
+  border-radius: var(--radius-sm);
+}
+
+/* Toggle actif (nego table) */
+.btn-load {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 6px var(--space-3);
+  font-size: 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-load.active,
+.btn-load:hover {
+  background: var(--accent-muted);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Bouton wizard analyser (dernier step) */
+#btn-wizard-analyser {
+  flex: 1;
+}
+
+/* Bouton expand expert */
+#btn-expand-expert {
+  display: block;
+  width: 100%;
+  margin-top: var(--space-4);
+  padding: var(--space-3);
+  background: var(--bg-surface);
+  border: 1px dashed var(--border);
+  color: var(--text-muted);
+  border-radius: var(--radius-lg);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+#btn-expand-expert:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
