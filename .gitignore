@@ -1,4 +1,6 @@
 backups/
+.superpowers/
+node_modules/
 
 # Fichiers de pilotage locaux et notes internes
 .claudesignore

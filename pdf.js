@@ -1208,7 +1208,41 @@ function collectSharePDFSnapshot() {
     projectionTable: extractTableDataFromElement(document.getElementById('projection-tbody')?.closest('table')),
     resaleSummary: getElementText('revente-summary'),
     resaleTable: extractTableDataFromElement(document.getElementById('revente-tbody')?.closest('table')),
-    notes: getElementText('commentaires-display')
+    notes: getElementText('commentaires-display'),
+    inputNotes: {
+      step1: (document.getElementById('note-step-1') || {}).value || '',
+      step2: (document.getElementById('note-step-2') || {}).value || '',
+      step3: (document.getElementById('note-step-3') || {}).value || '',
+      step4: (document.getElementById('note-step-4') || {}).value || '',
+    },
+    inputFields: {
+      prix:               (document.getElementById('prix') || {}).value || '',
+      loyer:              (document.getElementById('loyer') || {}).value || '',
+      nego:               (document.getElementById('nego') || {}).value || '0',
+      typeBien:           (document.getElementById('type-bien') || {}).value || '',
+      notaire:            (document.getElementById('notaire') || {}).value || '',
+      travaux:            (document.getElementById('travaux') || {}).value || '0',
+      meubles:            (document.getElementById('meubles') || {}).value || '0',
+      apport:             (document.getElementById('apport') || {}).value || '0',
+      tauxInput:          (document.getElementById('taux-input') || {}).value || '',
+      duree:              (document.getElementById('duree') || {}).value || '',
+      assurance:          (document.getElementById('assurance') || {}).value || '0',
+      agence:             (document.getElementById('agence') || {}).value || '0',
+      fraisBancaires:     (document.getElementById('frais-bancaires') || {}).value || '0',
+      vacance:            (document.getElementById('vacance') || {}).value || '',
+      copro:              (document.getElementById('copro') || {}).value || '0',
+      fonciere:           (document.getElementById('fonciere') || {}).value || '0',
+      pno:                (document.getElementById('pno') || {}).value || '0',
+      gestion:            (document.getElementById('gestion') || {}).value || '0',
+      revenus:            (document.getElementById('revenus') || {}).value || '',
+      regime:             (document.getElementById('regime') || {}).value || '',
+      tmiDisplay:         getElementText('tmi-display'),
+      inflation:          (document.getElementById('inflation') || {}).value || '0',
+      prixReventeEstime:  (document.getElementById('prix-revente-estime') || {}).value || '0',
+      appreciation:       (document.getElementById('appreciation') || {}).value || '0',
+      fraisRevente:       (document.getElementById('frais-revente') || {}).value || '0',
+      tauxPv:             (document.getElementById('taux-pv') || {}).value || '0',
+    }
   };
 }
 
@@ -1496,11 +1530,150 @@ function addWrappedText(doc, text, y, options = {}) {
   return y + (lines.length * lineHeight);
 }
 
+function addRecapPage(doc, snapshot) {
+  const pageWidth   = doc.internal.pageSize.getWidth();
+  const contentWidth = pageWidth - 28;
+  const REGIME_LABELS = { 'micro-foncier': 'Micro-Foncier', 'reel': 'Foncier Réel', 'sci-is': 'SCI a l IS' };
+  const TYPE_BIEN    = { 'ancien': 'Ancien', 'neuf': 'Neuf' };
+  const f = snapshot.inputFields;
+  const n = snapshot.inputNotes;
+
+  const fmtEur = v => parseFloat(v) ? parseFloat(v).toLocaleString('fr-FR') + ' EUR' : null;
+  const fmtPct = v => parseFloat(v) ? parseFloat(v) + ' %' : null;
+  const skip0  = v => parseFloat(v) === 0 ? null : v;
+
+  const GROUPS = [
+    {
+      title: 'Le Bien',
+      note: n.step1,
+      rows: [
+        ['Prix affiche',  fmtEur(f.prix)],
+        ['Loyer mensuel', fmtEur(f.loyer)],
+        parseFloat(f.nego)     ? ['Negociation',   fmtEur(f.nego)]   : null,
+        f.typeBien !== 'ancien' ? ['Type de bien',  TYPE_BIEN[f.typeBien] || f.typeBien] : null,
+        parseFloat(f.notaire) !== 8 ? ['Frais notaire', f.notaire + ' %'] : null,
+        parseFloat(f.travaux)  ? ['Travaux',        fmtEur(f.travaux)]  : null,
+        parseFloat(f.meubles)  ? ['Mobilier',       fmtEur(f.meubles)]  : null,
+      ].filter(Boolean)
+    },
+    {
+      title: 'Financement',
+      note: n.step2,
+      rows: [
+        parseFloat(f.apport)        ? ['Apport',           fmtEur(f.apport)]        : null,
+        ['Taux annuel',    f.tauxInput + ' %'],
+        ['Duree',          f.duree + ' ans'],
+        parseFloat(f.assurance)     ? ['Assurance empr.',  f.assurance + ' %']      : null,
+        parseFloat(f.agence)        ? ['Frais agence',     fmtEur(f.agence)]        : null,
+        parseFloat(f.fraisBancaires)? ['Frais bancaires',  fmtEur(f.fraisBancaires)]: null,
+      ].filter(Boolean)
+    },
+    {
+      title: 'Exploitation',
+      note: n.step3,
+      rows: [
+        ['Vacance',        f.vacance + ' %'],
+        parseFloat(f.copro)    ? ['Copro/mois',    fmtEur(f.copro)]    : null,
+        parseFloat(f.fonciere) ? ['Tax. fonciere', fmtEur(f.fonciere)] : null,
+        parseFloat(f.pno)      ? ['Ass. PNO',      fmtEur(f.pno)]      : null,
+        parseFloat(f.gestion)  ? ['Gestion',       f.gestion + ' %']   : null,
+      ].filter(Boolean)
+    },
+    {
+      title: 'Fiscalite',
+      note: n.step4,
+      rows: [
+        ['Revenus foyer', fmtEur(f.revenus)],
+        ['TMI',           f.tmiDisplay],
+        ['Regime fiscal', REGIME_LABELS[f.regime] || f.regime],
+        parseFloat(f.inflation)           ? ['Inflation',       f.inflation + ' %']           : null,
+        parseFloat(f.prixReventeEstime)   ? ['Prix revente',    fmtEur(f.prixReventeEstime)]  : null,
+        parseFloat(f.appreciation) !== 0  ? ['Evol. prix/an',   f.appreciation + ' %']        : null,
+        parseFloat(f.fraisRevente)        ? ['Frais revente',   f.fraisRevente + ' %']        : null,
+        parseFloat(f.tauxPv)              ? ['Taux fiscal IS',  f.tauxPv + ' %']              : null,
+      ].filter(Boolean)
+    }
+  ];
+
+  let y = 14;
+
+  doc.setFillColor(...SHARE_PDF_PALETTE.brand);
+  doc.roundedRect(14, y, contentWidth, 18, 4, 4, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.text('Parametres de la simulation', 20, y + 7);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.text(snapshot.projectName + '  —  ' + snapshot.generatedOn, 20, y + 13.5);
+  y += 24;
+
+  const colW = (contentWidth - 6) / 2;
+  let col = 0;
+  let leftY  = y;
+  let rightY = y;
+
+  for (const group of GROUPS) {
+    if (group.rows.length === 0) continue;
+    const curY  = col === 0 ? leftY : rightY;
+    const curX  = col === 0 ? 14 : 14 + colW + 6;
+    const blockH = 8 + group.rows.length * 6 + (group.note ? 10 : 0) + 4;
+
+    if (curY + blockH > doc.internal.pageSize.getHeight() - 16) {
+      if (col === 0) { leftY = 16; }
+      else { doc.addPage(); leftY = 16; rightY = 16; }
+    }
+
+    const drawY = col === 0 ? leftY : rightY;
+
+    doc.setFillColor(...SHARE_PDF_PALETTE.paper);
+    doc.setDrawColor(...SHARE_PDF_PALETTE.line);
+    doc.roundedRect(curX, drawY, colW, blockH, 3, 3, 'FD');
+
+    doc.setFillColor(...SHARE_PDF_PALETTE.brand);
+    doc.roundedRect(curX, drawY, colW, 7.5, 3, 3, 'F');
+    doc.roundedRect(curX, drawY + 4.5, colW, 3, 0, 0, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.8);
+    doc.setTextColor(255, 255, 255);
+    doc.text(group.title.toUpperCase(), curX + 4, drawY + 5.5);
+
+    let rowY = drawY + 11;
+    for (const [key, val] of group.rows) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.6);
+      doc.setTextColor(...SHARE_PDF_PALETTE.muted);
+      doc.text(key, curX + 4, rowY);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...SHARE_PDF_PALETTE.ink);
+      doc.text(String(val), curX + colW - 4, rowY, { align: 'right' });
+      rowY += 6;
+    }
+
+    if (group.note) {
+      doc.setFillColor(...SHARE_PDF_PALETTE.goldSoft);
+      doc.roundedRect(curX + 3, rowY + 1, colW - 6, 7.5, 2, 2, 'F');
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(7);
+      doc.setTextColor(...SHARE_PDF_PALETTE.text);
+      const noteLines = doc.splitTextToSize(group.note, colW - 14);
+      doc.text(noteLines[0], curX + 6, rowY + 5.5);
+    }
+
+    if (col === 0) leftY  += blockH + 5;
+    else           rightY += blockH + 5;
+    col = 1 - col;
+  }
+
+  doc.addPage();
+}
+
 export async function buildSharePDFFile(uploadedPhotos) {
   const jsPDF = ensurePdfDependencies();
   const { filename } = buildPDFParts(uploadedPhotos);
   const snapshot = collectSharePDFSnapshot();
   const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
+  addRecapPage(doc, snapshot);
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const contentWidth = pageWidth - 28;
